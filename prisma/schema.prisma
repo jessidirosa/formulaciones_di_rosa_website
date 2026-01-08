@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Producto {
+  id               Int      @id @default(autoincrement())
+  nombre           String
+  slug             String   @unique
+  descripcionCorta String?
+  descripcionLarga String?   // 👈 NUEVO
+
+  /// si querés conservar una categoría principal de texto:
+  categoria        String?
+
+  precio           Float
+  imagen           String?
+  stock            Int?     @default(0)
+  activo           Boolean  @default(true)
+  destacado        Boolean  @default(false)
+  orden            Int      @default(0)
+  creadoEn         DateTime @default(now())
+  actualizadoEn    DateTime @updatedAt
+
+  itemsPedido PedidoItem[]
+
+  // 🔹 Relación muchas-a-muchas con Categoría
+  categorias ProductosCategorias[]
+}
+
+model Categoria {
+  id    Int    @id @default(autoincrement())
+  nombre String
+  slug   String @unique
+
+  productos ProductosCategorias[]
+}
+
+/// tabla puente explícita para la relación N-a-N
+model ProductosCategorias {
+  productoId Int
+  categoriaId Int
+
+  producto  Producto  @relation(fields: [productoId], references: [id])
+  categoria Categoria @relation(fields: [categoriaId], references: [id])
+
+  @@id([productoId, categoriaId])
+}
+
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  role         String   @default("USER")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  pedidos Pedido[]
+}
+
+model Pedido {
+  id          Int    @id @default(autoincrement())
+  numero      String
+  subtotal    Int
+  descuento   Int      @default(0)
+  costoEnvio  Int
+  total       Int
+  estado      String @default("pendiente")
+  metodoEnvio String @default("desconocido")
+
+  // 🔹 Relación con el usuario (opcional)
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  items PedidoItem[]
+
+  // 🔹 CAMPOS DE CHECKOUT Y ENVÍO
+  nombreCliente   String?
+  apellidoCliente String?
+  emailCliente    String?
+  telefonoCliente String?
+  dniCliente      String?
+
+  tipoEntrega    String?
+  direccion      String?
+  ciudad         String?
+  provincia      String?
+  codigoPostal   String?
+  sucursalCorreo String?
+
+  notasCliente       String?
+  fechaEstimadaEnvio DateTime?
+}
+
+model PedidoItem {
+  id             Int    @id @default(autoincrement())
+  pedidoId       Int
+  productoId     Int?
+  nombreProducto String
+  cantidad       Int
+  subtotal       Int
+
+  pedido   Pedido    @relation(fields: [pedidoId], references: [id])
+  producto Producto? @relation(fields: [productoId], references: [id])
+}
