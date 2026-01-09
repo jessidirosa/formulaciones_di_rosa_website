@@ -1,7 +1,0 @@
-pagina web:
-
-- descripción no admite saltos de linea
-- pagina de cuando el pedido esta enviado; para que muestre seguimiento por correo o la info de la moto
-- no se pueden eliminar categorías que no sean la ultima que añadiste
-- error al buscar pedidos por id
-- ver fechas de entrega
