@@ -56,7 +56,7 @@ export default function CheckoutForm({ data, onChange, onNext }: CheckoutFormPro
 
   const handleChange = (field: keyof CheckoutData, value: string) => {
     onChange({ [field]: value })
-    
+
     // Limpiar error cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
@@ -146,7 +146,7 @@ export default function CheckoutForm({ data, onChange, onNext }: CheckoutFormPro
         {/* DNI (opcional) */}
         <div className="space-y-2">
           <Label htmlFor="dni">
-            DNI (opcional)
+            DNI (para envíos con Andreani)
           </Label>
           <Input
             id="dni"
@@ -199,7 +199,7 @@ export default function CheckoutForm({ data, onChange, onNext }: CheckoutFormPro
 
       {/* Botón continuar */}
       <div className="flex justify-end">
-        <Button 
+        <Button
           type="submit"
           className="bg-rose-600 hover:bg-rose-700 px-8"
         >

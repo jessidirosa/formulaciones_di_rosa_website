@@ -19,7 +19,9 @@ interface Pedido {
   total: number
   cantidadItems: number
   fechaEstimadaEnvio: string
+  publicToken?: string | null
 }
+
 
 export default function MiCuentaPage() {
   const { user, isAuthenticated, isLoading, logout } = useUser()
@@ -91,30 +93,22 @@ export default function MiCuentaPage() {
 
 
   // Obtener badge del estado
-  const getEstadoBadge = (estado: string, estadoPago: string) => {
-    if (estadoPago === 'PENDIENTE') {
-      return <Badge variant="secondary">Pendiente de pago</Badge>
-    }
+  const getEstadoBadge = (estado: string) => {
+    const e = (estado || "").toLowerCase()
 
-    switch (estado) {
-      case 'PAGADO':
-        return <Badge className="bg-blue-600">En producción</Badge>
-      case 'EN_PRODUCCION':
-        return <Badge className="bg-orange-600">Preparando</Badge>
-      case 'LISTO_RETIRO':
-        return <Badge className="bg-green-600">Listo para retiro</Badge>
-      case 'LISTO_ENVIO':
-        return <Badge className="bg-green-600">Listo para envío</Badge>
-      case 'ENVIADO':
-        return <Badge className="bg-purple-600">Enviado</Badge>
-      case 'ENTREGADO':
-        return <Badge className="bg-green-800">Entregado</Badge>
-      case 'CANCELADO':
-        return <Badge variant="destructive">Cancelado</Badge>
-      default:
-        return <Badge variant="secondary">{estado}</Badge>
-    }
+    if (e === "pending_payment_transfer") return <Badge variant="secondary">Pendiente de pago (transferencia)</Badge>
+    if (e === "transfer_proof_sent") return <Badge className="bg-amber-600">Comprobante enviado</Badge>
+    if (e === "confirmado") return <Badge className="bg-blue-600">Confirmado</Badge>
+    if (e === "cancelled_expired") return <Badge variant="destructive">Cancelado (venció)</Badge>
+    if (e === "cancelado") return <Badge variant="destructive">Cancelado</Badge>
+    if (e === "en_produccion") return <Badge className="bg-orange-600">En producción</Badge>
+    if (e === "listo_envio") return <Badge className="bg-green-600">Listo para envío</Badge>
+    if (e === "enviado") return <Badge className="bg-purple-600">Enviado</Badge>
+    if (e === "entregado") return <Badge className="bg-green-800">Entregado</Badge>
+
+    return <Badge variant="secondary">En proceso</Badge>
   }
+
 
   if (isLoading) {
     return (
@@ -283,7 +277,7 @@ export default function MiCuentaPage() {
                               </p>
                             </div>
                             <div className="text-right">
-                              {getEstadoBadge(pedido.estado, pedido.estadoPago)}
+                              {getEstadoBadge(pedido.estado)}
                               <p className="text-sm font-medium text-gray-900 mt-1">
                                 {formatPrice(pedido.total)}
                               </p>
@@ -296,7 +290,8 @@ export default function MiCuentaPage() {
                               <span>Estimado: {formatDate(pedido.fechaEstimadaEnvio)}</span>
                             </div>
 
-                            <Link href={`/checkout/confirmacion/${pedido.id}`}>
+                            <Link href={pedido.publicToken ? `/pedido/${pedido.publicToken}` : `/mi-cuenta`}>
+
                               <Button variant="outline" size="sm">
                                 <Eye className="h-4 w-4 mr-2" />
                                 Ver detalle

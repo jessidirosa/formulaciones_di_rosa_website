@@ -1,7 +1,14 @@
 pagina web:
 
 - descripción no admite saltos de linea
-- pagina de cuando el pedido esta enviado; para que muestre seguimiento por correo o la info de la moto
 - no se pueden eliminar categorías que no sean la ultima que añadiste
 - error al buscar pedidos por id
 - ver fechas de entrega
+- no toma el apellido como tal
+- cuando desde el carrito tocas las categorías que te aparecen no las muestra
+- cuando muestra el carrito para comprarlo, la fecha estimada que indica ahí esta mal
+- pagina de contacto
+- pagina de sobre nosotros
+- faltan credenciales de Gmail
+- mas estético el tema de las categorías y la tienda
+- api correo para que haga los rotulos

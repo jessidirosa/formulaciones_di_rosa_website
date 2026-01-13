@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { crearPreferencia } from "@/lib/mercadopago"
+import { sendEmail } from "@/lib/email"
+import { emailPedidoRecibido } from "@/lib/emailTemplates"
 
 export async function POST(req: Request) {
   try {
     const data = await req.json()
-
     console.log("📦 Recibiendo pedido desde el checkout:", data)
 
     // Buscar usuario por email para asociar el pedido
@@ -14,9 +15,7 @@ export async function POST(req: Request) {
       const user = await prisma.user.findUnique({
         where: { email: data.emailCliente },
       })
-      if (user) {
-        userId = user.id
-      }
+      if (user) userId = user.id
     }
 
     // 1) Calcular fecha estimada
@@ -49,11 +48,21 @@ export async function POST(req: Request) {
         metodoEnvio = "Desconocido"
     }
 
-    // 2) Crear pedido en base
+    // ✅ método de pago
+    const metodoPago = (data.metodoPago || "MERCADOPAGO").toUpperCase()
+    const isTransfer = metodoPago === "TRANSFERENCIA"
+
+    // ✅ expiración 1 hora si es transferencia
+    const expiresAt = isTransfer ? new Date(Date.now() + 60 * 60 * 1000) : null
+
+    // ✅ estado según pago
+    const estadoPedido = isTransfer ? "pending_payment_transfer" : "pendiente"
+
+    // 2) Crear pedido
     const pedido = await prisma.pedido.create({
       data: {
         numero: `P-${Date.now()}`,
-        userId, // 👈 ahora se asocia si encontramos usuario
+        userId,
 
         nombreCliente: data.nombreCliente,
         apellidoCliente: data.apellidoCliente,
@@ -65,17 +74,32 @@ export async function POST(req: Request) {
         ciudad: data.ciudad ?? null,
         provincia: data.provincia ?? null,
         codigoPostal: data.codigoPostal ?? null,
-        sucursalCorreo: data.sucursalCorreo ?? null,
         notasCliente: data.notasCliente ?? null,
         fechaEstimadaEnvio: fechaEstimada,
 
         subtotal: data.subtotal,
         costoEnvio: data.costoEnvio,
-        descuento: data.descuento,
+        descuento: data.descuento ?? 0,
         total: data.total,
 
-        estado: "pendiente",
+        estado: estadoPedido,
         metodoEnvio,
+
+        carrier: data.carrier ?? "CORREO_ARGENTINO",
+        sucursalId: data.sucursalId ?? null,
+        sucursalNombre: data.sucursalNombre ?? null,
+
+        // seguís guardando sucursalCorreo para mostrarla fácil
+        sucursalCorreo: data.sucursalNombre ?? data.sucursalCorreo ?? null,
+
+        // 👇 “nuevo” para el admin
+        adminSeenAt: null,
+
+        // 👇 token público (recordá que en Prisma debe ser String? @unique)
+        publicToken: crypto.randomUUID(),
+
+        metodoPago,
+        expiresAt,
 
         items: {
           create: (data.items || []).map((item: any) => ({
@@ -91,7 +115,49 @@ export async function POST(req: Request) {
 
     console.log("🧾 Pedido creado correctamente:", pedido.id)
 
-    // 3) Preferencia Mercado Pago
+    // ✅ Email “pedido recibido” (no rompe el flujo si falla)
+    try {
+      const appUrl = process.env.APP_URL || "http://localhost:3000"
+      const linkEstado = `${appUrl}/pedido/${pedido.publicToken}`
+
+      const emailItems = pedido.items.map((it) => ({
+        nombre: it.nombreProducto,
+        cantidad: it.cantidad,
+        subtotal: it.subtotal,
+      }))
+
+      if (pedido.emailCliente) {
+        await sendEmail(
+          pedido.emailCliente,
+          "Pedido recibido - Di Rosa Formulaciones",
+          emailPedidoRecibido({
+            nombre: pedido.nombreCliente || undefined,
+            pedidoNumero: pedido.numero,
+            subtotal: pedido.subtotal,
+            costoEnvio: pedido.costoEnvio,
+            descuento: pedido.descuento,
+            total: pedido.total,
+            linkEstado,
+            items: emailItems,
+          })
+        )
+
+
+        await prisma.pedido.update({
+          where: { id: pedido.id },
+          data: { customerEmailSentAt: new Date() },
+        })
+      }
+    } catch (e) {
+      console.error("⚠️ Falló el email de pedido recibido (no se corta el checkout):", e)
+    }
+
+    // ✅ Si es transferencia: NO crear preferencia MP
+    if (isTransfer) {
+      return NextResponse.json({ ok: true, pedidoId: pedido.id })
+    }
+
+    // 3) Preferencia MP
     const mpItems = (data.items || []).map((item: any) => ({
       title: item.nombreProducto,
       quantity: item.cantidad,
@@ -104,18 +170,11 @@ export async function POST(req: Request) {
       payer: {
         name: `${data.nombreCliente ?? ""} ${data.apellidoCliente ?? ""}`.trim(),
         email: data.emailCliente,
-        identification: data.dniCliente
-          ? { type: "DNI", number: data.dniCliente }
-          : undefined,
+        identification: data.dniCliente ? { type: "DNI", number: data.dniCliente } : undefined,
       },
       external_reference: pedido.numero,
-      payment_methods: {
-        installments: 12,
-      },
-      metadata: {
-        pedidoId: pedido.id,
-        emailCliente: data.emailCliente,
-      },
+      payment_methods: { installments: 12 },
+      metadata: { pedidoId: pedido.id, emailCliente: data.emailCliente },
     })
 
     console.log("💳 Preferencia MP creada:", preferencia.id)
@@ -124,19 +183,12 @@ export async function POST(req: Request) {
       ok: true,
       pedidoId: pedido.id,
       preferenceId: preferencia.id,
-      initPoint:
-        preferencia.init_point ||
-        preferencia.sandbox_init_point ||
-        null,
+      initPoint: preferencia.init_point || preferencia.sandbox_init_point || null,
     })
   } catch (error) {
     console.error("❌ Error en create-order:", error)
     return NextResponse.json(
-      {
-        ok: false,
-        error:
-          "Hubo un problema al procesar tu pedido. Por favor, intentá nuevamente.",
-      },
+      { ok: false, error: "Hubo un problema al procesar tu pedido. Por favor, intentá nuevamente." },
       { status: 500 }
     )
   }

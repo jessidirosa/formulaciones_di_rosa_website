@@ -1,3 +1,8 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+import GenerarRotuloButton from "@/components/admin/GenerarRotuloButton"
+
 import { Fragment } from "react"
 import prisma from "@/lib/prisma"
 import { getServerSession } from "next-auth"
@@ -16,6 +21,8 @@ import {
     TableCell,
 } from "@/components/ui/table"
 import EstadoPedidoSelect from "@/components/admin/EstadoPedidoSelect"
+import ConfirmarPedidoButton from '@/components/admin/ConfirmarPedidoButton'
+
 
 interface PedidosPageProps {
     searchParams: Promise<{
@@ -26,6 +33,7 @@ interface PedidosPageProps {
     }>
 }
 
+
 export default async function PedidosPage({ searchParams }: PedidosPageProps) {
     const session = await getServerSession(authOptions)
     const user = session?.user as any
@@ -33,6 +41,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
     if (!session || user?.role !== "ADMIN") {
         redirect("/mi-cuenta/login")
     }
+    const nuevos = await prisma.pedido.count({ where: { adminSeenAt: null } })
 
     const params = await searchParams
 
@@ -63,17 +72,34 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
         }
     }
 
+    const now = new Date()
+
+    await prisma.pedido.updateMany({
+        where: {
+            metodoPago: "TRANSFERENCIA",
+            estado: "pending_payment_transfer",
+            expiresAt: { lt: now },
+        },
+        data: { estado: "cancelled_expired" },
+    })
+
+
     const pedidos = await prisma.pedido.findMany({
         where,
         orderBy: [
-            { createdAt: "desc" },  // primero por fecha
-            { id: "desc" },         // si la fecha coincide, por id
+            { createdAt: "desc" },
+            { id: "desc" },
         ],
-        include: {
-            items: true,
-            user: true,
-        },
+        include: { items: true, user: true },
     })
+
+
+
+    await prisma.pedido.updateMany({
+        where: { adminSeenAt: null },
+        data: { adminSeenAt: new Date() },
+    })
+
 
     const totalPedidos = pedidos.length
     const totalFacturado = pedidos.reduce(
@@ -203,11 +229,20 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                 {new Date(pedido.createdAt).toLocaleString("es-AR")}
                                             </TableCell>
                                             <TableCell>
-                                                <EstadoPedidoSelect
-                                                    pedidoId={pedido.id}
-                                                    estadoActual={pedido.estado}
-                                                />
+                                                <div className="flex flex-col gap-2">
+                                                    <EstadoPedidoSelect
+                                                        key={`${pedido.id}-${pedido.estado}`}  // 👈 remount si cambia estado
+                                                        pedidoId={pedido.id}
+                                                        estadoActual={pedido.estado}
+                                                    />
+
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        <ConfirmarPedidoButton pedidoId={pedido.id} />
+                                                        <GenerarRotuloButton pedidoId={pedido.id} />
+                                                    </div>
+                                                </div>
                                             </TableCell>
+
                                             <TableCell className="capitalize">
                                                 {pedido.metodoEnvio}
                                             </TableCell>
@@ -218,9 +253,10 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                             </TableCell>
                                             <TableCell>
                                                 <Button variant="outline" size="sm" asChild>
-                                                    <Link href={`/checkout/confirmacion/${pedido.id}`}>
+                                                    <Link href={pedido.publicToken ? `/pedido/${pedido.publicToken}` : `/checkout/confirmacion/${pedido.id}`}>
                                                         Ver
                                                     </Link>
+
                                                 </Button>
                                             </TableCell>
                                         </TableRow>

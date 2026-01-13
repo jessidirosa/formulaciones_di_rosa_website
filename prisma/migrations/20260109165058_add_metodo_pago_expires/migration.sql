@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Pedido" ADD COLUMN "expiresAt" DATETIME;
+ALTER TABLE "Pedido" ADD COLUMN "metodoPago" TEXT DEFAULT 'MERCADOPAGO';

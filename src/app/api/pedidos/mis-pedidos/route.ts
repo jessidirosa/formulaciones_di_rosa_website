@@ -29,6 +29,17 @@ export async function GET(_req: NextRequest) {
             )
         }
 
+        const now = new Date()
+
+        await prisma.pedido.updateMany({
+            where: {
+                metodoPago: "TRANSFERENCIA",
+                estado: "pending_payment_transfer",
+                expiresAt: { lt: now },
+            },
+            data: { estado: "cancelled_expired" },
+        })
+
         // 3) Traer pedidos de ese usuario
         const pedidos = await prisma.pedido.findMany({
             where: { userId: user.id },
@@ -39,22 +50,28 @@ export async function GET(_req: NextRequest) {
         })
 
         // 4) Adaptar al formato que espera tu MiCuentaPage
-        const mapped = pedidos.map((p) => ({
-            id: p.id.toString(),
-            numero: p.numero,
-            fechaCreacion: p.createdAt.toISOString(),
-            estado: p.estado,
-            // por ahora fijo, si después agregás campo real de pago lo cambiamos
-            estadoPago: "PENDIENTE",
-            total: p.total,
-            cantidadItems: p.items.reduce(
-                (acc, item) => acc + item.cantidad,
-                0
-            ),
-            fechaEstimadaEnvio: p.fechaEstimadaEnvio
-                ? p.fechaEstimadaEnvio.toISOString()
-                : null,
-        }))
+        const mapped = pedidos.map((p) => {
+            const estado = (p.estado || "").toUpperCase()
+
+            // Estado de pago “humano”
+            let estadoPago = "PENDIENTE"
+            if (estado === "PAGADO" || estado === "CONFIRMADO") estadoPago = "PAGADO"
+            if (estado === "CANCELADO" || estado === "CANCELLED_EXPIRED") estadoPago = "CANCELADO"
+            if (estado === "TRANSFER_PROOF_SENT") estadoPago = "EN_REVISION"
+
+            return {
+                id: p.id.toString(),
+                publicToken: p.publicToken ?? null,
+                numero: p.numero,
+                fechaCreacion: p.createdAt.toISOString(),
+                estado: p.estado,
+                estadoPago,
+                total: p.total,
+                cantidadItems: p.items.reduce((acc, item) => acc + item.cantidad, 0),
+                fechaEstimadaEnvio: p.fechaEstimadaEnvio ? p.fechaEstimadaEnvio.toISOString() : null,
+            }
+        })
+
 
         return NextResponse.json({ pedidos: mapped })
     } catch (error) {

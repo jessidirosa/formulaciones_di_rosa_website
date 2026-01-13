@@ -27,12 +27,24 @@ export interface CheckoutData {
   provincia?: string
   codigoPostal?: string
 
+  // Pago
+  metodoPago?: 'MERCADOPAGO' | 'TRANSFERENCIA' | 'TARJETA'
+  aplicarDescuentoTransfer?: boolean // para el caso “10% off aunque pague por MP”
+  cuotasMP?: number // para 3 cuotas sin interés (si lo soporta tu implementación actual)
+
+
   // Opciones de entrega
   tipoEntrega:
   | 'RETIRO_LOCAL'
   | 'ENVIO_DOMICILIO'
   | 'SUCURSAL_CORREO'
   | 'MOTOMENSAJERIA'
+
+  carrier?: 'CORREO_ARGENTINO' | 'ANDREANI'
+  sucursalId?: string
+  sucursalNombre?: string
+  carrierService?: string
+
 
   // Sucursal de Correo Argentino (solo si tipoEntrega === 'SUCURSAL_CORREO')
   sucursalCorreo?: string
@@ -56,17 +68,25 @@ export default function CheckoutPage() {
     email: user?.email || '',
     telefono: user?.telefono || '',
     tipoEntrega: 'RETIRO_LOCAL',
-    sucursalCorreo: ''
+    sucursalCorreo: '',
+    metodoPago: 'MERCADOPAGO',
+    aplicarDescuentoTransfer: false,
+    cuotasMP: 1,
+    carrier: 'CORREO_ARGENTINO',
+    sucursalId: '',
+    sucursalNombre: '',
+
   })
   const [isProcessing, setIsProcessing] = useState(false)
   const [costoEnvio, setCostoEnvio] = useState(0)
 
   // Redireccionar si el carrito está vacío
   useEffect(() => {
-    if (state.items.length === 0) {
+    if (!isProcessing && state.items.length === 0) {
       router.push('/carrito')
     }
-  }, [state.items.length, router])
+  }, [state.items.length, router, isProcessing])
+
 
   // Calcular costo de envío
   useEffect(() => {
@@ -92,8 +112,16 @@ export default function CheckoutPage() {
 
   // Calcular totales
   const subtotal = state.total
-  const descuento = checkoutData.cuponDescuento || 0
-  const totalFinal = subtotal + costoEnvio - descuento
+  const cuponDescuento = checkoutData.cuponDescuento || 0
+
+  const transferDiscount =
+    checkoutData.aplicarDescuentoTransfer
+      ? Math.round(subtotal * 0.10)
+      : 0
+
+  const descuentoTotal = cuponDescuento + transferDiscount
+  const totalFinal = subtotal + costoEnvio - descuentoTotal
+
 
   // Actualizar datos del checkout
   const updateCheckoutData = (data: Partial<CheckoutData>) => {
@@ -112,8 +140,9 @@ export default function CheckoutPage() {
         precioUnitario: item.producto.precio,
         subtotal: item.producto.precio * item.cantidad,
         nombreProducto: item.producto.nombre,
-        categoriaProducto: item.producto.categoria
+        categoriaProducto: item.producto.categoria,
       }))
+
 
       // Crear el payload del pedido
       const orderData = {
@@ -133,6 +162,12 @@ export default function CheckoutPage() {
 
         }),
 
+        metodoPago: checkoutData.metodoPago,
+        aplicarDescuentoTransfer: checkoutData.aplicarDescuentoTransfer,
+        cuotasMP: checkoutData.cuotasMP,
+        descuento: descuentoTotal,
+
+
         // Sucursal de Correo Argentino (solo si corresponde)
         sucursalCorreo:
           checkoutData.tipoEntrega === 'SUCURSAL_CORREO'
@@ -143,12 +178,16 @@ export default function CheckoutPage() {
         tipoEntrega: checkoutData.tipoEntrega,
         subtotal,
         costoEnvio,
-        descuento,
         total: totalFinal,
         notasCliente: checkoutData.notas,
 
         // Items del carrito
         items,
+
+        carrier: checkoutData.tipoEntrega === 'SUCURSAL_CORREO' ? checkoutData.carrier : undefined,
+        sucursalId: checkoutData.tipoEntrega === 'SUCURSAL_CORREO' ? checkoutData.sucursalId : undefined,
+        sucursalNombre: checkoutData.tipoEntrega === 'SUCURSAL_CORREO' ? checkoutData.sucursalNombre : undefined,
+        carrierService: checkoutData.carrierService, // si lo usás
 
         // Cupón si existe
         ...(checkoutData.cuponCodigo && {
@@ -171,10 +210,16 @@ export default function CheckoutPage() {
       const success = result.ok ?? result.success
 
       if (response.ok && success) {
-        // Limpiar carrito
-        clearCart()
+        // Si el usuario eligió transferencia, NO redirigimos a Mercado Pago.
+        if (checkoutData.metodoPago === 'TRANSFERENCIA') {
+          if (result.pedidoId) {
+            router.push(`/checkout/transferencia/${result.pedidoId}`)
+            return
+          }
+          throw new Error('No se recibió ID de pedido para transferencia.')
+        }
 
-        // URL de Mercado Pago en cualquiera de estos campos
+        // Si no es transferencia, seguimos con el flujo de Mercado Pago
         const mercadoPagoUrl =
           result.initPoint ||
           result.init_point ||
@@ -182,16 +227,19 @@ export default function CheckoutPage() {
           result.mercadoPagoUrl
 
         if (mercadoPagoUrl) {
+          clearCart()
           window.location.href = mercadoPagoUrl
-        } else if (result.pedidoId) {
-          // Fallback: ir a página de confirmación
-          router.push(`/checkout/confirmacion/${result.pedidoId}`)
-        } else {
-          throw new Error('No se recibió URL de pago ni ID de pedido.')
+          return
         }
-      } else {
-        throw new Error(result.error || 'Error al procesar el pedido')
+
+        if (result.pedidoId) {
+          router.push(`/checkout/confirmacion/${result.pedidoId}`)
+          return
+        }
+
+        throw new Error('No se recibió URL de pago ni ID de pedido.')
       }
+
     } catch (error) {
       console.error('Error en checkout:', error)
       alert('Hubo un error al procesar tu pedido. Por favor intenta nuevamente.')
@@ -270,7 +318,7 @@ export default function CheckoutPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="w-6 h-6 bg-rose-600 text-white rounded-full flex items-center justify-center text-sm">
+                  <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-sm">
                     1
                   </span>
                   Datos personales
@@ -343,7 +391,7 @@ export default function CheckoutPage() {
             items={state.items}
             subtotal={subtotal}
             costoEnvio={costoEnvio}
-            descuento={descuento}
+            descuento={descuentoTotal}
             total={totalFinal}
             tipoEntrega={checkoutData.tipoEntrega}
           />
