@@ -19,13 +19,13 @@ interface PaymentSectionProps {
   total: number
 }
 
-export default function PaymentSection({ 
-  data, 
-  onChange, 
-  onSubmit, 
-  onBack, 
-  isProcessing, 
-  total 
+export default function PaymentSection({
+  data,
+  onChange,
+  onSubmit,
+  onBack,
+  isProcessing,
+  total
 }: PaymentSectionProps) {
   const [cuponCode, setCuponCode] = useState(data.cuponCodigo || '')
   const [cuponLoading, setCuponLoading] = useState(false)
@@ -53,16 +53,16 @@ export default function PaymentSection({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           codigo: cuponCode.trim().toUpperCase(),
-          subtotal: total 
+          subtotal: total
         })
       })
 
       const result = await response.json()
 
       if (response.ok && result.valid) {
-        onChange({ 
+        onChange({
           cuponCodigo: result.cupon.codigo,
           cuponDescuento: result.descuentoAplicado
         })
@@ -85,6 +85,9 @@ export default function PaymentSection({
     setCuponError('')
     onChange({ cuponCodigo: undefined, cuponDescuento: undefined })
   }
+
+  const metodoPago = data.metodoPago || 'MERCADOPAGO'
+
 
   return (
     <div className="space-y-6">
@@ -114,8 +117,8 @@ export default function PaymentSection({
                     Ahorrás {formatPrice(data.cuponDescuento || 0)}
                   </p>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={removeCoupon}
                   className="text-green-700 border-green-300"
@@ -134,7 +137,7 @@ export default function PaymentSection({
               className={cuponError ? 'border-red-500' : ''}
               disabled={cuponLoading}
             />
-            <Button 
+            <Button
               type="button"
               variant="outline"
               onClick={applyCoupon}
@@ -164,40 +167,49 @@ export default function PaymentSection({
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <CreditCard className="h-5 w-5 text-rose-600" />
-          <Label className="text-base font-medium">
-            Método de pago
-          </Label>
+          <Label className="text-base font-medium">Método de pago</Label>
         </div>
 
-        <Card className="border-blue-200">
+        {/* Mercado Pago */}
+        <Card
+          className={`cursor-pointer border-2 ${metodoPago === 'MERCADOPAGO'
+            ? 'border-rose-600'
+            : 'border-gray-200'
+            }`}
+          onClick={() =>
+            onChange({
+              metodoPago: 'MERCADOPAGO',
+            })
+          }
+        >
           <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-12 h-8 bg-blue-600 rounded text-white flex items-center justify-center text-xs font-bold">
-                MP
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-900 mb-2">
-                  Mercado Pago
-                </h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Pagá de forma segura con todos los métodos disponibles
-                </p>
-                
-                <div className="grid grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <p className="font-medium text-gray-700 mb-1">Tarjetas de crédito:</p>
-                    <p className="text-gray-600">Visa, Mastercard, American Express</p>
-                    <p className="text-green-600 font-medium">✓ Cuotas sin interés disponibles</p>
-                  </div>
-                  
-                  <div>
-                    <p className="font-medium text-gray-700 mb-1">Otros métodos:</p>
-                    <p className="text-gray-600">Débito, transferencia, efectivo</p>
-                    <p className="text-blue-600 font-medium">✓ Pago inmediato</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <h3 className="font-medium mb-1">Mercado Pago</h3>
+            <p className="text-sm text-gray-600">
+              Tarjetas, débito, dinero en cuenta
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Transferencia */}
+        <Card
+          className={`cursor-pointer border-2 ${metodoPago === 'TRANSFERENCIA'
+            ? 'border-green-600'
+            : 'border-gray-200'
+            }`}
+          onClick={() =>
+            onChange({
+              metodoPago: 'TRANSFERENCIA',
+              aplicarDescuentoTransfer: true,
+            })
+          }
+        >
+          <CardContent className="p-4">
+            <h3 className="font-medium text-green-700">
+              Transferencia bancaria
+            </h3>
+            <p className="text-sm text-green-600">
+              💸 10% más barato – tenés 1 hora para pagar
+            </p>
           </CardContent>
         </Card>
 
@@ -224,27 +236,36 @@ export default function PaymentSection({
             📋 Resumen de tu compra
           </h4>
           <p className="text-sm text-blue-800">
-            Al hacer clic en "Finalizar compra", serás redirigido a Mercado Pago para 
-            completar el pago de forma segura. Una vez confirmado el pago, recibirás 
-            la confirmación del pedido por email.
+            {metodoPago === 'TRANSFERENCIA'
+              ? 'Al finalizar, se generará tu pedido y verás los datos para transferir. Tenés 1 hora para enviar el pago.'
+              : 'Al finalizar, serás redirigido a Mercado Pago para completar el pago.'}
           </p>
+
         </div>
 
         <div className="text-center">
           <div className="text-2xl font-bold text-rose-600 mb-2">
             Total a pagar: {formatPrice(total)}
           </div>
+
           {data.cuponDescuento && (
-            <p className="text-sm text-green-600 mb-4">
+            <p className="text-sm text-green-600 mb-2">
               ¡Ahorrás {formatPrice(data.cuponDescuento)} con tu cupón!
             </p>
           )}
+
+          {data.aplicarDescuentoTransfer && (
+            <p className="text-sm text-green-600 mt-1">
+              ✔ Descuento por transferencia aplicado (10%)
+            </p>
+          )}
         </div>
+
       </div>
 
       {/* Botones de navegación */}
       <div className="flex justify-between">
-        <Button 
+        <Button
           type="button"
           variant="outline"
           onClick={onBack}
@@ -252,8 +273,8 @@ export default function PaymentSection({
         >
           Volver a entrega
         </Button>
-        
-        <Button 
+
+        <Button
           type="button"
           onClick={onSubmit}
           disabled={isProcessing}

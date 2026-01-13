@@ -73,6 +73,28 @@ model Pedido {
   total       Int
   estado      String @default("pendiente")
   metodoEnvio String @default("desconocido")
+  metodoPago String?   @default("MERCADOPAGO")
+  expiresAt  DateTime?
+  publicToken String?  @unique
+  transferProofStatus String?   // "none" | "sent"
+  transferProofNote   String?
+  transferProofUrl    String?
+  transferProofSentAt DateTime?
+
+  carrier        String?   // "CORREO_ARGENTINO" | "ANDREANI"
+  carrierService String?   // opcional: "STANDARD", "SUCURSAL", etc.
+  sucursalId     String?
+  sucursalNombre String?
+
+  trackingNumber   String?
+  trackingUrl    String?
+  labelUrl       String?   // URL al PDF del rótulo (ideal)
+  shippedAt      DateTime? // cuándo lo marcaste como enviado
+
+  adminSeenAt DateTime?
+  customerEmailSentAt DateTime?
+  confirmedEmailSentAt DateTime?
+
 
   // 🔹 Relación con el usuario (opcional)
   userId Int?
