@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Truck, ShieldCheck, CreditCard } from 'lucide-react'
 
 interface CartSummaryProps {
   subtotal: number
@@ -14,7 +15,7 @@ export default function CartSummary({
   costoEnvio = 0,
   descuento = 0
 }: CartSummaryProps) {
-  // Formatear precio en pesos argentinos
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -23,105 +24,99 @@ export default function CartSummary({
     }).format(price)
   }
 
-  // Calcular envío gratis
   const ENVIO_GRATIS_MINIMO = 200000
   const envioGratis = subtotal >= ENVIO_GRATIS_MINIMO
   const faltaParaEnvioGratis = ENVIO_GRATIS_MINIMO - subtotal
+  const porcentajeProgreso = Math.min((subtotal / ENVIO_GRATIS_MINIMO) * 100, 100)
 
-  // Calcular costo de envío final
   const costoEnvioFinal = envioGratis ? 0 : costoEnvio || 9500
-
-  // Calcular total
   const total = subtotal + costoEnvioFinal - descuento
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Resumen de compra</CardTitle>
+    <Card className="border-none shadow-md rounded-2xl overflow-hidden bg-white">
+      <CardHeader className="bg-[#F9F9F7] border-b border-[#E9E9E0]">
+        <CardTitle className="text-sm uppercase tracking-[0.2em] font-bold text-[#4A5D45]">
+          Resumen de Pedido
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Subtotal */}
-        <div className="flex justify-between text-sm">
-          <span>Subtotal ({cantidadItems} producto{cantidadItems !== 1 ? 's' : ''})</span>
-          <span className="font-medium">{formatPrice(subtotal)}</span>
-        </div>
 
-        {/* Envío gratis progress */}
-        {!envioGratis && faltaParaEnvioGratis > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <div className="text-sm text-amber-800 mb-2">
-              <strong>¡Envío gratis disponible!</strong>
-            </div>
-            <div className="text-xs text-amber-700 mb-2">
-              Agregá {formatPrice(faltaParaEnvioGratis)} más para envío gratis
-            </div>
-            <div className="w-full bg-amber-200 rounded-full h-2">
-              <div
-                className="bg-amber-500 h-2 rounded-full transition-all duration-300"
-                style={{
-                  width: `${Math.min((subtotal / ENVIO_GRATIS_MINIMO) * 100, 100)}%`
-                }}
-              />
-            </div>
+      <CardContent className="space-y-6 pt-6">
+        {/* Detalle de costos */}
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm text-[#5B6350]">
+            <span>Productos ({cantidadItems})</span>
+            <span className="font-semibold text-[#3A4031]">{formatPrice(subtotal)}</span>
           </div>
-        )}
 
-        {/* Envío */}
-        <div className="flex justify-between text-sm">
-          <span>Envío</span>
-          <div className="text-right">
-            {envioGratis ? (
-              <div>
-                <span className="text-green-600 font-medium">Gratis</span>
-                <div className="text-xs text-gray-500 line-through">
-                  {formatPrice(200000)}
+          {/* Barra de progreso Envío Gratis - Estética Di Rosa */}
+          <div className="py-2">
+            {!envioGratis ? (
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] uppercase tracking-wider font-bold text-[#A3B18A]">
+                  <span>Faltan {formatPrice(faltaParaEnvioGratis)} para envío gratis</span>
+                  <span>{Math.round(porcentajeProgreso)}%</span>
+                </div>
+                <div className="w-full bg-[#F5F5F0] rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-[#A3B18A] h-full rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${porcentajeProgreso}%` }}
+                  />
                 </div>
               </div>
             ) : (
-              <span className="font-medium">{formatPrice(costoEnvioFinal)}</span>
+              <div className="flex items-center gap-2 text-[#4A5D45] bg-[#E9E9E0] p-2 rounded-xl text-[10px] uppercase tracking-widest font-bold justify-center">
+                <Truck className="w-3 h-3" /> ¡Tu envío es sin cargo!
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Descuento */}
-        {descuento > 0 && (
-          <div className="flex justify-between text-sm text-green-600">
-            <span>Descuento aplicado</span>
-            <span className="font-medium">-{formatPrice(descuento)}</span>
-          </div>
-        )}
-
-        <Separator />
-
-        {/* Total */}
-        <div className="flex justify-between text-lg font-bold">
-          <span>Total</span>
-          <span className="text-rose-600">{formatPrice(total)}</span>
-        </div>
-
-        {/* Información adicional */}
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>• Los precios incluyen IVA</p>
-          <p>• Aceptamos todos los medios de pago</p>
-          <p>• Pago 100% seguro con Mercado Pago</p>
-        </div>
-
-        {/* Métodos de pago */}
-        <div className="pt-4 border-t">
-          <div className="text-sm font-medium text-gray-700 mb-2">
-            Medios de pago
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-              💳 Tarjetas
-            </span>
-            <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-              💰 Efectivo
-            </span>
-            <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
-              🏦 Transferencia
+          <div className="flex justify-between text-sm text-[#5B6350]">
+            <span>Costo de Envío</span>
+            <span className={envioGratis ? "text-[#4A5D45] font-bold" : "font-semibold text-[#3A4031]"}>
+              {envioGratis ? "Bonificado" : formatPrice(costoEnvioFinal)}
             </span>
           </div>
+
+          {descuento > 0 && (
+            <div className="flex justify-between text-sm text-[#A3B18A] bg-[#A3B18A]/10 p-2 rounded-lg border border-[#A3B18A]/20 font-bold">
+              <span>Beneficio aplicado</span>
+              <span>-{formatPrice(descuento)}</span>
+            </div>
+          )}
+        </div>
+
+        <Separator className="bg-[#F5F5F0]" />
+
+        {/* Total Final */}
+        <div className="flex justify-between items-baseline">
+          <span className="text-sm font-bold text-[#3A4031] uppercase tracking-widest">Total</span>
+          <div className="text-right">
+            <span className="text-3xl font-serif font-bold text-[#4A5D45]">
+              {formatPrice(total)}
+            </span>
+            <p className="text-[9px] text-[#A3B18A] uppercase font-bold tracking-tighter mt-1">IVA Incluido</p>
+          </div>
+        </div>
+
+        {/* Garantías sutiles */}
+        <div className="grid grid-cols-1 gap-2 pt-4 border-t border-[#F5F5F0]">
+          <div className="flex items-center gap-2 text-[10px] text-[#5B6350] font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#A3B18A]" />
+            Pago 100% encriptado y seguro
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-[#5B6350] font-medium">
+            <CreditCard className="w-3.5 h-3.5 text-[#A3B18A]" />
+            Mercado Pago • Transferencia • Tarjetas
+          </div>
+        </div>
+
+        {/* Tags de Medios de Pago - Diseño Limpio */}
+        <div className="flex flex-wrap gap-2 pt-2">
+          {['Visa', 'Mastercard', 'Amex', 'Transferencia'].map((pago) => (
+            <span key={pago} className="text-[8px] uppercase tracking-widest border border-[#E9E9E0] px-2 py-1 rounded text-[#A3B18A] font-bold bg-[#F9F9F7]">
+              {pago}
+            </span>
+          ))}
         </div>
       </CardContent>
     </Card>

@@ -7,14 +7,12 @@ import { useCart } from "@/contexts/CartContext"
 import { Button } from "@/components/ui/button"
 import logo from '@/logo.png';
 
-
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
   const { user, isAuthenticated, isLoading, logout } = useUser()
   const { state } = useCart()
 
-  // cantidad total de items (sumando cantidades)
   const totalItems = state.items.reduce(
     (acc: number, item: any) => acc + item.cantidad,
     0
@@ -25,84 +23,62 @@ export default function Header() {
     router.push("/")
   }
 
+  // Color Musgo para el link activo
   const isActive = (href: string) =>
-    pathname === href ? "text-emerald-700 font-semibold" : "text-gray-700"
+    pathname === href ? "text-[#4A5D45] font-bold border-b-2 border-[#4A5D45]" : "text-gray-600 hover:text-[#4A5D45]"
 
   return (
-    <header className="border-b bg-white">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="h-8 w-28 flex items-center justify-center text-xs">
-            <img src={logo.src} alt="Formulaciones Di Rosa" className="h-15 w-auto" />
-          </div>
+    <header className="border-b bg-white sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Logo con mejor centrado */}
+        <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
+          <img src={logo.src} alt="Formulaciones Di Rosa" className="h-12 w-auto object-contain" />
         </Link>
 
-        {/* Navegación */}
-        <nav className="hidden md:flex items-center gap-6 text-sm">
-          <Link href="/" className={isActive("/")}>
-            Inicio
-          </Link>
-          <Link href="/tienda" className={isActive("/tienda")}>
-            Tienda
-          </Link>
-          <Link href="/sobre-nosotros" className={isActive("/sobre-nosotros")}>
-            Sobre nosotros
-          </Link>
-          <Link href="/contacto" className={isActive("/contacto")}>
-            Contacto
-          </Link>
+        {/* Navegación - Text-xs para un aire más profesional */}
+        <nav className="hidden md:flex items-center gap-8 text-[13px] uppercase tracking-widest">
+          <Link href="/" className={`${isActive("/")} transition-all pb-1`}>Inicio</Link>
+          <Link href="/tienda" className={`${isActive("/tienda")} transition-all pb-1`}>Tienda</Link>
+          <Link href="/sobre-nosotros" className={`${isActive("/sobre-nosotros")} transition-all pb-1`}>Nosotros</Link>
+          <Link href="/contacto" className={`${isActive("/contacto")} transition-all pb-1`}>Contacto</Link>
         </nav>
 
         {/* Acciones derecha */}
-        <div className="flex items-center gap-3">
-          {/* Carrito con contador */}
-          <Link href="/carrito" aria-label="Carrito">
-            <div className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border">
-              <span>🛒</span>
+        <div className="flex items-center gap-4">
+          <Link href="/carrito" className="group relative">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-100 bg-gray-50 group-hover:bg-[#E9E9E0] transition-colors">
+              <span className="text-xl">🛒</span>
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] px-1 rounded-full bg-emerald-500 text-white text-[11px] leading-[18px] text-center">
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#4A5D45] text-[10px] font-bold text-white shadow-sm">
                   {totalItems}
                 </span>
               )}
             </div>
           </Link>
 
-          {/* Estado de usuario */}
           {isLoading ? (
-            <div className="h-9 w-32 bg-gray-100 rounded animate-pulse" />
+            <div className="h-9 w-24 bg-gray-50 rounded-full animate-pulse" />
           ) : isAuthenticated && user ? (
             <div className="flex items-center gap-2">
               <Link href="/mi-cuenta">
-                <Button variant="ghost" className="hidden sm:inline-flex">
-                  Hola, {user.nombre ?? "Mi cuenta"}
+                <Button variant="ghost" className="text-[#3A4031] font-semibold text-sm">
+                  Hola, {user.nombre}
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-              >
-                Cerrar sesión
+              <Button variant="outline" size="sm" onClick={handleLogout} className="text-xs border-[#D6D6C2] rounded-full">
+                Salir
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/mi-cuenta/login">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-800"
-                >
-                  Iniciar sesión
+                <Button variant="ghost" size="sm" className="text-gray-600 text-xs font-bold uppercase tracking-wider">
+                  Ingresar
                 </Button>
               </Link>
               <Link href="/mi-cuenta/registro">
-                <Button
-                  size="sm"
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                >
-                  Crear cuenta
+                <Button size="sm" className="bg-[#4A5D45] hover:bg-[#3D4C39] text-white text-xs font-bold uppercase tracking-wider rounded-full px-5">
+                  Registrarme
                 </Button>
               </Link>
             </div>

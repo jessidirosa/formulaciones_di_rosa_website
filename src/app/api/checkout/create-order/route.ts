@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma"
 import { crearPreferencia } from "@/lib/mercadopago"
 import { sendEmail } from "@/lib/email"
 import { emailPedidoRecibido } from "@/lib/emailTemplates"
+import { calcularFechaEstimada } from "@/lib/capacity"
+
 
 export async function POST(req: Request) {
   try {
@@ -19,15 +21,8 @@ export async function POST(req: Request) {
     }
 
     // 1) Calcular fecha estimada
-    const capacidadSemanal = Number(process.env.CAPACIDAD_SEMANAL) || 17
-    const pedidosPendientes = await prisma.pedido.count({
-      where: { estado: "pendiente" },
-    })
-
-    const semanasNecesarias = Math.floor(pedidosPendientes / capacidadSemanal)
-    const fechaEstimada = new Date()
-    fechaEstimada.setDate(fechaEstimada.getDate() + semanasNecesarias * 7 + 3)
-
+    const fechaEstimada = await calcularFechaEstimada()
+    console.log("🎯 Fecha estimada de envío calculada:", fechaEstimada)
     const rawTipoEntrega = (data.tipoEntrega || "").toUpperCase()
 
     let metodoEnvio: string
@@ -57,6 +52,38 @@ export async function POST(req: Request) {
 
     // ✅ estado según pago
     const estadoPedido = isTransfer ? "pending_payment_transfer" : "pendiente"
+
+    console.log("🧾 items incoming:", (data.items || []).map((it: any) => ({
+      productoId: it.productoId,
+      nombre: it.nombreProducto,
+    })))
+    // ✅ Validar productoId contra DB para evitar FK P2003
+    const rawItems = Array.isArray(data.items) ? data.items : []
+
+    const ids = rawItems
+      .map((it: any) => Number(it.productoId))
+      .filter((n: number) => Number.isFinite(n) && n > 0)
+
+    const existentes = await prisma.producto.findMany({
+      where: { id: { in: ids } },
+      select: { id: true },
+    })
+
+    const existentesSet = new Set(existentes.map(p => p.id))
+
+    const itemsCreate = rawItems.map((item: any) => {
+      const pid = Number(item.productoId)
+      const productoId =
+        Number.isFinite(pid) && pid > 0 && existentesSet.has(pid) ? pid : null
+
+      return {
+        productoId, // ✅ solo si existe, sino null
+        nombreProducto: item.nombreProducto,
+        cantidad: item.cantidad,
+        subtotal: item.subtotal,
+      }
+    })
+
 
     // 2) Crear pedido
     const pedido = await prisma.pedido.create({
@@ -102,13 +129,9 @@ export async function POST(req: Request) {
         expiresAt,
 
         items: {
-          create: (data.items || []).map((item: any) => ({
-            productoId: item.productoId,
-            nombreProducto: item.nombreProducto,
-            cantidad: item.cantidad,
-            subtotal: item.subtotal,
-          })),
+          create: itemsCreate,
         },
+
       },
       include: { items: true },
     })

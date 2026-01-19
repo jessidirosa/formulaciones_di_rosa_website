@@ -12,17 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, X } from 'lucide-react'
+import { Search, X, SlidersHorizontal } from 'lucide-react'
 
 type ProductFiltersProps = {
-  categorias: { nombre: string; slug: string }[] // la prop sigue por si la queremos usar después
+  categorias: { nombre: string; slug: string }[]
   categoriaActual?: string
   busquedaActual?: string
   ordenActual?: string
 }
 
 export default function ProductFilters({
-  categorias,        // ahora no la usamos, pero la dejamos por compatibilidad
+  categorias,
   categoriaActual,
   busquedaActual,
   ordenActual,
@@ -63,101 +63,106 @@ export default function ProductFilters({
     (ordenActual && ordenActual !== 'destacados')
 
   return (
-    <div className="space-y-6">
-      {/* Buscador */}
-      <form onSubmit={handleSearch} className="relative max-w-md">
-        <Input
-          type="text"
-          placeholder="Buscar productos..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="pr-10"
-        />
-        <Button
-          type="submit"
-          size="icon"
-          variant="ghost"
-          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-        >
-          <Search className="h-4 w-4" />
-        </Button>
-      </form>
+    <div className="space-y-6 bg-white p-6 rounded-3xl border border-[#E9E9E0] shadow-sm">
+      <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
 
-      {/* Filtros (solo orden) */}
-      <div className="flex flex-wrap gap-4 items-center">
-        {/* Filtro por orden */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">Ordenar por:</span>
-          <Select
-            value={ordenActual || 'destacados'}
-            onValueChange={(value) => updateSearchParams('orden', value)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="destacados">Destacados</SelectItem>
-              <SelectItem value="nombre">Nombre A-Z</SelectItem>
-              <SelectItem value="precio-asc">Precio menor a mayor</SelectItem>
-              <SelectItem value="precio-desc">Precio mayor a menor</SelectItem>
-              <SelectItem value="nuevo">Más recientes</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Botón limpiar filtros */}
-        {hasActiveFilters && (
+        {/* Buscador de Productos */}
+        <form onSubmit={handleSearch} className="relative w-full lg:max-w-md group">
+          <Input
+            type="text"
+            placeholder="¿Qué fórmula estás buscando?"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="pl-12 pr-10 h-12 bg-[#F9F9F7] border-[#E9E9E0] focus:ring-[#A3B18A] focus:border-[#A3B18A] rounded-2xl transition-all"
+          />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#A3B18A] group-focus-within:text-[#4A5D45] transition-colors" />
+          {busqueda && (
+            <button
+              type="button"
+              onClick={() => setBusqueda('')}
+              className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
           <Button
-            variant="outline"
+            type="submit"
             size="sm"
-            onClick={clearFilters}
-            className="ml-auto"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 bg-[#4A5D45] hover:bg-[#3D4C39] text-white rounded-xl px-4 text-xs font-bold uppercase tracking-widest"
           >
-            <X className="h-4 w-4 mr-2" />
-            Limpiar filtros
+            Buscar
           </Button>
-        )}
+        </form>
+
+        {/* Controles de Ordenamiento */}
+        <div className="flex flex-wrap gap-4 items-center w-full lg:w-auto">
+          <div className="flex items-center gap-3 bg-[#F9F9F7] px-4 py-2 rounded-2xl border border-[#E9E9E0]">
+            <SlidersHorizontal className="h-4 w-4 text-[#A3B18A]" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#5B6350]">Ordenar:</span>
+            <Select
+              value={ordenActual || 'destacados'}
+              onValueChange={(value) => updateSearchParams('orden', value)}
+            >
+              <SelectTrigger className="border-none bg-transparent focus:ring-0 h-auto p-0 text-sm font-semibold text-[#3A4031] w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-[#E9E9E0]">
+                <SelectItem value="destacados">Recomendados</SelectItem>
+                <SelectItem value="nombre">Orden Alfabético</SelectItem>
+                <SelectItem value="precio-asc">Menor Precio</SelectItem>
+                <SelectItem value="precio-desc">Mayor Precio</SelectItem>
+                <SelectItem value="nuevo">Novedades</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="text-[#A3B18A] hover:text-red-500 hover:bg-red-50 font-bold uppercase text-[10px] tracking-widest"
+            >
+              <X className="h-3 w-3 mr-2" />
+              Limpiar Todo
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Tags de filtros activos */}
+      {/* Chips de Filtros Activos */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F5F5F0]">
           {categoriaActual && categoriaActual !== 'todos' && (
-            <Badge variant="secondary" className="gap-1">
-              Categoría: {categoriaActual}
-              <button
+            <Badge className="bg-[#E9E9E0] text-[#4A5D45] hover:bg-[#D6D6C2] border-none px-3 py-1.5 rounded-full flex items-center gap-2 text-[11px] font-medium">
+              Especialidad: <span className="font-bold">{categoriaActual}</span>
+              <X
+                className="h-3 w-3 cursor-pointer hover:scale-125 transition-transform"
                 onClick={() => updateSearchParams('categoria', '')}
-                className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              />
             </Badge>
           )}
 
           {busquedaActual && (
-            <Badge variant="secondary" className="gap-1">
-              Búsqueda: &quot;{busquedaActual}&quot;
-              <button
+            <Badge className="bg-[#E9E9E0] text-[#4A5D45] hover:bg-[#D6D6C2] border-none px-3 py-1.5 rounded-full flex items-center gap-2 text-[11px] font-medium">
+              Buscando: <span className="font-bold">&quot;{busquedaActual}&quot;</span>
+              <X
+                className="h-3 w-3 cursor-pointer hover:scale-125 transition-transform"
                 onClick={() => {
                   setBusqueda('')
                   updateSearchParams('busqueda', '')
                 }}
-                className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              />
             </Badge>
           )}
 
           {ordenActual && ordenActual !== 'destacados' && (
-            <Badge variant="secondary" className="gap-1">
-              Orden: {getOrderLabel(ordenActual)}
-              <button
+            <Badge className="bg-[#E9E9E0] text-[#4A5D45] hover:bg-[#D6D6C2] border-none px-3 py-1.5 rounded-full flex items-center gap-2 text-[11px] font-medium">
+              Criterio: <span className="font-bold">{getOrderLabel(ordenActual)}</span>
+              <X
+                className="h-3 w-3 cursor-pointer hover:scale-125 transition-transform"
                 onClick={() => updateSearchParams('orden', '')}
-                className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              />
             </Badge>
           )}
         </div>
@@ -168,15 +173,10 @@ export default function ProductFilters({
 
 function getOrderLabel(orden: string): string {
   switch (orden) {
-    case 'nombre':
-      return 'Nombre A-Z'
-    case 'precio-asc':
-      return 'Precio ↑'
-    case 'precio-desc':
-      return 'Precio ↓'
-    case 'nuevo':
-      return 'Más recientes'
-    default:
-      return 'Destacados'
+    case 'nombre': return 'Nombre A-Z'
+    case 'precio-asc': return 'Precio ↑'
+    case 'precio-desc': return 'Precio ↓'
+    case 'nuevo': return 'Más recientes'
+    default: return 'Recomendados'
   }
 }

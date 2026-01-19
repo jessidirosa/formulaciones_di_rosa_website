@@ -1,9 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
-import { formatearFechaArgentina } from '@/lib/capacity'
 import { useToast } from "@/components/ui/toaster"
-
 
 // Tipos
 export interface Producto {
@@ -33,7 +31,7 @@ type CartAction =
   | { type: 'REMOVE_ITEM'; payload: { productoId: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { productoId: string; cantidad: number } }
   | { type: 'CLEAR_CART' }
-  | { type: 'SET_ESTIMATED_DATE'; payload: { fecha: string } }
+  | { type: 'SET_ESTIMATED_DATE'; payload: { fecha: string | null } }
   | { type: 'LOAD_CART'; payload: CartState }
 
 // Estado inicial
@@ -41,7 +39,7 @@ const initialState: CartState = {
   items: [],
   total: 0,
   cantidadItems: 0,
-  fechaEstimada: null
+  fechaEstimada: null,
 }
 
 // Reducer
@@ -49,27 +47,27 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_ITEM': {
       const { producto, cantidad } = action.payload
-      const existingItemIndex = state.items.findIndex(item => item.producto.id === producto.id)
+      const existingItemIndex = state.items.findIndex(
+        item => item.producto.id === producto.id
+      )
 
       let newItems: CartItem[]
 
       if (existingItemIndex >= 0) {
-        // Si el producto ya existe, actualizar cantidad
         newItems = state.items.map((item, index) =>
           index === existingItemIndex
             ? {
               ...item,
               cantidad: item.cantidad + cantidad,
-              subtotal: (item.cantidad + cantidad) * item.producto.precio
+              subtotal: (item.cantidad + cantidad) * item.producto.precio,
             }
             : item
         )
       } else {
-        // Si es un producto nuevo, agregarlo
         const newItem: CartItem = {
           producto,
           cantidad,
-          subtotal: cantidad * producto.precio
+          subtotal: cantidad * producto.precio,
         }
         newItems = [...state.items, newItem]
       }
@@ -81,12 +79,14 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         items: newItems,
         total: newTotal,
-        cantidadItems: newCantidadItems
+        cantidadItems: newCantidadItems,
       }
     }
 
     case 'REMOVE_ITEM': {
-      const newItems = state.items.filter(item => item.producto.id !== action.payload.productoId)
+      const newItems = state.items.filter(
+        item => item.producto.id !== action.payload.productoId
+      )
       const newTotal = newItems.reduce((sum, item) => sum + item.subtotal, 0)
       const newCantidadItems = newItems.reduce((sum, item) => sum + item.cantidad, 0)
 
@@ -94,7 +94,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         items: newItems,
         total: newTotal,
-        cantidadItems: newCantidadItems
+        cantidadItems: newCantidadItems,
       }
     }
 
@@ -110,7 +110,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           ? {
             ...item,
             cantidad,
-            subtotal: cantidad * item.producto.precio
+            subtotal: cantidad * item.producto.precio,
           }
           : item
       )
@@ -122,7 +122,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         items: newItems,
         total: newTotal,
-        cantidadItems: newCantidadItems
+        cantidadItems: newCantidadItems,
       }
     }
 
@@ -132,7 +132,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     case 'SET_ESTIMATED_DATE':
       return {
         ...state,
-        fechaEstimada: action.payload.fecha
+        fechaEstimada: action.payload.fecha,
       }
 
     case 'LOAD_CART':
@@ -150,7 +150,7 @@ const CartContext = createContext<{
   removeItem: (productoId: string) => void
   updateQuantity: (productoId: string, cantidad: number) => void
   clearCart: () => void
-  setEstimatedDate: (fecha: string) => void
+  setEstimatedDate: (fecha: string | null) => void
 } | null>(null)
 
 // Provider
@@ -158,7 +158,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState)
   const { showToast } = useToast()
 
-  // Cargar carrito desde localStorage al inicializar
+  // 1) Cargar carrito desde localStorage al iniciar
   useEffect(() => {
     const savedCart = localStorage.getItem('formulaciones-cart')
     if (savedCart) {
@@ -171,26 +171,48 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Guardar carrito en localStorage cuando cambie
+  // 2) Guardar carrito en localStorage cuando cambie
   useEffect(() => {
     localStorage.setItem('formulaciones-cart', JSON.stringify(state))
   }, [state])
 
-  // Obtener fecha estimada cuando cambien los items
+  // 3) Fecha estimada (MISMA lógica que backend)
+  // - Se recalcula cuando cambia la cantidad de items (agregar/quitar)
+  // - Se evita fetch si está vacío
   useEffect(() => {
-    if (state.cantidadItems > 0) {
-      fetch('/api/fecha-estimada')
-        .then(res => res.json())
-        .then(data => {
-          if (data.fechaEstimada) {
-            const fechaFormateada = formatearFechaArgentina(new Date(data.fechaEstimada))
-            dispatch({ type: 'SET_ESTIMATED_DATE', payload: { fecha: fechaFormateada } })
-          }
+    const loadEstimatedDate = async () => {
+      try {
+        if (state.cantidadItems <= 0) {
+          dispatch({ type: 'SET_ESTIMATED_DATE', payload: { fecha: null } })
+          return
+        }
+
+        const res = await fetch('/api/capacity/estimated-date', {
+          method: 'GET',
+          cache: 'no-store',
         })
-        .catch(error => console.error('Error al obtener fecha estimada:', error))
-    } else {
-      dispatch({ type: 'SET_ESTIMATED_DATE', payload: { fecha: '' } })
+
+        const data = await res.json().catch(() => ({}))
+
+        if (!res.ok || !data?.ok) {
+          console.error('Error API fecha estimada:', data?.error || res.statusText)
+          // Si falla, no rompemos la UI: simplemente no mostramos
+          dispatch({ type: 'SET_ESTIMATED_DATE', payload: { fecha: null } })
+          return
+        }
+
+        // ✅ data.formatted ya viene listo para UI (dd/MM/yyyy)
+        dispatch({
+          type: 'SET_ESTIMATED_DATE',
+          payload: { fecha: data.formatted || null },
+        })
+      } catch (error) {
+        console.error('Error al obtener fecha estimada:', error)
+        dispatch({ type: 'SET_ESTIMATED_DATE', payload: { fecha: null } })
+      }
     }
+
+    loadEstimatedDate()
   }, [state.cantidadItems])
 
   const addItem = (producto: Producto, cantidad = 1) => {
@@ -210,25 +232,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'CLEAR_CART' })
   }
 
-  const setEstimatedDate = (fecha: string) => {
+  const setEstimatedDate = (fecha: string | null) => {
     dispatch({ type: 'SET_ESTIMATED_DATE', payload: { fecha } })
   }
 
   return (
-    <CartContext.Provider value={{
-      state,
-      addItem,
-      removeItem,
-      updateQuantity,
-      clearCart,
-      setEstimatedDate
-    }}>
+    <CartContext.Provider
+      value={{
+        state,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        setEstimatedDate,
+      }}
+    >
       {children}
     </CartContext.Provider>
   )
 }
 
-// Hook personalizado
+// Hook
 export function useCart() {
   const context = useContext(CartContext)
   if (!context) {
