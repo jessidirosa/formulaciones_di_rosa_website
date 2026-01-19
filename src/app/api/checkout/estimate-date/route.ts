@@ -1,20 +1,17 @@
-import { NextResponse } from "next/server"
-import prisma from "@/lib/prisma"
-
-function calcularFechaEstimada(pedidosPendientes: number) {
-    const capacidadSemanal = Number(process.env.CAPACIDAD_SEMANAL) || 17
-    const semanasNecesarias = Math.floor(pedidosPendientes / capacidadSemanal)
-
-    const fecha = new Date()
-    fecha.setDate(fecha.getDate() + semanasNecesarias * 7 + 3)
-    return fecha
-}
+import { NextResponse } from 'next/server'
+import prisma from '@/lib/prisma'
 
 export async function GET() {
-    const pedidosPendientes = await prisma.pedido.count({
-        where: { estado: "pendiente" },
-    })
+    const capacidadSemanal = Number(process.env.CAPACIDAD_SEMANAL) || 17
+    const pedidosPendientes = await prisma.pedido.count({ where: { estado: 'pendiente' } })
 
-    const fecha = calcularFechaEstimada(pedidosPendientes)
-    return NextResponse.json({ fechaEstimada: fecha.toISOString() })
+    const semanasNecesarias = Math.floor(pedidosPendientes / capacidadSemanal)
+    const fechaEstimada = new Date()
+    fechaEstimada.setDate(fechaEstimada.getDate() + semanasNecesarias * 7 + 3)
+
+    return NextResponse.json({
+        ok: true,
+        fechaISO: fechaEstimada.toISOString(),
+        fechaAR: fechaEstimada.toLocaleDateString('es-AR'),
+    })
 }

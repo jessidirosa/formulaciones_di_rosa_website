@@ -1,84 +1,86 @@
-import { addWeeks, nextMonday, isWeekend, format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import prisma from './prisma'
+// src/lib/capacity.ts
+import { addWeeks, addDays, startOfWeek, nextMonday, isWeekend, format } from "date-fns"
+import { es } from "date-fns/locale"
+import prisma from "./prisma"
 
-// Constantes de configuración
-export const CAPACIDAD_SEMANAL = parseInt(process.env.CAPACIDAD_SEMANAL || '17')
+// Config
+export const CAPACIDAD_SEMANAL = parseInt(process.env.CAPACIDAD_SEMANAL || "17", 10)
 
-/**
- * Calcula la fecha estimada de envío/retiro basada en la capacidad semanal
- * y los pedidos pendientes/en producción
- */
-export async function calcularFechaEstimada(): Promise<Date> {
-  try {
-    // 1. Contar pedidos pendientes y en producción
-    const pedidosPendientes = await prisma.pedido.count({
-      where: {
-        estado: {
-          in: ['PENDIENTE', 'PAGADO', 'EN_PRODUCCION']
-        }
-      }
-    })
-
-    console.log(`📊 Pedidos pendientes/en producción: ${pedidosPendientes}`)
-    console.log(`📈 Capacidad semanal configurada: ${CAPACIDAD_SEMANAL}`)
-
-    // 2. Calcular semanas de offset
-    const semanaOffset = Math.floor(pedidosPendientes / CAPACIDAD_SEMANAL)
-    
-    // 3. Fecha base (hoy)
-    const fechaBase = new Date()
-    
-    // 4. Agregar semanas offset
-    const fechaEstimada = addWeeks(fechaBase, semanaOffset)
-    
-    // 5. Ajustar a día hábil si es necesario
-    const fechaFinal = ajustarADiaHabil(fechaEstimada)
-    
-    console.log(`🎯 Fecha estimada calculada: ${format(fechaFinal, 'dd/MM/yyyy', { locale: es })}`)
-    
-    return fechaFinal
-  } catch (error) {
-    console.error('❌ Error al calcular fecha estimada:', error)
-    // En caso de error, devolver fecha base + 1 semana
-    return ajustarADiaHabil(addWeeks(new Date(), 1))
-  }
-}
+// Estados que "consumen capacidad" (producción/pendientes)
+const ESTADOS_CAPACIDAD = ["pendiente", "pagado", "en_produccion", "pending_payment_transfer"]
 
 /**
- * Ajusta una fecha a un día hábil (lunes a viernes)
- * Si cae en fin de semana, la mueve al lunes siguiente
+ * Ajusta una fecha a día hábil (lun-vie).
+ * Si cae sábado/domingo → mueve al lunes siguiente.
  */
 export function ajustarADiaHabil(fecha: Date): Date {
-  if (isWeekend(fecha)) {
-    return nextMonday(fecha)
-  }
+  if (isWeekend(fecha)) return nextMonday(fecha)
   return fecha
 }
 
 /**
- * Obtiene un resumen de la capacidad actual del sistema
+ * Semana base:
+ * - siempre usamos el próximo lunes
+  */
+function obtenerLunesSemanaBase(hoy = new Date()): Date {
+  const base = startOfWeek(hoy, { weekStartsOn: 1 }) // lunes de esta semana
+
+  return addDays(base, 7);
+}
+
+/**
+ * Calcula fecha estimada (con cupos semanales) + colchón de 3 días.
+ * Regla:
+ * - Asignás el pedido a la semanaOffset (0 = semana base, 1 = siguiente, etc.)
+ * - Fecha estimada = lunes de la semana asignada + 3 días (colchón)
+ * - Ajuste a día hábil
+ */
+export async function calcularFechaEstimada(): Promise<Date> {
+  try {
+    const pedidosPendientes = await prisma.pedido.count({
+      where: { estado: { in: ESTADOS_CAPACIDAD } },
+    })
+
+    console.log(`📊 Pedidos que consumen capacidad: ${pedidosPendientes}`)
+    console.log(`📈 Capacidad semanal: ${CAPACIDAD_SEMANAL}`)
+
+    // 0..16 → semana 0, 17..33 → semana 1, etc.
+    const semanaOffset = Math.floor(pedidosPendientes / CAPACIDAD_SEMANAL)
+
+    const lunesBase = obtenerLunesSemanaBase(new Date())
+    const lunesAsignado = addWeeks(lunesBase, semanaOffset)
+
+    // colchón +3 días dentro de esa semana (lunes + 3 = jueves)
+    const conColchon = addDays(lunesAsignado, 3)
+
+    const fechaFinal = ajustarADiaHabil(conColchon)
+
+    console.log(
+      `🎯 Fecha estimada: ${format(fechaFinal, "dd/MM/yyyy", { locale: es })} (offset semanas=${semanaOffset})`
+    )
+
+    return fechaFinal
+  } catch (error) {
+    console.error("❌ Error al calcular fecha estimada:", error)
+    // fallback: próximo lunes + 3 días
+    const fallback = addDays(obtenerLunesSemanaBase(new Date()), 3)
+    return ajustarADiaHabil(fallback)
+  }
+}
+
+/**
+ * Resumen de capacidad actual
  */
 export async function obtenerResumenCapacidad() {
   try {
     const pedidosPendientes = await prisma.pedido.count({
-      where: {
-        estado: {
-          in: ['PENDIENTE', 'PAGADO', 'EN_PRODUCCION']
-        }
-      }
+      where: { estado: { in: ESTADOS_CAPACIDAD } },
     })
 
-    const pedidosEstaSemanaPorEstado = await prisma.pedido.groupBy({
-      by: ['estado'],
-      _count: {
-        estado: true
-      },
-      where: {
-        estado: {
-          in: ['PENDIENTE', 'PAGADO', 'EN_PRODUCCION']
-        }
-      }
+    const pedidosPorEstado = await prisma.pedido.groupBy({
+      by: ["estado"],
+      _count: { estado: true },
+      where: { estado: { in: ESTADOS_CAPACIDAD } },
     })
 
     const capacidadUsada = pedidosPendientes
@@ -90,32 +92,26 @@ export async function obtenerResumenCapacidad() {
       capacidadUsada,
       capacidadDisponible,
       semanasDeRetraso,
-      pedidosPorEstado: pedidosEstaSemanaPorEstado,
-      proximaFechaEstimada: await calcularFechaEstimada()
+      pedidosPorEstado,
+      proximaFechaEstimada: await calcularFechaEstimada(),
     }
   } catch (error) {
-    console.error('❌ Error al obtener resumen de capacidad:', error)
+    console.error("❌ Error al obtener resumen de capacidad:", error)
     return {
       capacidadTotal: CAPACIDAD_SEMANAL,
       capacidadUsada: 0,
       capacidadDisponible: CAPACIDAD_SEMANAL,
       semanasDeRetraso: 0,
       pedidosPorEstado: [],
-      proximaFechaEstimada: new Date()
+      proximaFechaEstimada: new Date(),
     }
   }
 }
 
-/**
- * Formatea una fecha en formato argentino (dd/mm/yyyy)
- */
 export function formatearFechaArgentina(fecha: Date): string {
-  return format(fecha, 'dd/MM/yyyy', { locale: es })
+  return format(fecha, "dd/MM/yyyy", { locale: es })
 }
 
-/**
- * Formatea una fecha en formato completo en español
- */
 export function formatearFechaCompleta(fecha: Date): string {
   return format(fecha, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: es })
 }

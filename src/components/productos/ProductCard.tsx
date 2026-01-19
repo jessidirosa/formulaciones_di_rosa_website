@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useCart } from '@/contexts/CartContext'
 import { useUser } from '@/contexts/UserContext'
-import { ShoppingCart, Eye } from 'lucide-react'
+import { ShoppingCart, Eye, FlaskConical, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface Producto {
@@ -32,7 +32,9 @@ export default function ProductCard({ producto }: ProductCardProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  // Formatear precio en pesos argentinos
+  // Cálculo del precio por transferencia (10% OFF)
+  const precioTransferencia = producto.precio * 0.9
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -41,13 +43,11 @@ export default function ProductCard({ producto }: ProductCardProps) {
     }).format(price)
   }
 
-  // Manejar agregar al carrito
   const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault() // Evitar navegación del Link
+    e.preventDefault()
     setIsLoading(true)
-    
+
     try {
-      // Convertir producto al formato esperado por el carrito
       const productoCarrito = {
         id: producto.id,
         nombre: producto.nombre,
@@ -56,11 +56,8 @@ export default function ProductCard({ producto }: ProductCardProps) {
         imagen: producto.imagen,
         categoria: producto.categoria
       }
-      
+
       addItem(productoCarrito, 1)
-      
-      // Opcional: mostrar toast o notificación
-      console.log(`✅ ${producto.nombre} agregado al carrito`)
     } catch (error) {
       console.error('Error al agregar producto:', error)
     } finally {
@@ -68,114 +65,119 @@ export default function ProductCard({ producto }: ProductCardProps) {
     }
   }
 
-  // Manejar ver detalle
-  const handleViewDetail = () => {
-    router.push(`/tienda/${producto.slug}`)
-  }
-
   return (
-    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 shadow-md">
-      {/* Imagen del producto */}
-      <Link href={`/tienda/${producto.slug}`}>
-        <div className="relative aspect-square overflow-hidden bg-gray-100">
-          <img
-            src={producto.imagen}
-            alt={producto.nombre}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              // Fallback en caso de error en la imagen
-              const target = e.target as HTMLImageElement
-              target.src = `https://placehold.co/400x400?text=${encodeURIComponent(producto.nombre)}`
-            }}
-          />
-          
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {producto.destacado && (
-              <Badge className="bg-rose-500 hover:bg-rose-600 text-white">
-                Destacado
-              </Badge>
-            )}
-            {producto.stock <= 5 && producto.stock > 0 && (
-              <Badge variant="destructive">
-                Últimas unidades
-              </Badge>
-            )}
-            {producto.stock === 0 && (
-              <Badge variant="secondary" className="bg-gray-500 text-white">
-                Sin stock
-              </Badge>
-            )}
-          </div>
+    <Card className="group overflow-hidden hover:shadow-2xl transition-all duration-500 border-none bg-white rounded-2xl shadow-sm flex flex-col h-full">
 
-          {/* Overlay con acciones (visible en hover) */}
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white hover:bg-gray-100"
-              onClick={(e) => {
-                e.preventDefault()
-                handleViewDetail()
-              }}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Ver detalle
-            </Button>
+      {/* Contenedor de Imagen */}
+      <Link href={`/tienda/${producto.slug}`} className="relative block aspect-[4/5] overflow-hidden bg-[#F9F9F7]">
+        <img
+          src={producto.imagen}
+          alt={producto.nombre}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.src = `https://placehold.co/400x500/F5F5F0/4A5D45?text=${encodeURIComponent(producto.nombre)}`
+          }}
+        />
+
+        {/* Badges Flotantes */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+          {producto.destacado && (
+            <Badge className="bg-[#4A5D45] text-[#F5F5F0] border-none px-3 py-1 text-[10px] uppercase tracking-widest font-bold">
+              Destacado
+            </Badge>
+          )}
+          {producto.stock <= 5 && producto.stock > 0 && (
+            <Badge className="bg-[#A3B18A] text-white border-none px-3 py-1 text-[10px] uppercase tracking-widest font-bold">
+              Últimas unidades
+            </Badge>
+          )}
+          {producto.stock === 0 && (
+            <Badge className="bg-gray-400 text-white border-none px-3 py-1 text-[10px] uppercase tracking-widest font-bold">
+              Agotado
+            </Badge>
+          )}
+        </div>
+
+        {/* Overlay de Acción Rápida */}
+        <div className="absolute inset-0 bg-[#3A4031]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          <div className="bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+            <Eye className="h-6 w-6 text-[#4A5D45]" />
           </div>
         </div>
       </Link>
 
-      {/* Información del producto */}
-      <CardHeader className="pb-2">
-        <div className="space-y-2">
-          {/* Categoría */}
-          <Badge variant="outline" className="text-xs w-fit">
+      {/* Cuerpo de la Tarjeta */}
+      <CardHeader className="pt-6 pb-2 px-6">
+        <div className="space-y-1">
+          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#A3B18A]">
             {producto.categoria}
-          </Badge>
-          
-          {/* Nombre del producto */}
+          </p>
           <Link href={`/tienda/${producto.slug}`}>
-            <h3 className="font-semibold text-gray-900 group-hover:text-rose-600 transition-colors line-clamp-2">
+            <h3 className="font-bold text-[#3A4031] text-lg leading-tight group-hover:text-[#4A5D45] transition-colors line-clamp-1 uppercase tracking-tight">
               {producto.nombre}
             </h3>
           </Link>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0 pb-4">
-        {/* Descripción corta */}
-        <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+      <CardContent className="px-6 flex-grow">
+        <p className="text-sm text-[#5B6350] line-clamp-2 leading-relaxed mb-4 italic">
           {producto.descripcionCorta}
         </p>
-        
-        {/* Precio */}
-        <div className="text-2xl font-bold text-rose-600">
-          {formatPrice(producto.precio)}
-        </div>
       </CardContent>
 
-      {/* Acciones */}
-      <CardFooter className="pt-0 gap-2">
-        <Button
-          onClick={handleAddToCart}
-          disabled={isLoading || producto.stock === 0}
-          className="flex-1 bg-rose-600 hover:bg-rose-700"
-          size="sm"
-        >
-          {isLoading ? (
-            <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-          ) : (
-            <ShoppingCart className="h-4 w-4 mr-2" />
-          )}
-          {producto.stock === 0 ? 'Sin stock' : 'Agregar'}
-        </Button>
-        
-        <Link href={`/tienda/${producto.slug}`} className="flex-shrink-0">
-          <Button variant="outline" size="sm">
-            Ver más
+      {/* Footer con Precio y Botón */}
+      <CardFooter className="px-6 pb-8 pt-0 flex flex-col gap-5">
+
+        {/* Sección de Precios Optimizada */}
+        <div className="w-full flex flex-col gap-1">
+          <div className="flex justify-between items-baseline">
+            <span className="text-[9px] uppercase tracking-widest text-[#A3B18A] font-bold">Precio de lista</span>
+            <span className="text-sm font-medium text-[#5B6350] line-through decoration-[#D6D6C2]">
+              {formatPrice(producto.precio)}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center bg-[#F9F9F7] p-2 rounded-lg border border-[#E9E9E0]/50">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-tight text-[#4A5D45] font-bold flex items-center gap-1">
+                <Sparkles className="h-3 w-3" /> Transferencia
+              </span>
+              <span className="text-2xl font-serif font-bold text-[#4A5D45]">
+                {formatPrice(precioTransferencia)}
+              </span>
+            </div>
+            <div className="text-right">
+              <Badge className="bg-[#A3B18A]/20 text-[#4A5D45] hover:bg-[#A3B18A]/20 shadow-none border-none text-[10px] font-bold px-2">
+                10% OFF
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full flex gap-2">
+          <Button
+            onClick={handleAddToCart}
+            disabled={isLoading || producto.stock === 0}
+            className={`flex-1 rounded-xl h-11 font-bold text-xs uppercase tracking-widest transition-all
+                ${producto.stock === 0
+                ? 'bg-gray-100 text-gray-400'
+                : 'bg-[#4A5D45] text-white hover:bg-[#3A4031] shadow-md hover:shadow-lg'}`}
+          >
+            {isLoading ? (
+              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>{producto.stock === 0 ? 'Sin Stock' : 'Añadir al Carrito'}</>
+            )}
           </Button>
-        </Link>
+
+          <Link href={`/tienda/${producto.slug}`}>
+            <Button variant="outline" className="h-11 w-11 p-0 rounded-xl border-[#D6D6C2] text-[#4A5D45] hover:bg-[#F5F5F0]">
+              <Eye className="h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
       </CardFooter>
     </Card>
   )

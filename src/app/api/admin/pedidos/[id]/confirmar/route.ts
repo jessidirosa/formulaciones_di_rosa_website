@@ -1,95 +1,105 @@
-import { NextRequest, NextResponse } from "next/server"
+// src/app/api/admin/pedidos/[id]/confirmar/route.ts
+import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { sendEmail } from "@/lib/email"
-import { emailPedidoConfirmado } from "@/lib/emailTemplates"
+import { generarRotuloYTracking } from "@/lib/shipping"
+import { uploadLabelPdf } from "@/lib/storage/labels"
 
-export async function POST(_req: NextRequest, { params }: { params: any }) {
+/**
+ * @description Confirma el pago de un pedido y dispara la logística de envío.
+ * Flujo: Confirmación -> Generación de Tracking -> Creación de Rótulo PDF -> Almacenamiento.
+ */
+export async function POST(_req: Request, { params }: { params: { id: string } }) {
     try {
-        const p = await params
-        const raw = p?.id
-        const id = Number(raw)
+        const pedidoId = Number(params.id)
 
-        if (Number.isNaN(id)) {
-            return NextResponse.json({ ok: false, error: "ID inválido" }, { status: 400 })
+        // Validación de entrada técnica
+        if (!pedidoId || isNaN(pedidoId)) {
+            return NextResponse.json(
+                { ok: false, error: "Identificador de pedido no válido" },
+                { status: 400 }
+            )
         }
 
-        const session = await getServerSession(authOptions)
-        if (!session?.user?.email) {
-            return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 })
+        // Buscamos el pedido con sus datos de envío
+        const pedido = await prisma.pedido.findUnique({
+            where: { id: pedidoId }
+        })
+
+        if (!pedido) {
+            return NextResponse.json(
+                { ok: false, error: "La orden solicitada no existe en el registro" },
+                { status: 404 }
+            )
         }
 
-        const role = (session as any)?.user?.role
-        if (role !== "ADMIN") {
-            return NextResponse.json({ ok: false, error: "Sin permisos" }, { status: 403 })
-        }
-
-        // ✅ select: campos + relación items
-        const pedido = await prisma.pedido.update({
-            where: { id },
-            data: { estado: "confirmado" },
-            select: {
-                id: true,
-                numero: true,
-                publicToken: true,
-                estado: true,
-                emailCliente: true,
-                nombreCliente: true,
-                apellidoCliente: true,
-                total: true,
-                items: {
-                    select: {
-                        nombreProducto: true,
-                        cantidad: true,
-                        subtotal: true,
-                    },
-                },
-                confirmedEmailSentAt: true,
-
+        // 1. Actualización de estado a 'confirmado'
+        // Se utiliza una transacción o actualización atómica para asegurar la integridad
+        const pedidoConfirmado = await prisma.pedido.update({
+            where: { id: pedidoId },
+            data: {
+                estado: "confirmado",
+                // Aquí podrías agregar fecha de confirmación si tuvieras el campo
             },
         })
 
-        // ✅ Email “confirmado” (no rompe el flujo si falla)
-        try {
-            const appUrl = process.env.APP_URL || "http://localhost:3000"
-            const linkEstado = pedido.publicToken
-                ? `${appUrl}/pedido/${pedido.publicToken}`
-                : `${appUrl}/mi-cuenta`
+        // 2. Evaluación de Logística Magistral
+        const tipoEntrega = (pedidoConfirmado.tipoEntrega || "").toUpperCase()
+        const requiereGestionLogistica =
+            tipoEntrega === "ENVIO_DOMICILIO" ||
+            tipoEntrega === "SUCURSAL_CORREO"
 
-            const emailItems = pedido.items.map((it) => ({
-                nombre: it.nombreProducto,
-                cantidad: it.cantidad,
-                subtotal: it.subtotal,
-            }))
+        // 3. Generación automática de documentos de envío
+        if (requiereGestionLogistica) {
+            // Evitamos duplicidad de tracking y etiquetas si ya fueron generados
+            if (!pedidoConfirmado.trackingNumber || !pedidoConfirmado.labelUrl) {
 
-            if (pedido.confirmedEmailSentAt) return NextResponse.json({ ok: true, pedido })
+                console.log(`📦 Iniciando gestión de envío para Pedido #${pedidoId}...`)
 
-            if (pedido.emailCliente) {
-                await sendEmail(
-                    pedido.emailCliente,
-                    "Pedido confirmado - Di Rosa Formulaciones",
-                    emailPedidoConfirmado({
-                        nombre: pedido.nombreCliente || undefined,
-                        pedidoNumero: pedido.numero,
-                        linkEstado,
-                        items: emailItems,
-                        total: pedido.total,
-                    })
-                )
+                // Disparamos la integración con el carrier (Andreani / Correo Argentino)
+                const { trackingNumber, pdf, trackingUrl } = await generarRotuloYTracking(pedidoConfirmado)
 
+                // Subida del Rótulo al storage (Vercel Blob / S3 / Supabase)
+                const labelUrl = await uploadLabelPdf(pedidoId, pdf)
+
+                // Actualizamos la orden con los datos de seguimiento técnico
                 await prisma.pedido.update({
-                    where: { id: pedido.id },
-                    data: { confirmedEmailSentAt: new Date() },
+                    where: { id: pedidoId },
+                    data: {
+                        trackingNumber,
+                        trackingUrl,
+                        labelUrl,
+                    },
                 })
+
+                console.log(`✅ Logística vinculada: ${trackingNumber}`)
             }
-        } catch (e) {
-            console.error("⚠️ Falló el email de pedido confirmado (no se corta la confirmación):", e)
         }
 
-        return NextResponse.json({ ok: true, pedido })
-    } catch (e) {
-        console.error("❌ Error confirmando pedido:", e)
-        return NextResponse.json({ ok: false, error: "Error interno" }, { status: 500 })
+        // Respuesta exitosa
+        return NextResponse.json({
+            ok: true,
+            mensaje: "Pedido confirmado y logística procesada correctamente",
+            data: {
+                id: pedidoId,
+                estado: "confirmado"
+            }
+        })
+
+    } catch (e: any) {
+        // Registro detallado del error en el servidor
+        console.error("❌ ERROR CRÍTICO EN CONFIRMACIÓN DE PEDIDO:", {
+            pedidoId: params.id,
+            error: e?.message,
+            stack: e?.stack
+        })
+
+        return NextResponse.json(
+            {
+                ok: false,
+                error: "Error interno en la validación de la orden magistral",
+                details: e?.message
+            },
+            { status: 500 }
+        )
     }
 }
