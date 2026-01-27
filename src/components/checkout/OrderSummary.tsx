@@ -41,7 +41,7 @@ export default function OrderSummary({
         return { label: 'Retiro en Sucursal', icon: <MapPin className="w-3.5 h-3.5" />, note: 'El paquete será enviado a la sucursal de correo seleccionada.' }
       case 'ENVIO_DOMICILIO':
       default:
-        return { label: 'Envío a Domicilio', icon: <Truck className="w-3.5 h-3.5" />, note: 'Los tiempos de entrega oscilan entre 3 y 7 días hábiles tras la preparación de la fórmula.' }
+        return { label: 'Envío a Domicilio', icon: <Truck className="w-3.5 h-3.5" />, note: 'Los tiempos de entrega oscilan entre 10 y 15 días hábiles tras la preparación de la fórmula.' }
     }
   }
 

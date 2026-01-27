@@ -1,9 +1,9 @@
-// src/app/api/admin/productos/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
+// Función de validación de administrador (Tal cual la tenías)
 async function requireAdmin() {
     const session = await getServerSession(authOptions)
     const user = session?.user as any
@@ -15,78 +15,118 @@ async function requireAdmin() {
     return { session, user }
 }
 
-interface RouteParams {
-    params: { id: string }
-}
-
-// PUT: actualizar producto + categorías
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+// PUT: actualizar producto (incluyendo presentaciones y categorías)
+export async function PUT(
+    req: NextRequest,
+    { params }: { params: { id: string } }
+) {
     const admin = await requireAdmin()
     if (!admin) {
         return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    const productoId = Number(params.id)
-    if (Number.isNaN(productoId)) {
-        return NextResponse.json(
-            { error: "ID de producto inválido." },
-            { status: 400 }
-        )
-    }
-
+    const id = parseInt(params.id)
     const body = await req.json()
+
     const {
         nombre,
+        slug,
         precio,
-        stock,
+        categoria,
         descripcionCorta,
         descripcionLarga,
-        categoria,
-        categoriaIds,
+        imagen,
+        stock,
         activo,
         destacado,
         orden,
+        categoriaIds,
+        presentaciones // 👈 Recibimos el array de presentaciones
     } = body
 
-    try {
-        // 1) Actualizo los campos básicos del producto
-        await prisma.producto.update({
-            where: { id: productoId },
-            data: {
-                nombre,
-                precio: Number(precio),
-                stock: stock !== undefined ? Number(stock) : null,
-                descripcionCorta,
-                descripcionLarga,
-                categoria,
-                activo,
-                destacado,
-                orden,
-            },
-        })
+    if (!nombre) {
+        return NextResponse.json({ error: "El nombre es obligatorio." }, { status: 400 })
+    }
 
-        // 2) Manejo de categorías (tabla pivote)
-        if (Array.isArray(categoriaIds)) {
-            // Borro las relaciones viejas
-            await prisma.productosCategorias.deleteMany({
-                where: { productoId: productoId },
+    // Lógica de Slug (respetando tu formato original)
+    let finalSlug =
+        slug &&
+        String(slug)
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, "-")
+
+    if (!finalSlug) {
+        finalSlug = String(nombre)
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "")
+    }
+
+    try {
+        // Usamos una transacción para que si algo falla, no se rompa la integridad de la DB
+        const productoActualizado = await prisma.$transaction(async (tx) => {
+
+            // 1) Borramos categorías actuales para este producto
+            await tx.productosCategorias.deleteMany({
+                where: { productoId: id }
             })
 
-            // Creo las nuevas
-            if (categoriaIds.length > 0) {
-                await prisma.productosCategorias.createMany({
-                    data: categoriaIds.map((cid: number) => ({
-                        productoId: productoId,
-                        categoriaId: cid,
+            // 2) Borramos presentaciones actuales para este producto (para reemplazarlas)
+            await tx.presentacion.deleteMany({
+                where: { productoId: id }
+            })
+
+            // 3) Actualizamos los datos principales del producto
+            const actualizado = await tx.producto.update({
+                where: { id },
+                data: {
+                    nombre,
+                    slug: finalSlug,
+                    precio: precio !== undefined ? Number(precio) : 0,
+                    categoria: categoria || null,
+                    descripcionCorta: descripcionCorta || null,
+                    descripcionLarga: descripcionLarga || null,
+                    imagen: imagen || null,
+                    stock: stock !== undefined ? Number(stock) : 0,
+                    activo: activo ?? true,
+                    destacado: destacado ?? false,
+                    orden: orden ?? 0,
+                },
+            })
+
+            // 4) Re-creamos la relación con categorías si hay IDs
+            if (Array.isArray(categoriaIds) && categoriaIds.length > 0) {
+                await tx.productosCategorias.createMany({
+                    data: categoriaIds.map((catId: number) => ({
+                        productoId: id,
+                        categoriaId: catId,
                     })),
                 })
             }
-        }
 
-        // 3) Devuelvo el producto actualizado con las categorías
-        const producto = await prisma.producto.findUnique({
-            where: { id: productoId },
+            // 5) Creamos las nuevas presentaciones
+            if (Array.isArray(presentaciones) && presentaciones.length > 0) {
+                await tx.presentacion.createMany({
+                    data: presentaciones.map((p: any) => ({
+                        nombre: p.nombre,
+                        precio: Number(p.precio),
+                        stock: Number(p.stock),
+                        productoId: id,
+                    })),
+                })
+            }
+
+            return actualizado
+        })
+
+        // 6) Buscamos el producto final con todo incluido para devolverlo al frontend
+        const productoCompleto = await prisma.producto.findUnique({
+            where: { id },
             include: {
+                presentaciones: true,
                 categorias: {
                     include: {
                         categoria: true,
@@ -95,58 +135,35 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
             },
         })
 
-        return NextResponse.json({ ok: true, producto })
-    } catch (error) {
+        return NextResponse.json({ ok: true, producto: productoCompleto })
+    } catch (error: any) {
         console.error("❌ Error actualizando producto:", error)
-        return NextResponse.json(
-            { error: "No se pudo actualizar el producto." },
-            { status: 500 }
-        )
+        if (error.code === "P2002") {
+            return NextResponse.json({ error: "Ese slug ya está en uso." }, { status: 409 })
+        }
+        return NextResponse.json({ error: "Error interno al actualizar." }, { status: 500 })
     }
 }
+
+// DELETE: eliminar producto (Prisma se encarga de las presentaciones por el Cascade en el schema)
 export async function DELETE(
-    _req: NextRequest,
+    req: NextRequest,
     { params }: { params: { id: string } }
 ) {
     const admin = await requireAdmin()
     if (!admin) {
-        return NextResponse.json(
-            { error: "No autorizado" },
-            { status: 401 }
-        )
-    }
-
-    const id = Number(params.id)
-    if (Number.isNaN(id)) {
-        return NextResponse.json(
-            { error: "ID inválido" },
-            { status: 400 }
-        )
+        return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
     try {
-        // 1) Desvinculo las ventas (PedidoItem) de este producto
-        await prisma.pedidoItem.updateMany({
-            where: { productoId: id },
-            data: { productoId: null },
-        })
-
-        // 2) Borro las filas de la tabla pivote ProductosCategorias
-        await prisma.productosCategorias.deleteMany({
-            where: { productoId: id },
-        })
-
-        // 3) Ahora sí, borro el producto
+        const id = parseInt(params.id)
         await prisma.producto.delete({
             where: { id },
         })
 
         return NextResponse.json({ ok: true })
-    } catch (error) {
+    } catch (error: any) {
         console.error("❌ Error eliminando producto:", error)
-        return NextResponse.json(
-            { error: "Error interno al eliminar producto." },
-            { status: 500 }
-        )
+        return NextResponse.json({ error: "No se pudo eliminar el producto." }, { status: 500 })
     }
 }

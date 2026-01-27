@@ -1,23 +1,22 @@
-// src/app/api/auth/register/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password } = await req.json()
+    const { name, apellido, email, password } = await req.json()
 
-    // Validación básica
-    if (!name || !email || !password) {
+    // Validación básica ampliada
+    if (!name || !apellido || !email || !password) {
       return NextResponse.json(
-        { error: "Faltan datos obligatorios." },
+        { error: "Faltan datos obligatorios (Nombre, Apellido, Email y Contraseña)." },
         { status: 400 }
       )
     }
 
     // ¿Ya existe ese mail?
     const existing = await prisma.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
     })
 
     if (existing) {
@@ -30,13 +29,14 @@ export async function POST(req: NextRequest) {
     // Hashear contraseña
     const passwordHash = await bcrypt.hash(password, 10)
 
-    // Crear usuario
+    // Crear usuario con los nuevos campos del schema
     await prisma.user.create({
       data: {
-        name,
-        email,
+        nombre: name,     // Mapeamos name del form a nombre en DB
+        apellido: apellido,
+        email: email.toLowerCase(),
         passwordHash,
-        role: "USER", // por defecto usuario común
+        role: "USER",
       },
     })
 

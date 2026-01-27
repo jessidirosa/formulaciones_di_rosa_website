@@ -32,6 +32,7 @@ export default async function HomePage() {
     orderBy: { orden: 'asc' },
     take: 3,
     include: {
+      presentaciones: true,
       categorias: {
         include: {
           categoria: true,
@@ -41,11 +42,9 @@ export default async function HomePage() {
   })
 
   return (
-    <div className="bg-[#F5F5F0]"> {/* Fondo Beige Global */}
-
-      {/* Hero Section - Estética Orgánica */}
+    <div className="bg-[#F5F5F0]">
+      {/* Hero Section */}
       <section className="relative overflow-hidden bg-[#4A5D45] py-24 px-4">
-        {/* Decoración sutil de fondo */}
         <div className="absolute top-0 right-0 w-1/3 h-full bg-[#A3B18A] opacity-10 rounded-l-full blur-3xl pointer-events-none"></div>
 
         <div className="container mx-auto max-w-6xl relative z-10">
@@ -95,7 +94,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Navegá por categorías - Chips Mejorados */}
+      {/* Navegá por categorías */}
       {categorias.length > 0 && (
         <section className="py-12 px-4 bg-[#E9E9E0] border-b border-[#D6D6C2]">
           <div className="container mx-auto max-w-6xl">
@@ -127,29 +126,14 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Beneficios de la marca - Cards Estilo Minimalista */}
+      {/* Beneficios */}
       <section className="py-24 px-4 bg-[#F5F5F0]">
         <div className="container mx-auto max-w-6xl text-center">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {[
-              {
-                icon: "🧪",
-                title: "Formulación Magistral",
-                desc: "Soluciones exclusivas y personalizadas bajo estándares farmacéuticos.",
-                color: "bg-[#E9E9E0]"
-              },
-              {
-                icon: "🐇",
-                title: "100% Cruelty Free",
-                desc: "Nacimos con la idea de ofrecer un cuidado ético y responsable.",
-                color: "bg-[#E9E9E0]"
-              },
-              {
-                icon: "🇦🇷",
-                title: "Envíos a todo el país",
-                desc: "Llegamos a lo largo y ancho de Argentina con empresas serias y seguras.",
-                color: "bg-[#E9E9E0]"
-              }
+              { icon: "🧪", title: "Formulación Magistral", desc: "Soluciones exclusivas y personalizadas bajo estándares farmacéuticos.", color: "bg-[#E9E9E0]" },
+              { icon: "🐇", title: "100% Cruelty Free", desc: "Nacimos con la idea de ofrecer un cuidado ético y responsable.", color: "bg-[#E9E9E0]" },
+              { icon: "🇦🇷", title: "Envíos a todo el país", desc: "Llegamos a lo largo y ancho de Argentina con empresas serias y seguras.", color: "bg-[#E9E9E0]" }
             ].map((beneficio, i) => (
               <div key={i} className="flex flex-col items-center group">
                 <div className={`w-20 h-20 ${beneficio.color} rounded-full flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform shadow-sm`}>
@@ -163,7 +147,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Productos Destacados - Tarjetas Refinadas */}
+      {/* Productos Destacados */}
       <section className="py-24 px-4 bg-white rounded-t-[3rem] shadow-inner">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
@@ -180,6 +164,11 @@ export default async function HomePage() {
                 const categoriaPrincipal = producto.categorias[0]?.categoria?.nombre || "Exclusivo"
                 const imagenSrc = producto.imagen || `https://placehold.co/400x400?text=${encodeURIComponent(producto.nombre)}`
 
+                const tienePresentaciones = producto.presentaciones && producto.presentaciones.length > 0
+                const precioMostrar = tienePresentaciones
+                  ? Math.min(...producto.presentaciones.map(p => p.precio))
+                  : (producto.precio || 0)
+
                 return (
                   <Card key={producto.id} className="group border-none bg-transparent shadow-none">
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl mb-6 shadow-md border border-[#F5F5F0]">
@@ -194,13 +183,14 @@ export default async function HomePage() {
                     </div>
                     <CardHeader className="p-0 mb-4">
                       <p className="text-[#A3B18A] text-xs font-bold uppercase tracking-wider mb-2">{categoriaPrincipal}</p>
-                      <CardTitle className="text-xl text-[#3A4031] font-bold group-hover:text-[#4A5D45] transition-colors uppercase">
+                      <CardTitle className="text-xl text-[#3A4031] font-bold group-hover:text-[#4A5D45] transition-colors uppercase leading-tight">
                         {producto.nombre}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0 mb-6">
                       <div className="text-2xl font-serif text-[#4A5D45]">
-                        {formatPrice(producto.precio)}
+                        {tienePresentaciones && <span className="text-xs mr-1">Desde</span>}
+                        {formatPrice(precioMostrar)}
                       </div>
                     </CardContent>
                     <CardFooter className="p-0">
@@ -218,7 +208,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Call to Action - Contacto */}
+      {/* CTA */}
       <section className="bg-[#4A5D45] py-24 px-6 relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-center relative z-10 text-[#F5F5F0]">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">

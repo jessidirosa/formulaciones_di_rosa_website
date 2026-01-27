@@ -5,10 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { CheckoutData } from '@/app/checkout/page'
-import { Truck, MapPin, Clock, DollarSign, Bike, ChevronRight, Store } from 'lucide-react'
+import { Truck, Bike, ChevronRight, Store, Loader2, MapPin, ExternalLink, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface ShippingOptionsProps {
   data: CheckoutData
@@ -18,145 +17,136 @@ interface ShippingOptionsProps {
 }
 
 const CARRIERS = [
-  { value: 'CORREO_ARGENTINO', label: 'Correo Argentino' },
-  { value: 'ANDREANI', label: 'Andreani' },
+  {
+    value: 'CORREO_ARGENTINO',
+    label: 'Correo Argentino',
+    link: 'https://www.correoargentino.com.ar/formularios/sucursales'
+  },
+  {
+    value: 'ANDREANI',
+    label: 'Andreani',
+    link: 'https://www.andreani.com/buscar-sucursal'
+  },
 ] as const
 
-export default function ShippingOptions({
-  data,
-  onChange,
-  onNext,
-  onBack,
-}: ShippingOptionsProps) {
+export default function ShippingOptions({ data, onChange, onNext, onBack }: ShippingOptionsProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [loadingSucursales, setLoadingSucursales] = useState(false)
+  const [busquedaIntentada, setBusquedaIntentada] = useState(false)
+  const [listaSucursales, setListaSucursales] = useState<any[]>([])
+
+  const buscarSucursales = async () => {
+    if (!data.provincia?.trim() || !data.localidad?.trim() || !data.carrier) {
+      toast.error("Completá Correo, Provincia y Localidad")
+      return
+    }
+    setLoadingSucursales(true)
+    setBusquedaIntentada(true)
+    setListaSucursales([])
+    try {
+      const res = await fetch(`/api/shipping/sucursales?carrier=${data.carrier}&provincia=${encodeURIComponent(data.provincia)}&localidad=${encodeURIComponent(data.localidad)}`)
+      const json = await res.json()
+      if (json.sucursales?.length > 0) {
+        setListaSucursales(json.sucursales)
+      } else {
+        toast.info("No se encontraron sucursales automáticas. Por favor, ingresala manualmente.")
+      }
+    } catch (e) {
+      console.error("Error buscando sucursales:", e)
+      toast.error("Error de conexión. Podés usar la carga manual.")
+    } finally {
+      setLoadingSucursales(false)
+    }
+  }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-
-    // Validación para Envío a Domicilio y Moto
     if (data.tipoEntrega === 'ENVIO_DOMICILIO' || data.tipoEntrega === 'MOTOMENSAJERIA') {
-      if (!data.direccion?.trim()) newErrors.direccion = 'La dirección es requerida'
-      if (!data.ciudad?.trim()) newErrors.ciudad = 'La ciudad es requerida'
-      if (!data.ciudad?.trim()) newErrors.ciudad = 'La ciudad es requerida'
-      if (!data.provincia?.trim()) newErrors.provincia = 'La provincia es requerida'
-      if (!data.codigoPostal?.trim()) {
-        newErrors.codigoPostal = 'El código postal es requerido'
-      } else if (!/^\d{4}$/.test(data.codigoPostal)) {
-        newErrors.codigoPostal = 'Formato inválido (4 dígitos)'
-      }
+      if (!data.direccion?.trim()) newErrors.direccion = 'Requerido'
+      if (!data.localidad?.trim()) newErrors.localidad = 'Requerido'
+      if (!data.provincia?.trim()) newErrors.provincia = 'Requerido'
+      if (!data.codigoPostal?.trim()) newErrors.codigoPostal = 'Requerido'
     }
-
-    // Validación para Sucursal Correo
     if (data.tipoEntrega === 'SUCURSAL_CORREO') {
-      const okSucursal = Boolean((data.sucursalId && data.sucursalId.trim()) || (data.sucursalCorreo && data.sucursalCorreo.trim()))
-      if (!okSucursal) newErrors.sucursalCorreo = 'La sucursal es requerida'
-      if (!data.ciudad?.trim()) newErrors.ciudad = 'La ciudad es requerida'
-      if (!data.provincia?.trim()) newErrors.provincia = 'La provincia es requerida'
+      if (!data.sucursalId && !data.sucursalCorreo?.trim()) {
+        newErrors.sucursalCorreo = 'Debés seleccionar o indicar una sucursal'
+      }
+      if (!data.provincia?.trim()) newErrors.provincia = 'Requerido'
+      if (!data.localidad?.trim()) newErrors.localidad = 'Requerido'
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
-    if (validateForm()) onNext()
+  const handleCarrierChange = (c: string) => {
+    onChange({ carrier: c as any, sucursalId: '', sucursalNombre: '', sucursalCorreo: '' })
+    setListaSucursales([])
+    setBusquedaIntentada(false)
   }
 
-  const handleChange = (field: keyof CheckoutData, value: any) => {
-    onChange({ [field]: value })
-    if (errors[field as string]) setErrors(prev => ({ ...prev, [field as string]: '' }))
-  }
-
-  const handleShippingTypeChange = (value: string) => {
+  const handleShippingTypeChange = (v: string) => {
+    const value = v as CheckoutData['tipoEntrega'];
     onChange({
-      tipoEntrega: value as CheckoutData['tipoEntrega'],
-      ...(value === 'RETIRO_LOCAL' && { direccion: '', ciudad: '', provincia: '', codigoPostal: '', sucursalCorreo: '', sucursalId: '', sucursalNombre: '' }),
-      ...(value !== 'SUCURSAL_CORREO' && { sucursalCorreo: '', sucursalId: '', sucursalNombre: '' }),
-      ...(value === 'ENVIO_DOMICILIO' && { carrier: data.carrier ?? 'CORREO_ARGENTINO' }),
-    })
-    setErrors({})
+      tipoEntrega: value,
+      // Al cambiar tipo, reseteamos datos específicos de sucursal pero MANTENEMOS provincia y localidad
+      sucursalId: '',
+      sucursalNombre: '',
+      sucursalCorreo: '',
+      ...(value === 'RETIRO_LOCAL' && { direccion: '', ciudad: '', localidad: '', provincia: '', codigoPostal: '' }),
+    });
+    setListaSucursales([]);
+    setBusquedaIntentada(false);
   }
+
+  const currentCarrierLink = CARRIERS.find(c => c.value === data.carrier)?.link
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="space-y-4">
-        <Label className="text-[11px] uppercase tracking-[0.2em] font-bold text-[#4A5D45] flex items-center gap-2">
-          <Truck className="w-4 h-4" /> Modalidad de Entrega
-        </Label>
+      <div className="space-y-4 text-left">
+        <Label className="text-[11px] uppercase tracking-[0.2em] font-bold text-[#4A5D45]">Modalidad de Entrega</Label>
+        <RadioGroup value={data.tipoEntrega} onValueChange={handleShippingTypeChange} className="grid grid-cols-1 gap-4">
 
-        <RadioGroup
-          value={data.tipoEntrega}
-          onValueChange={handleShippingTypeChange}
-          className="grid grid-cols-1 gap-4"
-        >
-          {/* 1. Retiro Local */}
-          <label className={`cursor-pointer flex items-start gap-4 p-5 rounded-2xl border-2 transition-all duration-300 ${data.tipoEntrega === 'RETIRO_LOCAL' ? 'border-[#4A5D45] bg-[#F9F9F7] shadow-md' : 'border-[#E9E9E0] bg-white hover:border-[#D6D6C2]'}`}>
-            <RadioGroupItem value="RETIRO_LOCAL" id="retiro" className="mt-1 border-[#A3B18A] text-[#4A5D45]" />
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-[#3A4031] uppercase text-xs tracking-wider">Retiro por Caseros</span>
-                <span className="text-[10px] font-bold text-[#A3B18A] uppercase">Sin Cargo</span>
-              </div>
-              <p className="text-[11px] text-[#5B6350]">Retirá tu pedido directamente en nuestras oficinas coordinando previamente la entrega.</p>
-              <div className="mt-2 flex items-center gap-3 text-[9px] uppercase tracking-widest font-bold text-[#A3B18A]">
-                <span className="flex items-center gap-1"><Store className="w-3 h-3" /> Punto Pick-up</span>
-              </div>
+          <label className={`cursor-pointer flex items-start gap-4 p-5 rounded-2xl border-2 transition-all ${data.tipoEntrega === 'RETIRO_LOCAL' ? 'border-[#4A5D45] bg-[#F9F9F7]' : 'border-[#E9E9E0] bg-white'}`}>
+            <RadioGroupItem value="RETIRO_LOCAL" />
+            <div className="flex-1 text-left">
+              <span className="font-bold text-[#3A4031] uppercase text-xs">Retiro por Caseros</span>
+              <p className="text-[11px] text-[#5B6350]">Retirá en nuestras oficinas (Sin cargo).</p>
             </div>
           </label>
 
-          {/* 2. Moto Mensajería */}
-          <label className={`cursor-pointer flex items-start gap-4 p-5 rounded-2xl border-2 transition-all duration-300 ${data.tipoEntrega === 'MOTOMENSAJERIA' ? 'border-[#4A5D45] bg-[#F9F9F7] shadow-md' : 'border-[#E9E9E0] bg-white hover:border-[#D6D6C2]'}`}>
-            <RadioGroupItem value="MOTOMENSAJERIA" id="moto" className="mt-1 border-[#A3B18A] text-[#4A5D45]" />
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-[#3A4031] uppercase text-xs tracking-wider">Motomensajería Rápida</span>
-                <span className="text-[10px] font-bold text-[#4A5D45] uppercase">A Coordinar</span>
-              </div>
-              <p className="text-[11px] text-[#5B6350]">Ideal para CABA y GBA. El costo se abona al repartidor.</p>
-              <div className="mt-2 flex items-center gap-3 text-[9px] uppercase tracking-widest font-bold text-[#A3B18A]">
-                <span className="flex items-center gap-1"><Bike className="w-3 h-3" /> Envío Express</span>
-              </div>
+          <label className={`cursor-pointer flex items-start gap-4 p-5 rounded-2xl border-2 transition-all ${data.tipoEntrega === 'MOTOMENSAJERIA' ? 'border-[#4A5D45] bg-[#F9F9F7]' : 'border-[#E9E9E0] bg-white'}`}>
+            <RadioGroupItem value="MOTOMENSAJERIA" />
+            <div className="flex-1 text-left">
+              <span className="font-bold text-[#3A4031] uppercase text-xs">Motomensajería Rápida</span>
+              <p className="text-[11px] text-[#5B6350]">CABA y GBA. Costo a coordinar.</p>
             </div>
           </label>
 
-          {/* 3. Envío a domicilio (Correo) */}
-          <label className={`cursor-pointer flex items-start gap-4 p-5 rounded-2xl border-2 transition-all duration-300 ${data.tipoEntrega === 'ENVIO_DOMICILIO' ? 'border-[#4A5D45] bg-[#F9F9F7] shadow-md' : 'border-[#E9E9E0] bg-white hover:border-[#D6D6C2]'}`}>
-            <RadioGroupItem value="ENVIO_DOMICILIO" id="envio" className="mt-1 border-[#A3B18A] text-[#4A5D45]" />
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-[#3A4031] uppercase text-xs tracking-wider">Envío a Domicilio</span>
-                <span className="text-[10px] font-bold text-[#4A5D45] uppercase">$9.500</span>
-              </div>
-              <p className="text-[11px] text-[#5B6350]">Recibí tus productos mediante Correo Argentino o Andreani.</p>
+          <label className={`cursor-pointer flex items-start gap-4 p-5 rounded-2xl border-2 transition-all ${data.tipoEntrega === 'ENVIO_DOMICILIO' ? 'border-[#4A5D45] bg-[#F9F9F7]' : 'border-[#E9E9E0] bg-white'}`}>
+            <RadioGroupItem value="ENVIO_DOMICILIO" />
+            <div className="flex-1 text-left">
+              <span className="font-bold text-[#3A4031] uppercase text-xs">Envío a Domicilio</span>
+              <p className="text-[11px] text-[#5B6350]">Correo Argentino o Andreani.</p>
             </div>
           </label>
 
-          {/* 4. Sucursal Correo */}
-          <label className={`cursor-pointer flex items-start gap-4 p-5 rounded-2xl border-2 transition-all duration-300 ${data.tipoEntrega === 'SUCURSAL_CORREO' ? 'border-[#4A5D45] bg-[#F9F9F7] shadow-md' : 'border-[#E9E9E0] bg-white hover:border-[#D6D6C2]'}`}>
-            <RadioGroupItem value="SUCURSAL_CORREO" id="sucursal" className="mt-1 border-[#A3B18A] text-[#4A5D45]" />
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-[#3A4031] uppercase text-xs tracking-wider">Punto de Retiro (Correo)</span>
-                <span className="text-[10px] font-bold text-[#4A5D45] uppercase">$7.000</span>
-              </div>
-              <p className="text-[11px] text-[#5B6350]">Retirá en la sucursal de correo más cercana a tu zona.</p>
+          <label className={`cursor-pointer flex items-start gap-4 p-5 rounded-2xl border-2 transition-all ${data.tipoEntrega === 'SUCURSAL_CORREO' ? 'border-[#4A5D45] bg-[#F9F9F7]' : 'border-[#E9E9E0] bg-white'}`}>
+            <RadioGroupItem value="SUCURSAL_CORREO" />
+            <div className="flex-1 text-left">
+              <span className="font-bold text-[#3A4031] uppercase text-xs">Punto de Retiro (Correo)</span>
+              <p className="text-[11px] text-[#5B6350]">Retirá en sucursal oficial.</p>
             </div>
           </label>
         </RadioGroup>
       </div>
 
-      {/* Selector de Carrier */}
       {(data.tipoEntrega === 'ENVIO_DOMICILIO' || data.tipoEntrega === 'SUCURSAL_CORREO') && (
-        <div className="space-y-4 pt-4 border-t border-[#F5F5F0]">
-          <Label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350]">Empresa de Transporte</Label>
+        <div className="space-y-4 pt-4 border-t text-left">
+          <Label className="text-[10px] uppercase font-bold text-[#5B6350]">Empresa de Transporte</Label>
           <div className="grid grid-cols-2 gap-4">
             {CARRIERS.map(c => (
-              <button
-                key={c.value}
-                onClick={() => handleChange('carrier', c.value)}
-                className={`px-4 py-3 rounded-xl border-2 text-[11px] font-bold uppercase tracking-wider transition-all ${data.carrier === c.value ? 'border-[#A3B18A] bg-[#A3B18A] text-white shadow-sm' : 'border-[#E9E9E0] text-[#5B6350] hover:border-[#A3B18A]'
-                  }`}
-              >
+              <button key={c.value} type="button" onClick={() => handleCarrierChange(c.value)}
+                className={`px-4 py-3 rounded-xl border-2 text-[11px] font-bold uppercase ${data.carrier === c.value ? 'border-[#A3B18A] bg-[#A3B18A] text-white' : 'border-[#E9E9E0]'}`}>
                 {c.label}
               </button>
             ))}
@@ -164,119 +154,81 @@ export default function ShippingOptions({
         </div>
       )}
 
-      {/* Formulario de Dirección (Para domicilio y Moto) */}
       {(data.tipoEntrega === 'ENVIO_DOMICILIO' || data.tipoEntrega === 'MOTOMENSAJERIA') && (
-        <div className="space-y-6 pt-6 border-t border-[#F5F5F0]">
-          <h3 className="text-[11px] uppercase tracking-[0.2em] font-bold text-[#4A5D45]">Dirección de Destino</h3>
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs text-[#5B6350] font-bold uppercase tracking-tighter">Calle y Número *</Label>
-              <Input
-                value={data.direccion || ''}
-                onChange={e => handleChange('direccion', e.target.value)}
-                className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.direccion ? 'border-red-400' : ''}`}
-                placeholder="Ej: Av. Santa Fe 1234, 5to B"
-              />
-              {errors.direccion && <p className="text-[10px] text-red-500 font-bold italic">{errors.direccion}</p>}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs text-[#5B6350] font-bold uppercase tracking-tighter">ciudad / barrio *</Label>
-                <Input
-                  value={data.ciudad || ''}
-                  onChange={e => handleChange('ciudad', e.target.value)}
-                  placeholder="Ej: Caseros"
-                  className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.ciudad ? 'border-red-400' : ''}`}
-                />
-                {errors.ciudad && <p className="text-[10px] text-red-500 font-bold italic">{errors.ciudad}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-[#5B6350] font-bold uppercase tracking-tighter">Localidad / Partido *</Label>
-                <Input
-                  value={data.ciudad || ''}
-                  onChange={e => handleChange('ciudad', e.target.value)}
-                  placeholder="Ej: Tres de Febrero"
-                  className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.ciudad ? 'border-red-400' : ''}`}
-                />
-                {errors.ciudad && <p className="text-[10px] text-red-500 font-bold italic">{errors.ciudad}</p>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs text-[#5B6350] font-bold uppercase tracking-tighter">Provincia *</Label>
-                <Input
-                  value={data.provincia || ''}
-                  onChange={e => handleChange('provincia', e.target.value)}
-                  placeholder="Ej: Buenos Aires"
-                  className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.provincia ? 'border-red-400' : ''}`}
-                />
-                {errors.provincia && <p className="text-[10px] text-red-500 font-bold italic">{errors.provincia}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-[#5B6350] font-bold uppercase tracking-tighter">C. Postal *</Label>
-                <Input
-                  value={data.codigoPostal || ''}
-                  onChange={e => handleChange('codigoPostal', e.target.value)}
-                  maxLength={4}
-                  placeholder="1678"
-                  className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.codigoPostal ? 'border-red-400' : ''}`}
-                />
-                {errors.codigoPostal && <p className="text-[10px] text-red-500 font-bold italic">{errors.codigoPostal}</p>}
-              </div>
-            </div>
+        <div className="space-y-4 pt-4 border-t text-left">
+          <Label className="text-xs font-bold uppercase">Dirección de Envío</Label>
+          <Input value={data.direccion || ''} onChange={e => onChange({ direccion: e.target.value })} placeholder="Calle y Número" className="bg-[#F9F9F7] rounded-xl h-11" />
+          <div className="grid grid-cols-2 gap-4">
+            <Input value={data.localidad || ''} onChange={e => onChange({ localidad: e.target.value })} placeholder="Localidad" className="bg-[#F9F9F7] rounded-xl h-11" />
+            <Input value={data.provincia || ''} onChange={e => onChange({ provincia: e.target.value })} placeholder="Provincia" className="bg-[#F9F9F7] rounded-xl h-11" />
           </div>
+          <Input value={data.codigoPostal || ''} onChange={e => onChange({ codigoPostal: e.target.value })} placeholder="Código Postal" maxLength={4} className="bg-[#F9F9F7] rounded-xl h-11 w-1/2" />
         </div>
       )}
 
-      {/* Sucursal Correo (Input de texto y campos geográficos) */}
       {data.tipoEntrega === 'SUCURSAL_CORREO' && (
-        <div className="space-y-6 pt-6 border-t border-[#F5F5F0]">
-          <h3 className="text-[11px] uppercase tracking-[0.2em] font-bold text-[#4A5D45]">Detalle de Sucursal</h3>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-[#5B6350] font-bold uppercase tracking-tighter">Sucursal de Retiro *</Label>
-            <Input
-              value={data.sucursalCorreo || ''}
-              onChange={e => handleChange('sucursalCorreo', e.target.value)}
-              className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.sucursalCorreo ? 'border-red-400' : ''}`}
-              placeholder="Ej: Sucursal Caballito (Correo Argentino)"
-            />
-            {errors.sucursalCorreo && <p className="text-[10px] text-red-500 font-bold italic">{errors.sucursalCorreo}</p>}
+        <div className="space-y-4 pt-4 border-t text-left">
+          <div className="flex justify-between items-center">
+            <Label className="text-xs font-bold uppercase">Datos de la Sucursal</Label>
+            {currentCarrierLink && (
+              <a href={currentCarrierLink} target="_blank" className="text-[10px] text-[#A3B18A] flex items-center gap-1 hover:underline font-bold uppercase">
+                <ExternalLink className="w-3 h-3" /> Buscá el nombre de tu sucursal en la página oficial del correo
+              </a>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs text-[#5B6350] font-bold uppercase tracking-tighter">ciudad de la sucursal *</Label>
-              <Input
-                value={data.ciudad || ''}
-                onChange={e => handleChange('ciudad', e.target.value)}
-                placeholder="Ej: Caballito"
-                className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.ciudad ? 'border-red-400' : ''}`}
-              />
-              {errors.ciudad && <p className="text-[10px] text-red-500 font-bold italic">{errors.ciudad}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-[#5B6350] font-bold uppercase tracking-tighter">Provincia *</Label>
-              <Input
-                value={data.provincia || ''}
-                onChange={e => handleChange('provincia', e.target.value)}
-                placeholder="Ej: CABA"
-                className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.provincia ? 'border-red-400' : ''}`}
-              />
-              {errors.provincia && <p className="text-[10px] text-red-500 font-bold italic">{errors.provincia}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <Input value={data.provincia || ''} onChange={e => onChange({ provincia: e.target.value })} placeholder="Provincia" className="bg-[#F9F9F7] rounded-xl h-11" />
+            <div className="flex gap-2">
+              <Input value={data.localidad || ''} onChange={e => onChange({ localidad: e.target.value })} placeholder="Localidad" className="bg-[#F9F9F7] rounded-xl h-11 flex-1" />
+              <Button type="button" onClick={buscarSucursales} disabled={loadingSucursales} className="bg-[#A3B18A] text-white rounded-xl h-11">
+                {loadingSucursales ? <Loader2 className="animate-spin h-4 w-4" /> : "Buscar"}
+              </Button>
             </div>
           </div>
+
+          {/* Mostrar lista si hay resultados */}
+          {listaSucursales.length > 0 && (
+            <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto mt-2">
+              {listaSucursales.map(s => (
+                <button key={s.id} type="button" onClick={() => onChange({ sucursalId: s.id, sucursalNombre: s.nombre, sucursalCorreo: `${s.nombre} - ${s.direccion}` })}
+                  className={`p-3 text-left rounded-xl border-2 text-[11px] ${data.sucursalId === s.id ? 'border-[#4A5D45] bg-[#F9F9F7]' : 'border-gray-100'}`}>
+                  <div className="font-bold">{s.nombre}</div>
+                  <div className="text-gray-500">{s.direccion}</div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* MODO MANUAL */}
+          {busquedaIntentada && listaSucursales.length === 0 && !loadingSucursales && (
+            <div className="space-y-4 animate-in fade-in duration-300">
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
+                <div className="text-[10px] text-amber-800 leading-relaxed">
+                  <p className="font-bold uppercase mb-1">Carga Manual de Sucursal</p>
+                  No pudimos conectar con el servidor de correos. Podés ingresar el nombre de tu sucursal manualmente debajo. Por favor sé bien específico/a para evitar errores en la entrega.
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] text-gray-500 uppercase font-bold">Nombre de la Sucursal de Retiro</Label>
+                <Input
+                  value={data.sucursalCorreo || ''}
+                  onChange={e => onChange({ sucursalCorreo: e.target.value, sucursalId: '', sucursalNombre: e.target.value })}
+                  placeholder="Ej: Sucursal Caseros Centro"
+                  className="bg-white border-[#A3B18A] rounded-xl h-11"
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Botones */}
       <div className="flex flex-col sm:flex-row gap-4 pt-6">
-        <Button type="button" variant="ghost" onClick={onBack} className="text-[#A3B18A] hover:text-[#4A5D45] text-[10px] font-bold uppercase tracking-widest">
+        <Button variant="ghost" onClick={onBack} className="text-[#A3B18A] font-bold uppercase text-[10px] tracking-widest">
           ← Volver
         </Button>
-        <Button onClick={handleSubmit} className="flex-1 bg-[#4A5D45] hover:bg-[#3A4031] text-white rounded-2xl h-14 font-bold uppercase tracking-[0.15em] text-xs shadow-lg">
+        <Button onClick={() => validateForm() && onNext()} className="flex-1 bg-[#4A5D45] hover:bg-[#3A4031] text-white rounded-2xl h-14 font-bold uppercase text-xs tracking-widest shadow-lg">
           Continuar al Pago <ChevronRight className="ml-2 w-4 h-4" />
         </Button>
       </div>

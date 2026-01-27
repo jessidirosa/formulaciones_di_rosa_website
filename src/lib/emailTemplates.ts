@@ -1,19 +1,19 @@
 type EmailItem = {
-    nombre: string
-    cantidad: number
-    subtotal: number
+  nombre: string
+  cantidad: number
+  subtotal: number
 }
 
 function formatARS(n: number) {
-    return new Intl.NumberFormat("es-AR", {
-        style: "currency",
-        currency: "ARS",
-        maximumFractionDigits: 0,
-    }).format(n)
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  }).format(n)
 }
 
 function row(label: string, value: string) {
-    return `
+  return `
       <tr>
         <td style="padding:6px 0;color:#6b7280;font-size:14px;">${label}</td>
         <td style="padding:6px 0;text-align:right;font-weight:600;font-size:14px;color:#111827;">${value}</td>
@@ -22,150 +22,175 @@ function row(label: string, value: string) {
 }
 
 function itemsTable(items: EmailItem[]) {
-    const rows = items
-        .map(
-            (it) => `
-        <tr>
-          <td style="padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;font-size:14px;">
-            ${it.nombre} <span style="color:#6b7280;">x ${it.cantidad}</span>
-          </td>
-          <td style="padding:10px 0;border-top:1px solid #e5e7eb;text-align:right;font-weight:600;color:#111827;font-size:14px;">
-            ${formatARS(it.subtotal)}
-          </td>
-        </tr>
-      `
-        )
-        .join("")
-
-    return `
+  return `
       <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:10px;">
         <thead>
           <tr>
-            <th align="left" style="padding:8px 0;color:#6b7280;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">
-              Producto
-            </th>
-            <th align="right" style="padding:8px 0;color:#6b7280;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">
-              Subtotal
-            </th>
+            <th align="left" style="padding:8px 0;color:#6b7280;font-size:12px;font-weight:600;text-transform:uppercase;">Producto</th>
+            <th align="right" style="padding:8px 0;color:#6b7280;font-size:12px;font-weight:600;text-transform:uppercase;">Subtotal</th>
           </tr>
         </thead>
         <tbody>
-          ${rows}
+          ${items.map(it => `
+            <tr>
+              <td style="padding:10px 0;border-top:1px solid #e5e7eb;font-size:14px;">${it.nombre} x ${it.cantidad}</td>
+              <td style="padding:10px 0;border-top:1px solid #e5e7eb;text-align:right;font-weight:600;font-size:14px;">${formatARS(it.subtotal)}</td>
+            </tr>
+          `).join('')}
         </tbody>
       </table>
     `
 }
 
-function button(link: string, text: string) {
-    return `
-      <div style="margin:18px 0;">
-        <a href="${link}"
-           style="display:inline-block;background:#c7ca65;color:#111827;text-decoration:none;
-                  padding:12px 16px;border-radius:12px;font-weight:700;font-size:14px;">
-          ${text}
-        </a>
-      </div>
-      <div style="color:#6b7280;font-size:12px;">
-        Si el botón no funciona, copiá y pegá este link en tu navegador:<br/>
-        <span style="word-break:break-all;color:#111827;">${link}</span>
-      </div>
-    `
-}
-
 function baseLayout(title: string, bodyHtml: string) {
-    return `
-    <div style="background:#f8fafc;padding:24px;">
-      <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
-        <div style="padding:18px 20px;background:#d6d8b8;">
-          <div style="font-weight:800;font-size:16px;color:#111827;">Di Rosa Formulaciones</div>
-          <div style="font-size:12px;color:#374151;">Cosmética magistral • Skincare • Capilar</div>
+  return `
+    <div style="background:#F5F5F0;padding:24px;font-family:sans-serif;">
+      <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #E9E9E0;">
+        <div style="padding:30px;background:#E9E9E0;text-align:center;">
+          <div style="font-weight:800;font-size:18px;color:#3A4031;letter-spacing:0.2em;">DI ROSA FORMULACIONES</div>
+          <div style="font-size:10px; color:#4A5D45; margin-top:5px; letter-spacing:0.1em;">COSMÉTICA MAGISTRAL</div>
         </div>
-  
-        <div style="padding:22px 20px;font-family:Arial,sans-serif;line-height:1.45;color:#111827;">
-          <h1 style="margin:0 0 12px;font-size:20px;">${title}</h1>
+        <div style="padding:40px 30px;line-height:1.6;color:#374151;">
+          <h1 style="margin:0 0 20px;font-size:22px;color:#111827;text-align:center;">${title}</h1>
           ${bodyHtml}
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:18px 0;" />
-          <p style="margin:0;color:#6b7280;font-size:12px;">
-            Si necesitás ayuda, respondé este email o escribinos desde la web.
-          </p>
+          <div style="margin-top:30px; padding-top:20px; border-top:1px solid #E9E9E0; text-align:center;">
+            <p style="font-size:12px; color:#6b7280;">Podés seguir el avance de tu pedido en tiempo real desde nuestra web ingresando a tu cuenta o con el link de seguimiento proporcionado.</p>
+          </div>
         </div>
       </div>
-    </div>
-    `
+    </div>`
 }
 
 export function emailPedidoRecibido(params: {
-    nombre?: string
-    pedidoNumero: string
-    total: number
-    subtotal: number
-    costoEnvio: number
-    descuento?: number
-    linkEstado: string
-    items: EmailItem[]
+  nombre?: string,
+  pedidoNumero: string,
+  total: number,
+  subtotal: number,
+  costoEnvio: number,
+  descuento?: number,
+  metodoPago?: string,
+  linkEstado: string,
+  items: EmailItem[]
 }) {
-    const { nombre, pedidoNumero, total, subtotal, costoEnvio, descuento = 0, linkEstado, items } =
-        params
+  const isTransfer = params.metodoPago?.toUpperCase().includes("TRANSFERENCIA");
 
-    const body = `
-      <p style="margin:0 0 10px;color:#374151;">
-        Hola${nombre ? ` <b>${nombre}</b>` : ""} 👋
-        Recibimos tu pedido <b>${pedidoNumero}</b>. Te avisamos por acá cuando lo confirmemos.
-      </p>
-  
-      <div style="border:1px solid #e5e7eb;border-radius:14px;padding:14px 14px;margin:14px 0;">
-        <div style="font-weight:700;margin-bottom:8px;">Resumen del pedido</div>
-  
-        ${itemsTable(items)}
-  
-        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:10px;">
-          <tbody>
-            ${row("Subtotal", formatARS(subtotal))}
-            ${row("Envío", formatARS(costoEnvio))}
-            ${descuento > 0 ? row("Descuento", `- ${formatARS(descuento)}`) : ""}
-            <tr>
-              <td style="padding:10px 0;border-top:1px solid #e5e7eb;font-size:15px;font-weight:800;">
-                Total
-              </td>
-              <td style="padding:10px 0;border-top:1px solid #e5e7eb;text-align:right;font-size:16px;font-weight:900;color:#82801a;">
-                ${formatARS(total)}
-              </td>
-            </tr>
-          </tbody>
+  const body = `
+      <p>Hola${params.nombre ? ` <b>${params.nombre}</b>` : ""} 👋</p>
+      <p>Recibimos tu pedido <b>#${params.pedidoNumero}</b> correctamente.</p>
+      
+      ${isTransfer ? `
+      <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:16px; padding:20px; margin:20px 0;">
+        <p style="margin:0; font-weight:700; color:#92400E; font-size:14px;">⚠️ IMPORTANTE: Pendiente de pago</p>
+        <p style="font-size:13px; color:#92400E;">Tenés <b>1 hora</b> para realizar la transferencia y enviarnos el comprobante antes de que el pedido expire.</p>
+        <p style="font-size:13px; margin-bottom:5px;"><b>Datos para la transferencia:</b></p>
+        <p style="font-size:13px; margin:2px 0;">ENTIDAD: MERCADO PAGO</p>
+        <p style="font-size:13px; margin:2px 0;">ALIAS: DIROSA.MP</p>
+        <p style="font-size:13px; margin:2px 0;">TITULAR: JESSICA MELANIE DI ROSA</p>
+        <p style="font-size:12px; margin:2px 0;">Si ya abonaste, envianos el comprobante por WhatsApp y aguardá a que validemos el pago para confirmar el pedido. Te llegará la confirmación vía email.</p>
+      </div>
+      ` : ''}
+
+      <div style="border:1px solid #E9E9E0;border-radius:16px;padding:20px;margin:20px 0;">
+        <p style="font-weight:700;margin-top:0;">Resumen del pedido</p>
+        ${itemsTable(params.items)}
+        <table width="100%" style="margin-top:10px;">
+          ${row("Subtotal", formatARS(params.subtotal))}
+          ${row("Envío", formatARS(params.costoEnvio))}
+          ${params.descuento ? row("Descuento", `- ${formatARS(params.descuento)}`) : ""}
+          ${params.metodoPago ? row("Método de Pago", params.metodoPago) : ""}
+          <tr>
+            <td style="padding:10px 0;font-weight:800;border-top:1px solid #F5F5F0;">Total</td>
+            <td style="padding:10px 0;text-align:right;font-size:18px;font-weight:900;color:#4A5D45;border-top:1px solid #F5F5F0;">${formatARS(params.total)}</td>
+          </tr>
         </table>
       </div>
-  
-      ${button(linkEstado, "Ver estado de mi pedido")}
+      <div style="text-align:center;margin-top:20px;">
+        <a href="${params.linkEstado}" style="background:#4A5D45;color:white;padding:12px 25px;text-decoration:none;border-radius:12px;font-weight:bold;display:inline-block;">VER ESTADO EN LA WEB</a>
+      </div>
     `
-
-    return baseLayout("🧾 Pedido recibido", body)
+  return baseLayout("🧾 Recibimos tu pedido", body)
 }
 
-export function emailPedidoConfirmado(params: {
-    nombre?: string
-    pedidoNumero: string
-    linkEstado: string
-    items: EmailItem[]
-    total: number
+export function emailPedidoConfirmado(params: { nombre?: string, pedidoNumero: string, linkEstado: string }) {
+  const body = `
+    <p>Hola ${params.nombre || ""} ✅</p>
+    <p>¡Excelentes noticias! Tu pago ha sido acreditado correctamente.</p>
+    <p>El pedido <b>#${params.pedidoNumero}</b> ya se encuentra confirmado y en la fila de ingreso al laboratorio para su formulación.</p>
+    <div style="text-align:center;margin-top:20px;">
+        <a href="${params.linkEstado}" style="background:#4A5D45;color:white;padding:12px 25px;text-decoration:none;border-radius:12px;font-weight:bold;display:inline-block;">SEGUIR MI PEDIDO</a>
+    </div>
+  `;
+  return baseLayout("✅ Pago Acreditado", body);
+}
+
+export function emailEnProduccion(params: { nombre?: string, pedidoNumero: string, linkEstado: string }) {
+  const body = `<p>Tu pedido <b>#${params.pedidoNumero}</b> ya está siendo formulado por nuestros especialistas. Te avisaremos cuando pase al área de empaque.</p>`;
+  return baseLayout("🧪 En Laboratorio", body);
+}
+
+export function emailPedidoListo(params: { nombre?: string, pedidoNumero: string, linkEstado: string }) {
+  const body = `<p>¡Tu pedido <b>#${params.pedidoNumero}</b> ha finalizado su etapa de elaboración! Ya está listo y esperando ser retirado por el transporte.</p>`;
+  return baseLayout("✨ Pedido Preparado", body);
+}
+
+export function emailPedidoEnviado(params: {
+  nombre?: string,
+  pedidoNumero: string,
+  trackingNumber: string,
+  trackingUrl: string,
+  carrier: string
 }) {
-    const { nombre, pedidoNumero, linkEstado, items, total } = params
-
-    const body = `
-      <p style="margin:0 0 10px;color:#374151;">
-        Hola${nombre ? ` <b>${nombre}</b>` : ""} ✅
-        Confirmamos tu pedido <b>${pedidoNumero}</b>.
-      </p>
-  
-      <div style="border:1px solid #e5e7eb;border-radius:14px;padding:14px 14px;margin:14px 0;">
-        <div style="font-weight:700;margin-bottom:8px;">Productos</div>
-        ${itemsTable(items)}
-        <div style="margin-top:10px;text-align:right;font-size:16px;font-weight:900;color:#82801a;">
-          Total: ${formatARS(total)}
-        </div>
+  const carrierName = params.carrier === 'ANDREANI' ? 'Andreani' : 'Correo Argentino';
+  const body = `
+    <p>Hola${params.nombre ? ` <b>${params.nombre}</b>` : ""} 🚚</p>
+    <p>Tu pedido <b>#${params.pedidoNumero}</b> ya fue despachado a través de <b>${carrierName}</b>.</p>
+    
+    <div style="background:#F9F9F7; border:1px solid #E9E9E0; border-radius:16px; padding:25px; margin:20px 0; text-align:center;">
+      <p style="margin:0; font-size:11px; color:#A3B18A; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Número de Seguimiento</p>
+      <p style="font-size:26px; font-weight:800; margin:10px 0; color:#3A4031;">${params.trackingNumber}</p>
+      <div style="margin-top:15px;">
+        <a href="${params.trackingUrl}" style="background:#4A5D45; color:white; padding:14px 28px; border-radius:12px; text-decoration:none; display:inline-block; font-weight:bold; font-size:13px;">RASTREAR PAQUETE</a>
       </div>
-  
-      ${button(linkEstado, "Ver estado de mi pedido")}
-    `
+    </div>
+    
+    <p style="font-size:13px; color:#6b7280; text-align:center;">Tené en cuenta que el correo puede tardar hasta 24hs en actualizar el estado en su sistema de seguimiento.</p>
+  `;
+  return baseLayout("🚚 Pedido en Camino", body);
+}
 
-    return baseLayout("✅ Pedido confirmado", body)
+export function emailPedidoCancelado(params: { nombre?: string, pedidoNumero: string }) {
+  const body = `
+    <p>Hola ${params.nombre || ""} ❌</p>
+    <p>Te informamos que tu pedido <b>#${params.pedidoNumero}</b> ha sido cancelado.</p>
+    <p>Si creés que se trata de un error o tenés alguna duda sobre el motivo de la cancelación, por favor comunicate con nosotros indicando tu número de orden.</p>
+    <div style="text-align:center;margin-top:25px;">
+      <a href="https://wa.me/541137024467" style="background:#25D366;color:white;padding:12px 25px;text-decoration:none;border-radius:12px;font-weight:bold;display:inline-block;">CONSULTAR POR WHATSAPP</a>
+    </div>
+  `;
+  return baseLayout("❌ Pedido Cancelado", body);
+}
+
+export function emailPagoExpirado(params: { nombre?: string, pedidoNumero: string }) {
+  const body = `
+    <p>Hola ${params.nombre || ""} ⏳</p>
+    <p>El tiempo límite de 1 hora para realizar la transferencia de tu pedido <b>#${params.pedidoNumero}</b> ha expirado.</p>
+    <p>Por este motivo, el sistema ha cancelado la orden automáticamente para liberar el stock de los productos reservados.</p>
+    <p><b>¿Aún querés tus productos?</b> No te preocupes, podés realizar una nueva compra en nuestra web o consultarnos si ya habías realizado el pago y no llegaste a avisar.</p>
+    <div style="text-align:center;margin-top:25px;">
+      <a href="https://wa.me/541137024467" style="background:#25D366;color:white;padding:12px 25px;text-decoration:none;border-radius:12px;font-weight:bold;display:inline-block;">AVISAR PAGO / CONSULTAR</a>
+    </div>
+  `;
+  return baseLayout("⏳ Pago Expirado", body);
+}
+
+export function emailNuevoPedidoAdmin(params: { pedidoNumero: string, cliente: string, total: number, linkAdmin: string }) {
+  return baseLayout("📦 Nuevo Pedido en la Web", `
+        <p>Se ha registrado una nueva orden de venta:</p>
+        <p><b>Orden:</b> #${params.pedidoNumero}</p>
+        <p><b>Cliente:</b> ${params.cliente}</p>
+        <p><b>Total:</b> ${formatARS(params.total)}</p>
+        <div style="margin-top:20px; text-align:center;">
+            <a href="${params.linkAdmin}" style="background:#4A5D45;color:white;padding:12px 20px;text-decoration:none;border-radius:10px;font-weight:bold;display:inline-block;">GESTIONAR EN PANEL</a>
+        </div>
+    `);
 }

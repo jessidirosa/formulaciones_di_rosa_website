@@ -16,7 +16,7 @@ type AppUser = {
   email: string
   telefono?: string | null
   role: string
-  esAdmin: boolean
+  esAdmin: boolean // 👈 Mantenemos la propiedad pero la calcularemos
   creadoEn?: string
 }
 
@@ -40,6 +40,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       const res = await fetch("/api/auth/me", {
         credentials: "include",
+        cache: 'no-store' // Evitar cache para ver cambios inmediatos
       })
 
       if (!res.ok) {
@@ -49,9 +50,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await res.json()
-      const u: AppUser | null = data.user ?? null
 
-      if (u) {
+      if (data.user) {
+        // 🔹 CORRECCIÓN: Inyectamos 'esAdmin' basándonos en el role que viene de la DB
+        const u: AppUser = {
+          ...data.user,
+          esAdmin: data.user.role === "ADMIN"
+        }
         setUser(u)
         setIsAuthenticated(true)
       } else {
@@ -74,9 +79,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await signOut({ redirect: false })
-    } finally {
       setUser(null)
       setIsAuthenticated(false)
+    } catch (err) {
+      console.error("Error al cerrar sesión:", err)
     }
   }
 

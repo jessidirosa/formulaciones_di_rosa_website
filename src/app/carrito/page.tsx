@@ -45,10 +45,15 @@ export default function CarritoPage() {
               <div className="pt-8 border-t border-[#D6D6C2]">
                 <p className="text-xs uppercase tracking-widest text-[#A3B18A] font-bold mb-6">¿Qué estás buscando hoy?</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
-                  {['Antiage', 'Capilar', 'Corporal', 'Solares'].map((cat) => (
-                    <Link key={cat} href={`/tienda?categoria=${cat}`}>
+                  {[
+                    { nombre: 'Antiage', slug: 'antiage' },
+                    { nombre: 'Capilar', slug: 'capilar' },
+                    { nombre: 'Corporal', slug: 'corporal' },
+                    { nombre: 'Solares', slug: 'solares' }
+                  ].map((cat) => (
+                    <Link key={cat.slug} href={`/tienda?categoria=${cat.slug}`}>
                       <Button variant="outline" size="sm" className="w-full border-[#D6D6C2] text-[#5B6350] hover:bg-white hover:border-[#4A5D45] rounded-lg">
-                        {cat}
+                        {cat.nombre}
                       </Button>
                     </Link>
                   ))}

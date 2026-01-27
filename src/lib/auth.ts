@@ -38,8 +38,10 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: user.id.toString(),
-          name: user.name || "",
+          name: user.nombre || "",
           email: user.email,
+          apellido: user.apellido || "",
+          telefono: user.telefono || "",
           role: isAdmin ? "ADMIN" : user.role ?? "USER",
         }
       },

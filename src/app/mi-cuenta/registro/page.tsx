@@ -24,6 +24,7 @@ export default function RegistroPage() {
     setLoading(true)
 
     try {
+      // 1. Llamada a registro con los nuevos campos
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -34,9 +35,11 @@ export default function RegistroPage() {
 
       if (!res.ok) {
         setError(data.error || "Ocurrió un error al registrarte.")
+        setLoading(false)
         return
       }
 
+      // 2. Login automático
       const loginResult = await signIn("credentials", {
         redirect: false,
         email,
@@ -60,8 +63,6 @@ export default function RegistroPage() {
   return (
     <div className="min-h-[90vh] flex items-center justify-center bg-[#F5F5F0] px-4 py-16">
       <div className="w-full max-w-lg">
-
-        {/* Cabecera de Marca */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-sm mb-4 border border-[#E9E9E0]">
             <FlaskConical className="w-8 h-8 text-[#4A5D45]" />
@@ -72,9 +73,7 @@ export default function RegistroPage() {
 
         <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
           <CardHeader className="bg-[#4A5D45] text-[#F5F5F0] py-8 px-8">
-            <CardTitle className="text-xl text-center font-bold tracking-tight">
-              Unite a la comunidad
-            </CardTitle>
+            <CardTitle className="text-xl text-center font-bold tracking-tight">Unite a la comunidad</CardTitle>
             <div className="flex justify-center gap-4 mt-4 overflow-x-auto no-scrollbar">
               <span className="flex items-center gap-1 text-[10px] text-[#A3B18A] uppercase font-bold whitespace-nowrap"><CheckCircle2 className="w-3 h-3" /> Productos personalizados</span>
               <span className="flex items-center gap-1 text-[10px] text-[#A3B18A] uppercase font-bold whitespace-nowrap"><CheckCircle2 className="w-3 h-3" /> Cruelty Free</span>
@@ -84,92 +83,39 @@ export default function RegistroPage() {
 
           <CardContent className="p-8 bg-white">
             <form className="space-y-5" onSubmit={handleSubmit}>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2">
-                    <User className="w-3 h-3" /> Nombre
-                  </label>
-                  <Input
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ej: Ana"
-                    className="bg-[#F9F9F7] border-[#E9E9E0] focus:ring-[#A3B18A] focus:border-[#A3B18A] h-11 rounded-xl"
-                  />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2"><User className="w-3 h-3" /> Nombre</label>
+                  <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Ana" className="bg-[#F9F9F7] border-[#E9E9E0] h-11 rounded-xl" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2">
-                    <User className="w-3 h-3" /> Apellido
-                  </label>
-                  <Input
-                    required
-                    value={apellido}
-                    onChange={(e) => setApellido(e.target.value)}
-                    placeholder="Ej: García"
-                    className="bg-[#F9F9F7] border-[#E9E9E0] focus:ring-[#A3B18A] focus:border-[#A3B18A] h-11 rounded-xl"
-                  />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2"><User className="w-3 h-3" /> Apellido</label>
+                  <Input required value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Ej: García" className="bg-[#F9F9F7] border-[#E9E9E0] h-11 rounded-xl" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2">
-                  <Mail className="w-3 h-3" /> Correo Electrónico
-                </label>
-                <Input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="paciente@correo.com"
-                  className="bg-[#F9F9F7] border-[#E9E9E0] focus:ring-[#A3B18A] focus:border-[#A3B18A] h-11 rounded-xl"
-                />
+                <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2"><Mail className="w-3 h-3" /> Correo Electrónico</label>
+                <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="paciente@correo.com" className="bg-[#F9F9F7] border-[#E9E9E0] h-11 rounded-xl" />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2">
-                  <Lock className="w-3 h-3" /> Contraseña
-                </label>
-                <Input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="bg-[#F9F9F7] border-[#E9E9E0] focus:ring-[#A3B18A] focus:border-[#A3B18A] h-11 rounded-xl"
-                />
-                <p className="text-[9px] text-[#A3B18A] font-medium italic italic">Mínimo 8 caracteres sugeridos.</p>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2"><Lock className="w-3 h-3" /> Contraseña</label>
+                <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-[#F9F9F7] border-[#E9E9E0] h-11 rounded-xl" />
               </div>
 
-              {error && (
-                <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-medium text-center italic">
-                  {error}
-                </div>
-              )}
+              {error && <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-medium text-center italic">{error}</div>}
 
-              <Button
-                type="submit"
-                className="w-full bg-[#4A5D45] hover:bg-[#3D4C39] text-[#F5F5F0] h-12 rounded-xl font-bold text-sm shadow-lg shadow-emerald-900/10 transition-all mt-4"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full bg-[#4A5D45] hover:bg-[#3D4C39] text-[#F5F5F0] h-12 rounded-xl font-bold text-sm shadow-lg shadow-emerald-900/10 transition-all mt-4" disabled={loading}>
                 {loading ? "Generando Paciente..." : "Confirmar Registro"}
               </Button>
 
               <div className="pt-6 border-t border-[#F5F5F0] text-center">
-                <p className="text-xs text-[#5B6350]">
-                  ¿Ya tenés una cuenta? <br className="md:hidden" />
-                  <Link href="/mi-cuenta/login" className="text-[#4A5D45] font-bold hover:underline ml-1">
-                    Inicia sesión aquí
-                  </Link>
-                </p>
+                <p className="text-xs text-[#5B6350]">¿Ya tenés una cuenta? <Link href="/mi-cuenta/login" className="text-[#4A5D45] font-bold hover:underline ml-1">Inicia sesión aquí</Link></p>
               </div>
             </form>
           </CardContent>
         </Card>
-
-        <p className="text-center mt-8 text-[10px] text-[#A3B18A] uppercase tracking-[0.2em] font-medium">
-          Tratamientos Personalizados & Experiencia Profesional
-        </p>
       </div>
     </div>
   )

@@ -1,37 +1,66 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
+// GET: Obtener datos completos del usuario logueado
 export async function GET() {
   const session = await getServerSession(authOptions)
 
-  // Si no hay sesión válida, devolvemos user: null
-  if (!session?.user?.email) {
-    return NextResponse.json({ user: null }, { status: 401 })
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-  })
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        telefono: true,
+        role: true,
+      }
+    })
 
-  if (!user) {
-    return NextResponse.json({ user: null }, { status: 404 })
+    return NextResponse.json({ user })
+  } catch (error) {
+    return NextResponse.json({ error: "Error al obtener perfil" }, { status: 500 })
+  }
+}
+
+// PATCH: Actualizar datos (Apellido, Teléfono, etc)
+export async function PATCH(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
-  // 🔴 IMPORTANTE: acá armamos exactamente lo que esperan
-  // Header, MiCuenta y el resto del frontend
-  return NextResponse.json({
-    user: {
-      id: user.id,
-      nombre: user.name ?? "",
-      // estos dos los casteo porque pueden no existir en tu modelo
-      apellido: (user as any).apellido ?? "",
-      email: user.email,
-      telefono: (user as any).telefono ?? "",
-      role: user.role,
-      esAdmin: user.role === "ADMIN",
-      creadoEn: user.createdAt.toISOString(),
-    },
-  })
+  try {
+    const { nombre, apellido, telefono } = await req.json()
+
+    const updatedUser = await prisma.user.update({
+      where: { email: session.user.email },
+      data: {
+        nombre,
+        apellido,
+        telefono
+      }
+    })
+
+    return NextResponse.json({
+      ok: true,
+      message: "Perfil actualizado",
+      user: {
+        nombre: updatedUser.nombre,
+        apellido: updatedUser.apellido,
+        telefono: updatedUser.telefono
+      }
+    })
+  } catch (error) {
+    console.error("❌ Error al actualizar perfil:", error)
+    return NextResponse.json({ error: "Error al actualizar los datos" }, { status: 500 })
+  }
 }

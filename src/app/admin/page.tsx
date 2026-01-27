@@ -1,4 +1,3 @@
-// src/app/admin/page.tsx 
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
@@ -46,7 +45,7 @@ export default async function AdminDashboardPage() {
                             Revisá, actualizá estados y exportá los pedidos realizados en la web.
                         </p>
                         <Link href="/admin/pedidos">
-                            <Button className="w-full bg-green-600 hover:bg-green-700">
+                            <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl h-11">
                                 Ir a pedidos
                             </Button>
                         </Link>
@@ -66,15 +65,15 @@ export default async function AdminDashboardPage() {
                             Creá, editá, activá/desactivá y marcá como destacados los productos.
                         </p>
                         <Link href="/admin/productos">
-                            <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl h-11">
                                 Ir a productos
                             </Button>
                         </Link>
                     </CardContent>
                 </Card>
 
-                {/* Cupones (placeholder para después) */}
-                <Card className="border-blue-200">
+                {/* Cupones - AHORA ACTIVADO */}
+                <Card className="border-blue-200 bg-blue-50/30 shadow-sm shadow-blue-100">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-blue-700">
                             <Percent className="h-5 w-5" />
@@ -83,11 +82,13 @@ export default async function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <p className="text-sm text-gray-600">
-                            Próximamente vas a poder crear cupones de descuento para campañas.
+                            Creá cupones por porcentaje o monto fijo, con límites de uso y fechas.
                         </p>
-                        <Button className="w-full" variant="outline" disabled>
-                            Próximamente
-                        </Button>
+                        <Link href="/admin/cupones">
+                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl h-11">
+                                Gestionar Cupones
+                            </Button>
+                        </Link>
                     </CardContent>
                 </Card>
 
@@ -104,14 +105,14 @@ export default async function AdminDashboardPage() {
                             Administrá las categorías que podés asignar a cada producto.
                         </p>
                         <Link href="/admin/categorias">
-                            <Button className="w-full" variant="outline">
+                            <Button className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 font-bold uppercase text-[10px] tracking-widest rounded-xl h-11" variant="outline">
                                 Gestionar categorías
                             </Button>
                         </Link>
                     </CardContent>
                 </Card>
 
-                {/* Reportes de ventas por producto */}
+                {/* Reportes de ventas */}
                 <Card className="border-amber-200">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-amber-700">
@@ -124,7 +125,7 @@ export default async function AdminDashboardPage() {
                             Exportá ventas por producto en CSV, filtrando por período y estado.
                         </p>
                         <Link href="/admin/reportes/ventas-productos">
-                            <Button className="w-full" variant="outline">
+                            <Button className="w-full border-amber-200 text-amber-700 hover:bg-amber-50 font-bold uppercase text-[10px] tracking-widest rounded-xl h-11" variant="outline">
                                 Ir al reporte
                             </Button>
                         </Link>
