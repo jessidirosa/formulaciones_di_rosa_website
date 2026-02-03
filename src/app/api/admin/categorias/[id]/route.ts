@@ -16,14 +16,17 @@ async function requireAdmin() {
 
 export async function DELETE(
     _req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> } // ✅ CAMBIO: Definido como Promise
 ) {
     const admin = await requireAdmin()
     if (!admin) {
         return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    const id = Number(params.id)
+    // ✅ CAMBIO: Esperamos a que los params se resuelvan
+    const resolvedParams = await params
+    const id = Number(resolvedParams.id)
+
     if (Number.isNaN(id)) {
         return NextResponse.json({ error: "ID inválido" }, { status: 400 })
     }
