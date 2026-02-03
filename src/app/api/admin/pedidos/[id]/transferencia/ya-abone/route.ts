@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 
-export async function POST(_req: NextRequest, { params }: { params: any }) {
+export async function POST(
+    _req: NextRequest,
+    { params }: { params: Promise<{ id: string }> } // ✅ Tipado correcto para Next.js 16
+) {
     try {
         const p = await params
         const id = Number(p?.id)
