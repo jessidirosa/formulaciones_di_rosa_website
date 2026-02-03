@@ -22,7 +22,6 @@ const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, 
         icon: Landmark,
         color: "text-amber-600 bg-amber-50 border-amber-200"
     },
-    // ✅ NUEVO ESTADO: Mercado Pago Pendiente
     pendiente_mercadopago: {
         title: "Pago en Proceso",
         desc: "Estamos esperando la confirmación de Mercado Pago. Si tuviste un problema, podés reintentar el pago.",
@@ -87,14 +86,32 @@ export default function PedidoPublicPage({ params }: PageProps) {
     const loadPedido = async () => {
         try {
             const res = await fetch(`/api/pedidos/public/${token}`)
+
+            // Verificamos si la respuesta es exitosa antes de intentar el .json()
+            if (!res.ok) {
+                console.error("Error en la respuesta del servidor:", res.status)
+                setPedido(null)
+                return
+            }
+
             const data = await res.json()
-            if (data.ok) setPedido(data.pedido)
-        } catch (e) { console.error(e) }
-        finally { setLoading(false) }
+            if (data.ok) {
+                setPedido(data.pedido)
+            } else {
+                setPedido(null)
+            }
+        } catch (e) {
+            console.error("Error cargando pedido:", e)
+            setPedido(null)
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
-        loadPedido()
+        if (token) {
+            loadPedido()
+        }
     }, [token])
 
     const handleAvisarPago = async () => {
@@ -104,13 +121,26 @@ export default function PedidoPublicPage({ params }: PageProps) {
             if (res.ok) {
                 toast.success("Aviso enviado correctamente")
                 loadPedido()
+            } else {
+                toast.error("No se pudo enviar el aviso")
             }
-        } catch (e) { toast.error("Error al enviar aviso") }
-        finally { setSending(false) }
+        } catch (e) {
+            toast.error("Error de conexión al enviar aviso")
+        } finally {
+            setSending(false)
+        }
     }
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#F5F5F0]"><Loader2 className="animate-spin" /></div>
-    if (!pedido) return <div className="p-20 text-center text-[#5B6350] font-medium italic">Pedido no encontrado</div>
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#F5F5F0]"><Loader2 className="animate-spin text-[#4A5D45]" /></div>
+
+    if (!pedido) return (
+        <div className="min-h-screen flex items-center justify-center bg-[#F5F5F0]">
+            <div className="p-20 text-center text-[#5B6350] font-medium italic">
+                <AlertCircle className="w-10 h-10 mx-auto mb-4 opacity-20" />
+                Pedido no encontrado
+            </div>
+        </div>
+    )
 
     const estadoLwr = pedido.estado.toLowerCase()
     const info = INFO_ESTADOS[estadoLwr] || { title: pedido.estado, desc: "Procesando...", next: "Pronto habrá novedades.", icon: Package, color: "bg-gray-50 text-gray-700" }
@@ -140,13 +170,12 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             </div>
                         </div>
 
-                        {/* ACCIONES SEGÚN ESTADO */}
                         {estadoLwr === "pending_payment_transfer" && (
                             <div className="mt-2 pt-4 border-t border-black/5">
                                 <button
                                     onClick={handleAvisarPago}
                                     disabled={sending}
-                                    className="w-full bg-[#4A5D45] text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
+                                    className="w-full bg-[#4A5D45] text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#3A4031] transition-colors"
                                 >
                                     {sending ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                                     Ya realicé la transferencia
@@ -154,12 +183,11 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             </div>
                         )}
 
-                        {/* ✅ NUEVO: Botón de Reintento Mercado Pago */}
                         {estadoLwr === "pendiente_mercadopago" && pedido.mercadopagoUrl && (
                             <div className="mt-2 pt-4 border-t border-black/5">
                                 <a
                                     href={pedido.mercadopagoUrl}
-                                    className="w-full bg-[#4A5D45] text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
+                                    className="w-full bg-[#4A5D45] text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#3A4031] transition-colors"
                                 >
                                     <CreditCard className="h-3.5 w-3.5" />
                                     Completar pago con Mercado Pago
@@ -191,6 +219,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             <a
                                 href={pedido.trackingUrl}
                                 target="_blank"
+                                rel="noopener noreferrer"
                                 className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
                             >
                                 Rastrear Paquete <ExternalLink className="h-3 w-3" />
@@ -199,7 +228,6 @@ export default function PedidoPublicPage({ params }: PageProps) {
                     </Card>
                 )}
 
-                {/* Detalles del Pedido */}
                 <Card className="border-none shadow-xl rounded-3xl overflow-hidden bg-white">
                     <CardHeader className="bg-[#F9F9F7] border-b border-[#E9E9E0]">
                         <CardTitle className="text-[10px] uppercase tracking-widest font-bold text-[#A3B18A]">Resumen de Inversión</CardTitle>

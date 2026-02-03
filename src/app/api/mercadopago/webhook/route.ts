@@ -35,9 +35,26 @@ export async function POST(req: NextRequest) {
                 if (pedido && pedido.estado !== "confirmado") {
                     const appUrl = process.env.APP_URL || "http://localhost:3000"
 
+                    // --- NUEVA LÓGICA DE DETALLE FINANCIERO ---
+                    // Calculamos la comisión real cobrada por MP
+                    const totalPagado = pagoMP.transaction_amount || pedido.total
+                    let totalFee = 0
+                    if (pagoMP.fee_details) {
+                        totalFee = pagoMP.fee_details.reduce((acc: number, fee: any) => acc + fee.amount, 0)
+                    }
+                    const netoReal = totalPagado - totalFee
+
                     await prisma.pedido.update({
                         where: { id: pedido.id },
-                        data: { estado: "confirmado" }
+                        data: {
+                            estado: "confirmado",
+                            // ✅ Guardamos los nuevos campos de detalle
+                            mpPaymentMethod: pagoMP.payment_method_id, // ej: visa, master, account_money
+                            mpPaymentType: pagoMP.payment_type_id,     // ej: credit_card, account_money
+                            mpInstallments: pagoMP.installments || 1,
+                            mpFee: totalFee,
+                            netoReal: netoReal
+                        }
                     })
 
                     // 3. Notificamos al Cliente
@@ -65,7 +82,7 @@ export async function POST(req: NextRequest) {
                         })
                     )
 
-                    console.log(`✅ Pedido ${codigoPedido} confirmado vía Webhook.`)
+                    console.log(`✅ Pedido ${codigoPedido} confirmado con detalles financieros guardados.`)
                 }
             }
         }

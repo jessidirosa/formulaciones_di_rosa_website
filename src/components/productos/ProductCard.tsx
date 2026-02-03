@@ -6,10 +6,8 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useCart } from '@/contexts/CartContext'
-import { useUser } from '@/contexts/UserContext'
-import { ShoppingCart, Eye, FlaskConical, Sparkles } from 'lucide-react'
+import { ShoppingCart, Eye, Sparkles, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from "lucide-react" // Para el icono de carga
 
 interface Presentacion {
   id: number
@@ -37,7 +35,6 @@ interface ProductCardProps {
 
 export default function ProductCard({ producto }: ProductCardProps) {
   const { addItem } = useCart()
-  const { isAuthenticated } = useUser()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -86,7 +83,7 @@ export default function ProductCard({ producto }: ProductCardProps) {
   }
 
   return (
-    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-500 border-none bg-white rounded-2xl shadow-sm flex flex-col h-full max-w-sm mx-auto w-full">
+    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-500 border-none bg-white rounded-2xl shadow-sm flex flex-col h-full max-w-sm mx-auto w-full text-left">
       <Link href={`/tienda/${producto.slug}`} className="relative block aspect-square overflow-hidden bg-[#F9F9F7]">
         <img
           src={producto.imagen || '/images/placeholder-producto.jpg'}
@@ -155,7 +152,7 @@ export default function ProductCard({ producto }: ProductCardProps) {
               </span>
             </div>
             <div className="text-right">
-              <Badge className="bg-[#A3B18A]/20 text-[#4A5D45] hover:bg-[#A3B18A]/20 shadow-none border-none text-[9px] font-bold px-1.5">
+              <Badge className="bg-[#A3B18A]/20 text-[#4A5D45] shadow-none border-none text-[9px] font-bold px-1.5">
                 10% OFF
               </Badge>
             </div>

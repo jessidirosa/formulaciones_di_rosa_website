@@ -10,6 +10,8 @@ import {
     Percent,
     Tag,
     BarChart3,
+    FileSpreadsheet,
+    FilePieChart
 } from "lucide-react"
 
 export default async function AdminDashboardPage() {
@@ -24,14 +26,14 @@ export default async function AdminDashboardPage() {
         <div className="container mx-auto px-4 py-10 space-y-8">
             <div className="flex items-baseline justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold">Panel de administración</h1>
+                    <h1 className="text-2xl font-semibold text-[#3A4031]">Panel de administración</h1>
                     <p className="text-sm text-gray-600">
                         Gestioná pedidos, productos y cupones de Formulaciones Di Rosa.
                     </p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Pedidos */}
                 <Card className="border-green-200">
                     <CardHeader>
@@ -42,7 +44,7 @@ export default async function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <p className="text-sm text-gray-600">
-                            Revisá, actualizá estados y exportá los pedidos realizados en la web.
+                            Revisá, actualizá estados y gestioná las ventas del día.
                         </p>
                         <Link href="/admin/pedidos">
                             <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl h-11">
@@ -62,7 +64,7 @@ export default async function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <p className="text-sm text-gray-600">
-                            Creá, editá, activá/desactivá y marcá como destacados los productos.
+                            Administrá el catálogo, precios y stock de tus fórmulas.
                         </p>
                         <Link href="/admin/productos">
                             <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl h-11">
@@ -72,8 +74,8 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Cupones - AHORA ACTIVADO */}
-                <Card className="border-blue-200 bg-blue-50/30 shadow-sm shadow-blue-100">
+                {/* Cupones */}
+                <Card className="border-blue-200">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-blue-700">
                             <Percent className="h-5 w-5" />
@@ -82,7 +84,7 @@ export default async function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <p className="text-sm text-gray-600">
-                            Creá cupones por porcentaje o monto fijo, con límites de uso y fechas.
+                            Gestioná códigos de descuento y promociones activas.
                         </p>
                         <Link href="/admin/cupones">
                             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl h-11">
@@ -102,7 +104,7 @@ export default async function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <p className="text-sm text-gray-600">
-                            Administrá las categorías que podés asignar a cada producto.
+                            Organizá tus productos por familias y especialidades.
                         </p>
                         <Link href="/admin/categorias">
                             <Button className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 font-bold uppercase text-[10px] tracking-widest rounded-xl h-11" variant="outline">
@@ -112,21 +114,21 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Reportes de ventas */}
-                <Card className="border-amber-200">
+                {/* Reportes de ventas - ACTUALIZADO */}
+                <Card className="border-amber-200 lg:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-amber-700">
                             <BarChart3 className="h-5 w-5" />
-                            Reportes de ventas
+                            Centro de Reportes y Exportación
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-4">
                         <p className="text-sm text-gray-600">
-                            Exportá ventas por producto en CSV, filtrando por período y estado.
+                            Accedé a la descarga de informes detallados en CSV. Podrás filtrar por mes, año y estado de los pedidos.
                         </p>
                         <Link href="/admin/reportes/ventas-productos">
                             <Button className="w-full border-amber-200 text-amber-700 hover:bg-amber-50 font-bold uppercase text-[10px] tracking-widest rounded-xl h-11" variant="outline">
-                                Ir al reporte
+                                Configurar y Generar Reportes
                             </Button>
                         </Link>
                     </CardContent>

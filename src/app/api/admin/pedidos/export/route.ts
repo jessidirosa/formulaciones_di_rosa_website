@@ -16,6 +16,9 @@ export async function GET() {
         "subtotal",
         "costoEnvio",
         "total",
+        // ✅ Campos de cupones agregados
+        "cuponCodigo",
+        "cuponDescuento",
 
         "nombreCliente",
         "apellidoCliente",
@@ -34,46 +37,56 @@ export async function GET() {
         "fechaEstimadaEnvio",
     ]
 
-    const rows = pedidos.map((p) => [
-        p.id,
-        p.numero,
-        p.userId ?? "",
-        p.createdAt.toISOString(),
-        p.estado,
-        p.metodoEnvio,
-        p.subtotal,
-        p.costoEnvio,
-        p.total,
+    const rows = pedidos.map((p) => {
+        // Usamos una aserción de tipo por si los campos son nuevos en el esquema
+        const pedido = p as any;
 
-        p.nombreCliente ?? "",
-        p.apellidoCliente ?? "",
-        p.emailCliente ?? "",
-        p.telefonoCliente ?? "",
-        p.dniCliente ?? "",
+        return [
+            pedido.id,
+            pedido.numero,
+            pedido.userId ?? "",
+            pedido.createdAt.toISOString(),
+            pedido.estado,
+            pedido.metodoEnvio,
+            pedido.subtotal,
+            pedido.costoEnvio,
+            pedido.total,
+            // ✅ Mapeo de cupones
+            pedido.cuponCodigo ?? "",
+            pedido.cuponDescuento ?? 0,
 
-        p.tipoEntrega ?? "",
-        p.direccion ?? "",
-        p.ciudad ?? "",
-        p.localidad ?? "",
-        p.provincia ?? "",
-        p.codigoPostal ?? "",
-        p.sucursalCorreo ?? "",
-        p.notasCliente ?? "",
-        p.fechaEstimadaEnvio
-            ? p.fechaEstimadaEnvio.toISOString()
-            : "",
-    ])
+            pedido.nombreCliente ?? "",
+            pedido.apellidoCliente ?? "",
+            pedido.emailCliente ?? "",
+            pedido.telefonoCliente ?? "",
+            pedido.dniCliente ?? "",
 
-    const csv =
+            pedido.tipoEntrega ?? "",
+            pedido.direccion ?? "",
+            pedido.ciudad ?? "",
+            pedido.localidad ?? "",
+            pedido.provincia ?? "",
+            pedido.codigoPostal ?? "",
+            pedido.sucursalCorreo ?? "",
+            pedido.notasCliente ?? "",
+            pedido.fechaEstimadaEnvio
+                ? pedido.fechaEstimadaEnvio.toISOString()
+                : "",
+        ]
+    })
+
+    // Agregamos el BOM (Byte Order Mark) para que Excel reconozca los acentos correctamente
+    const BOM = "\uFEFF";
+    const csvContent =
         headers.join(";") +
         "\n" +
-        rows.map((row) => row.join(";")).join("\n")
+        rows.map((row) => row.join(";")).join("\n");
 
-    return new NextResponse(csv, {
+    return new NextResponse(BOM + csvContent, {
         status: 200,
         headers: {
             "Content-Type": "text/csv; charset=utf-8",
-            "Content-Disposition": 'attachment; filename="pedidos.csv"',
+            "Content-Disposition": 'attachment; filename="pedidos_di_rosa.csv"',
         },
     })
 }

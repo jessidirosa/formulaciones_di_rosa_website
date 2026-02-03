@@ -194,3 +194,29 @@ export function emailNuevoPedidoAdmin(params: { pedidoNumero: string, cliente: s
         </div>
     `);
 }
+
+export function emailNuevaConsultaAdmin(params: {
+  nombre: string,
+  email: string,
+  telefono: string,
+  tipo: string,
+  mensaje: string
+}) {
+  const body = `
+    <div style="background:#F9F9F7; border:1px solid #E9E9E0; border-radius:16px; padding:25px; margin:20px 0;">
+      <p style="margin:0 0 10px; font-size:12px; color:#A3B18A; text-transform:uppercase; font-weight:700;">Datos del Interesado</p>
+      <p style="margin:5px 0; font-size:14px;"><b>Nombre:</b> ${params.nombre}</p>
+      <p style="margin:5px 0; font-size:14px;"><b>Email:</b> ${params.email}</p>
+      <p style="margin:5px 0; font-size:14px;"><b>Teléfono:</b> <a href="tel:${params.telefono}" style="color:#4A5D45; text-decoration:none; font-weight:bold;">${params.telefono}</a></p>
+      <p style="margin:5px 0; font-size:14px;"><b>Asunto:</b> ${params.tipo}</p>
+      <hr style="border:0; border-top:1px solid #E9E9E0; margin:20px 0;" />
+      <p style="margin:0 0 10px; font-size:12px; color:#A3B18A; text-transform:uppercase; font-weight:700;">Mensaje</p>
+      <p style="margin:0; font-size:15px; line-height:1.6; color:#3A4031;">${params.mensaje.replace(/\n/g, '<br>')}</p>
+    </div>
+    <div style="text-align:center; margin-top:20px;">
+      <a href="mailto:${params.email}" style="background:#4A5D45; color:white; padding:12px 25px; text-decoration:none; border-radius:12px; font-weight:bold; display:inline-block;">RESPONDER POR EMAIL</a>
+      <a href="https://wa.me/${params.telefono.replace(/[^0-9]/g, '')}" style="background:#25D366; color:white; padding:12px 25px; text-decoration:none; border-radius:12px; font-weight:bold; display:inline-block; margin-left:10px;">WHATSAPP</a>
+    </div>
+  `;
+  return baseLayout("📩 Nueva Consulta Web", body);
+}

@@ -110,6 +110,12 @@ model Pedido {
   customerEmailSentAt DateTime?
   confirmedEmailSentAt DateTime?
 
+// Nuevos campos para detalle de pago
+  mpPaymentMethod String?  // Ej: "visa", "mastercard", "account_money"
+  mpPaymentType   String?  // Ej: "credit_card", "debit_card", "account_money"
+  mpInstallments  Int?     @default(1)
+  mpFee           Float?   // Comisión real cobrada por MP (opcional)
+  netoReal        Float?   // El valor final que te queda después de comisiones
 
   // 🔹 Relación con el usuario (opcional)
   userId Int?

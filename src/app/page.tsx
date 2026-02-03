@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+// ✅ Importamos la sección de beneficios profesional
+import BenefitsSection from "@/components/home/BenefitsSection"
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -42,13 +43,13 @@ export default async function HomePage() {
   })
 
   return (
-    <div className="bg-[#F5F5F0]">
+    <main className="bg-[#F5F5F0] min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-[#4A5D45] py-24 px-4">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-[#A3B18A] opacity-10 rounded-l-full blur-3xl pointer-events-none"></div>
 
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-left">
             <div className="space-y-8">
               <div className="inline-flex items-center gap-2 bg-[#A3B18A]/20 border border-[#A3B18A]/30 px-4 py-1.5 rounded-full">
                 <span className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">Est. 2004 — +20 años de experiencia</span>
@@ -71,10 +72,11 @@ export default async function HomePage() {
                   </Button>
                 </Link>
                 <Link href="/sobre-nosotros">
+                  {/* ✅ Botón corregido: Mayor legibilidad con fondo sutil inicial */}
                   <Button
                     variant="outline"
                     size="lg"
-                    className="border-[#F5F5F0]/30 text-[#F5F5F0] hover:bg-[#F5F5F0]/10 rounded-full px-10 font-bold"
+                    className="border-[#F5F5F0]/40 text-[#F5F5F0] bg-[#F5F5F0]/10 hover:bg-[#F5F5F0]/20 rounded-full px-10 font-bold transition-colors"
                   >
                     Nuestra Historia
                   </Button>
@@ -94,10 +96,13 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ✅ BARRA DE BENEFICIOS (3 cuotas, 10% Transferencia, Envíos) */}
+      <BenefitsSection />
+
       {/* Navegá por categorías */}
       {categorias.length > 0 && (
         <section className="py-12 px-4 bg-[#E9E9E0] border-b border-[#D6D6C2]">
-          <div className="container mx-auto max-w-6xl">
+          <div className="container mx-auto max-w-6xl text-left">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div>
                 <h2 className="text-sm font-bold text-[#4A5D45] uppercase tracking-widest mb-2">Especialidades</h2>
@@ -126,27 +131,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Beneficios */}
-      <section className="py-24 px-4 bg-[#F5F5F0]">
-        <div className="container mx-auto max-w-6xl text-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {[
-              { icon: "🧪", title: "Formulación Magistral", desc: "Soluciones exclusivas y personalizadas bajo estándares farmacéuticos.", color: "bg-[#E9E9E0]" },
-              { icon: "🐇", title: "100% Cruelty Free", desc: "Nacimos con la idea de ofrecer un cuidado ético y responsable.", color: "bg-[#E9E9E0]" },
-              { icon: "🇦🇷", title: "Envíos a todo el país", desc: "Llegamos a lo largo y ancho de Argentina con empresas serias y seguras.", color: "bg-[#E9E9E0]" }
-            ].map((beneficio, i) => (
-              <div key={i} className="flex flex-col items-center group">
-                <div className={`w-20 h-20 ${beneficio.color} rounded-full flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform shadow-sm`}>
-                  {beneficio.icon}
-                </div>
-                <h4 className="text-xl font-bold text-[#3A4031] mb-3 uppercase tracking-tight">{beneficio.title}</h4>
-                <p className="text-[#5B6350] leading-relaxed max-w-xs">{beneficio.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Productos Destacados */}
       <section className="py-24 px-4 bg-white rounded-t-[3rem] shadow-inner">
         <div className="container mx-auto max-w-6xl">
@@ -163,14 +147,13 @@ export default async function HomePage() {
               {productosDestacados.map((producto) => {
                 const categoriaPrincipal = producto.categorias[0]?.categoria?.nombre || "Exclusivo"
                 const imagenSrc = producto.imagen || `https://placehold.co/400x400?text=${encodeURIComponent(producto.nombre)}`
-
                 const tienePresentaciones = producto.presentaciones && producto.presentaciones.length > 0
                 const precioMostrar = tienePresentaciones
                   ? Math.min(...producto.presentaciones.map(p => p.precio))
                   : (producto.precio || 0)
 
                 return (
-                  <Card key={producto.id} className="group border-none bg-transparent shadow-none">
+                  <Card key={producto.id} className="group border-none bg-transparent shadow-none text-left">
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl mb-6 shadow-md border border-[#F5F5F0]">
                       <img
                         src={imagenSrc}
@@ -195,7 +178,7 @@ export default async function HomePage() {
                     </CardContent>
                     <CardFooter className="p-0">
                       <Link href={`/tienda/${producto.slug}`} className="w-full">
-                        <Button className="w-full bg-[#3A4031] hover:bg-[#4A5D45] text-white rounded-xl py-6 font-bold tracking-wide">
+                        <Button className="w-full bg-[#3A4031] hover:bg-[#4A5D45] text-white rounded-xl py-6 font-bold tracking-wide transition-all shadow-sm">
                           Ver detalles
                         </Button>
                       </Link>
@@ -208,7 +191,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA Final */}
       <section className="bg-[#4A5D45] py-24 px-6 relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-center relative z-10 text-[#F5F5F0]">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">
@@ -218,19 +201,24 @@ export default async function HomePage() {
             Nuestro equipo de especialistas está a tu disposición para asesorarte sobre nuestras formulaciones exclusivas.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <a href="https://wa.me/541122334455" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/541137024467" target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="bg-[#F5F5F0] text-[#4A5D45] hover:bg-[#E9E9E0] px-10 py-7 rounded-full font-bold shadow-xl flex items-center gap-2">
                 <span>WhatsApp Profesional</span>
               </Button>
             </a>
             <Link href="/contacto">
-              <Button size="lg" variant="outline" className="border-[#F5F5F0]/30 text-[#F5F5F0] hover:bg-[#F5F5F0]/10 px-10 py-7 rounded-full font-bold">
-                Enviar un mensaje
+              {/* ✅ Botón corregido: bg-[#F5F5F0]/15 y borde más opaco para legibilidad inmediata */}
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-[#F5F5F0]/50 text-[#F5F5F0] bg-[#F5F5F0]/15 hover:bg-[#F5F5F0]/25 px-10 py-7 rounded-full font-bold transition-all"
+              >
+                Contactanos
               </Button>
             </Link>
           </div>
         </div>
       </section>
-    </div>
+    </main>
   )
 }

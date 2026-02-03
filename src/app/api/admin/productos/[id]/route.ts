@@ -3,29 +3,28 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
-// Función de validación de administrador (Tal cual la tenías)
 async function requireAdmin() {
     const session = await getServerSession(authOptions)
     const user = session?.user as any
-
-    if (!session || user?.role !== "ADMIN") {
-        return null
-    }
-
+    if (!session || user?.role !== "ADMIN") return null
     return { session, user }
 }
 
-// PUT: actualizar producto (incluyendo presentaciones y categorías)
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> } // 👈 Definimos params como Promesa
 ) {
     const admin = await requireAdmin()
-    if (!admin) {
-        return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    if (!admin) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+
+    // 1. SOLUCIÓN AL ERROR DE LA IMAGEN: Esperamos a que los params se resuelvan
+    const resolvedParams = await params;
+    const idProductoTarget = parseInt(resolvedParams.id);
+
+    if (isNaN(idProductoTarget)) {
+        return NextResponse.json({ error: "ID inválido" }, { status: 400 })
     }
 
-    const id = parseInt(params.id)
     const body = await req.json()
 
     const {
@@ -39,92 +38,70 @@ export async function PUT(
         stock,
         activo,
         destacado,
-        orden,
         categoriaIds,
-        presentaciones // 👈 Recibimos el array de presentaciones
+        presentaciones
     } = body
 
-    if (!nombre) {
-        return NextResponse.json({ error: "El nombre es obligatorio." }, { status: 400 })
-    }
+    if (!nombre) return NextResponse.json({ error: "El nombre es obligatorio." }, { status: 400 })
 
-    // Lógica de Slug (respetando tu formato original)
-    let finalSlug =
-        slug &&
-        String(slug)
-            .toLowerCase()
-            .trim()
-            .replace(/\s+/g, "-")
-
+    let finalSlug = slug && String(slug).toLowerCase().trim().replace(/\s+/g, "-")
     if (!finalSlug) {
-        finalSlug = String(nombre)
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)/g, "")
+        finalSlug = String(nombre).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
     }
 
     try {
-        // Usamos una transacción para que si algo falla, no se rompa la integridad de la DB
-        const productoActualizado = await prisma.$transaction(async (tx) => {
-
-            // 1) Borramos categorías actuales para este producto
+        await prisma.$transaction(async (tx) => {
+            // A. Borramos relaciones viejas
             await tx.productosCategorias.deleteMany({
-                where: { productoId: id }
+                where: { productoId: idProductoTarget }
             })
 
-            // 2) Borramos presentaciones actuales para este producto (para reemplazarlas)
             await tx.presentacion.deleteMany({
-                where: { productoId: id }
+                where: { productoId: idProductoTarget }
             })
 
-            // 3) Actualizamos los datos principales del producto
-            const actualizado = await tx.producto.update({
-                where: { id },
+            // B. Actualizamos datos principales
+            await tx.producto.update({
+                where: { id: idProductoTarget },
                 data: {
                     nombre,
                     slug: finalSlug,
-                    precio: precio !== undefined ? Number(precio) : 0,
+                    precio: parseFloat(precio) || 0,
                     categoria: categoria || null,
                     descripcionCorta: descripcionCorta || null,
                     descripcionLarga: descripcionLarga || null,
                     imagen: imagen || null,
-                    stock: stock !== undefined ? Number(stock) : 0,
+                    stock: parseInt(stock) || 0,
                     activo: activo ?? true,
                     destacado: destacado ?? false,
-                    orden: orden ?? 0,
                 },
             })
 
-            // 4) Re-creamos la relación con categorías si hay IDs
+            // C. Recreamos Categorías
             if (Array.isArray(categoriaIds) && categoriaIds.length > 0) {
                 await tx.productosCategorias.createMany({
-                    data: categoriaIds.map((catId: number) => ({
-                        productoId: id,
-                        categoriaId: catId,
+                    data: categoriaIds.map((cId: any) => ({
+                        productoId: idProductoTarget,
+                        categoriaId: parseInt(cId),
                     })),
                 })
             }
 
-            // 5) Creamos las nuevas presentaciones
+            // D. Recreamos Presentaciones
             if (Array.isArray(presentaciones) && presentaciones.length > 0) {
                 await tx.presentacion.createMany({
                     data: presentaciones.map((p: any) => ({
-                        nombre: p.nombre,
-                        precio: Number(p.precio),
-                        stock: Number(p.stock),
-                        productoId: id,
+                        nombre: String(p.nombre),
+                        precio: parseFloat(p.precio) || 0,
+                        stock: parseInt(p.stock) || 0,
+                        productoId: idProductoTarget,
                     })),
                 })
             }
-
-            return actualizado
         })
 
-        // 6) Buscamos el producto final con todo incluido para devolverlo al frontend
-        const productoCompleto = await prisma.producto.findUnique({
-            where: { id },
+        const productoActualizado = await prisma.producto.findUnique({
+            where: { id: idProductoTarget },
             include: {
                 presentaciones: true,
                 categorias: {
@@ -135,35 +112,31 @@ export async function PUT(
             },
         })
 
-        return NextResponse.json({ ok: true, producto: productoCompleto })
+        return NextResponse.json({ ok: true, producto: productoActualizado })
+
     } catch (error: any) {
-        console.error("❌ Error actualizando producto:", error)
-        if (error.code === "P2002") {
-            return NextResponse.json({ error: "Ese slug ya está en uso." }, { status: 409 })
-        }
-        return NextResponse.json({ error: "Error interno al actualizar." }, { status: 500 })
+        console.error("❌ Error en PUT Producto:", error)
+        return NextResponse.json({
+            error: "Error en la base de datos",
+            message: error.message
+        }, { status: 500 })
     }
 }
 
-// DELETE: eliminar producto (Prisma se encarga de las presentaciones por el Cascade en el schema)
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> } // 👈 También corregimos aquí
 ) {
     const admin = await requireAdmin()
-    if (!admin) {
-        return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if (!admin) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
     try {
-        const id = parseInt(params.id)
-        await prisma.producto.delete({
-            where: { id },
-        })
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id);
 
+        await prisma.producto.delete({ where: { id } })
         return NextResponse.json({ ok: true })
     } catch (error: any) {
-        console.error("❌ Error eliminando producto:", error)
-        return NextResponse.json({ error: "No se pudo eliminar el producto." }, { status: 500 })
+        return NextResponse.json({ error: "No se pudo eliminar." }, { status: 500 })
     }
 }

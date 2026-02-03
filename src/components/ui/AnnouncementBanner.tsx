@@ -10,7 +10,7 @@ const announcements = [
         color: "bg-[#4A5D45]"
     },
     {
-        text: "10% OFF EXTRA ABONANDO POR TRANSFERENCIA",
+        text: "10% OFF ABONANDO POR TRANSFERENCIA",
         icon: <Landmark className="w-3 h-3" />,
         color: "bg-[#A3B18A]"
     },

@@ -2,4 +2,4 @@ pagina web:
 
 - no se pueden eliminar categorías que no sean la ultima que añadiste
 - api correo para que haga los rotulos
-
+- paginas terminos y condiciones y politica de envios

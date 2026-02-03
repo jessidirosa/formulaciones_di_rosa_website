@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import AdminImageUpload from "@/components/admin/AdminImageUpload"
 import {
     Table,
     TableHeader,
@@ -17,15 +18,14 @@ import {
     TableCell,
 } from "@/components/ui/table"
 import {
-    FlaskConical,
-    TrendingUp,
     Pencil,
     Trash2,
     FileDown,
     Plus,
     X,
     Sparkles,
-    Loader2
+    Loader2,
+    TrendingUp
 } from "lucide-react"
 
 // --- Interfaces ---
@@ -70,6 +70,7 @@ export default function ProductosAdmin() {
         categoria: "",
         descripcionCorta: "",
         descripcionLarga: "",
+        imagen: "",
         stock: "0",
         activo: true,
         destacado: false,
@@ -84,6 +85,7 @@ export default function ProductosAdmin() {
         stock: "",
         descripcionCorta: "",
         descripcionLarga: "",
+        imagen: "",
         categoria: "",
         activo: true,
         destacado: false,
@@ -147,7 +149,7 @@ export default function ProductosAdmin() {
             toast.success("Producto creado")
             setForm({
                 nombre: "", slug: "", precio: "0", categoria: "",
-                descripcionCorta: "", descripcionLarga: "", stock: "0",
+                descripcionCorta: "", descripcionLarga: "", imagen: "", stock: "0",
                 activo: true, destacado: false, categoriaIds: [],
                 presentaciones: [{ nombre: "", precio: "", stock: "" }]
             })
@@ -162,7 +164,8 @@ export default function ProductosAdmin() {
             stock: String(p.stock || 0),
             descripcionCorta: p.descripcionCorta || "",
             descripcionLarga: p.descripcionLarga || "",
-            categoria: p.categoria || "", // Cargamos la categoría texto existente
+            imagen: p.imagen || "",
+            categoria: p.categoria || "",
             activo: p.activo,
             destacado: p.destacado,
             categoriaIds: (p.categorias || []).map((c) => c.categoria.id),
@@ -191,18 +194,14 @@ export default function ProductosAdmin() {
     return (
         <div className="container mx-auto px-4 py-10 space-y-10 bg-[#F9F9F7] min-h-screen">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E9E9E0] pb-6">
-                <div>
+                <div className="text-left">
                     <h1 className="text-3xl font-serif font-bold text-[#3A4031]">Gestión de Fórmulas</h1>
                     <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#A3B18A] mt-1">Panel Administrativo Magistral</p>
                 </div>
-                <a href="/api/admin/reportes/ventas-productos?soloPagados=true">
-                    <Button variant="outline" className="rounded-xl border-[#D6D6C2] text-[#5B6350] text-[10px] uppercase font-bold tracking-widest h-10 px-6">
-                        <FileDown className="w-4 h-4" /> Exportar CSV
-                    </Button>
-                </a>
+
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
                 <div className="space-y-6">
                     <Card className="rounded-3xl shadow-lg border-none bg-blue-50/50">
                         <CardHeader>
@@ -228,18 +227,26 @@ export default function ProductosAdmin() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-4">
-                            <form onSubmit={handleCreate} className="space-y-3">
+                            <form onSubmit={handleCreate} className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase font-bold text-[#A3B18A]">Imagen de Producto</label>
+                                    <AdminImageUpload
+                                        value={form.imagen}
+                                        onChange={(url) => setForm({ ...form, imagen: url })}
+                                        onRemove={() => setForm({ ...form, imagen: "" })}
+                                    />
+                                </div>
                                 <Input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre" className="rounded-xl" />
                                 <Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="Slug (opcional)" className="rounded-xl" />
-                                <Input value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} placeholder="Categoría Texto" className="rounded-xl" />
+                                <Input value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} placeholder="Categoría Texto (ej: Rostro)" className="rounded-xl" />
                                 <Input value={form.descripcionCorta} onChange={e => setForm({ ...form, descripcionCorta: e.target.value })} placeholder="Descripción corta" className="rounded-xl" />
-                                <Textarea value={form.descripcionLarga} onChange={e => setForm({ ...form, descripcionLarga: e.target.value })} placeholder="Descripción detallada" className="rounded-xl min-h-[100px]" />
+                                <Textarea value={form.descripcionLarga} onChange={e => setForm({ ...form, descripcionLarga: e.target.value })} placeholder="Descripción detallada (admite saltos de línea)" className="rounded-xl min-h-[100px]" />
 
                                 <div className="space-y-3 bg-[#F9F9F7] p-4 rounded-2xl border border-[#E9E9E0]">
                                     <p className="text-[10px] font-bold uppercase text-[#4A5D45] flex items-center gap-1"><Sparkles className="w-3 h-3" /> Presentaciones</p>
                                     {form.presentaciones.map((p, i) => (
                                         <div key={i} className="flex gap-1 items-center">
-                                            <Input placeholder="30ml" value={p.nombre} onChange={e => {
+                                            <Input placeholder="Vol" value={p.nombre} onChange={e => {
                                                 const n = [...form.presentaciones]; n[i].nombre = e.target.value; setForm({ ...form, presentaciones: n })
                                             }} className="h-8 text-xs bg-white" />
                                             <Input placeholder="$" value={p.precio} onChange={e => {
@@ -248,12 +255,10 @@ export default function ProductosAdmin() {
                                             <Input placeholder="Stock" value={p.stock} onChange={e => {
                                                 const n = [...form.presentaciones]; n[i].stock = e.target.value; setForm({ ...form, presentaciones: n })
                                             }} className="h-8 text-xs bg-white" />
-                                            {form.presentaciones.length > 1 && (
-                                                <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, presentaciones: form.presentaciones.filter((_, idx) => idx !== i) })}><X className="w-3 h-3 text-red-400" /></Button>
-                                            )}
+                                            <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, presentaciones: form.presentaciones.filter((_, idx) => idx !== i) })}><X className="w-3 h-3 text-red-400" /></Button>
                                         </div>
                                     ))}
-                                    <Button type="button" variant="ghost" size="sm" className="w-full text-[9px] uppercase font-bold" onClick={() => setForm({ ...form, presentaciones: [...form.presentaciones, { nombre: "", precio: "", stock: "" }] })}>+ Añadir Medida</Button>
+                                    <Button type="button" variant="ghost" className="w-full text-[9px] uppercase font-bold" onClick={() => setForm({ ...form, presentaciones: [...form.presentaciones, { nombre: "", precio: "", stock: "" }] })}>+ Añadir Medida</Button>
                                 </div>
 
                                 <div className="flex items-center justify-between bg-[#F9F9F7] p-3 rounded-xl border">
@@ -286,6 +291,7 @@ export default function ProductosAdmin() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-[#F5F5F0]">
+                                        <TableHead className="text-[10px] uppercase font-bold text-[#A3B18A]">Imagen</TableHead>
                                         <TableHead className="text-[10px] uppercase font-bold text-[#A3B18A]">Fórmula</TableHead>
                                         <TableHead className="text-center text-[10px] uppercase font-bold text-[#A3B18A]">Estado</TableHead>
                                         <TableHead className="text-right text-[10px] uppercase font-bold text-[#A3B18A]">Acciones</TableHead>
@@ -295,11 +301,16 @@ export default function ProductosAdmin() {
                                     {productos.map((p) => (
                                         <TableRow key={p.id} className="border-[#F5F5F0]">
                                             <TableCell>
+                                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#F5F5F0] border border-[#E9E9E0]">
+                                                    <img src={p.imagen || "https://placehold.co/100"} className="w-full h-full object-cover" alt="" />
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-[#3A4031] text-sm uppercase">{p.nombre}</span>
                                                     <div className="flex gap-2 mt-1">
                                                         {p.destacado && <Badge className="bg-[#4A5D45] text-[8px] h-4">Destacado</Badge>}
-                                                        <span className="text-[9px] text-[#A3B18A] uppercase font-bold">{p.presentaciones?.length || 0} Medidas</span>
+                                                        <span className="text-[9px] text-[#A3B18A] uppercase font-bold">{p.categoria || 'Sin Categoría'}</span>
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -318,19 +329,27 @@ export default function ProductosAdmin() {
                 </div>
             </div>
 
+            {/* Modal Edición Completo */}
             {editingProduct && (
                 <div className="fixed inset-0 bg-[#3A4031]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <Card className="w-full max-w-xl rounded-[2.5rem] shadow-2xl border-none bg-white overflow-hidden">
-                        <CardHeader className="bg-[#F9F9F7] border-b p-8"><CardTitle className="font-serif text-xl">Editar: {editingProduct.nombre}</CardTitle></CardHeader>
+                    <Card className="w-full max-w-xl rounded-[2.5rem] shadow-2xl border-none bg-white overflow-hidden text-left">
+                        <CardHeader className="bg-[#F9F9F7] border-b p-8">
+                            <CardTitle className="font-serif text-xl">Editar: {editingProduct.nombre}</CardTitle>
+                        </CardHeader>
                         <form onSubmit={handleSaveEdit}>
                             <CardContent className="p-8 space-y-4 max-h-[60vh] overflow-y-auto pt-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase font-bold text-[#A3B18A]">Imagen del Producto</label>
+                                    <AdminImageUpload
+                                        value={editForm.imagen}
+                                        onChange={(url) => setEditForm({ ...editForm, imagen: url })}
+                                        onRemove={() => setEditForm({ ...editForm, imagen: "" })}
+                                    />
+                                </div>
                                 <Input value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} placeholder="Nombre" className="rounded-xl h-11" />
-
-                                {/* RESTAURADO: Categoría Texto en Edición */}
-                                <Input value={editForm.categoria} onChange={e => setEditForm({ ...editForm, categoria: e.target.value })} placeholder="Categoría Texto (ej: Rostro, Capilar)" className="rounded-xl h-11" />
-
+                                <Input value={editForm.categoria} onChange={e => setEditForm({ ...editForm, categoria: e.target.value })} placeholder="Categoría Texto" className="rounded-xl h-11" />
                                 <Input value={editForm.descripcionCorta} onChange={e => setEditForm({ ...editForm, descripcionCorta: e.target.value })} placeholder="Descripción corta" className="rounded-xl h-11" />
-                                <Textarea value={editForm.descripcionLarga} onChange={e => setEditForm({ ...editForm, descripcionLarga: e.target.value })} className="rounded-xl min-h-[120px]" placeholder="Descripción magistral" />
+                                <Textarea value={editForm.descripcionLarga} onChange={e => setEditForm({ ...editForm, descripcionLarga: e.target.value })} className="rounded-xl min-h-[120px]" placeholder="Descripción magistral detallada" />
 
                                 <div className="space-y-3 bg-[#F9F9F7] p-4 rounded-2xl border">
                                     <p className="text-[10px] font-bold uppercase text-[#4A5D45]">Presentaciones Activas</p>
@@ -348,7 +367,7 @@ export default function ProductosAdmin() {
                                             <Button type="button" variant="ghost" size="sm" onClick={() => setEditForm({ ...editForm, presentaciones: editForm.presentaciones.filter((_, idx) => idx !== i) })}><Trash2 className="w-4 h-4 text-red-300" /></Button>
                                         </div>
                                     ))}
-                                    <Button type="button" variant="ghost" className="w-full text-[10px] uppercase font-bold" onClick={() => setEditForm({ ...editForm, presentaciones: [...editForm.presentaciones, { nombre: "", precio: "", stock: "" }] })}>+ Añadir Medida</Button>
+                                    <Button type="button" variant="ghost" className="w-full text-[10px] font-bold uppercase" onClick={() => setEditForm({ ...editForm, presentaciones: [...editForm.presentaciones, { nombre: "", precio: "", stock: "" }] })}>+ Añadir Medida</Button>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 bg-[#F9F9F7] p-4 rounded-2xl border">
