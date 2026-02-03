@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/contexts/CartContext'
-import { Minus, Plus, Trash2, FlaskConical } from 'lucide-react'
+import { Minus, Plus, Trash2 } from 'lucide-react'
 import type { CartItem as CartItemType } from '@/contexts/CartContext'
 
 interface CartItemProps {
@@ -39,11 +39,10 @@ export default function CartItem({ item }: CartItemProps) {
 
   return (
     <div className="flex gap-6 group py-2">
-      {/* Imagen del producto con estilo de laboratorio */}
       <Link href={`/tienda/${item.producto.slug}`} className="flex-shrink-0 relative">
         <div className="w-24 h-24 rounded-2xl overflow-hidden bg-[#F9F9F7] border border-[#E9E9E0] transition-transform group-hover:scale-105 duration-300">
           <img
-            src={item.producto.imagen}
+            src={item.producto.imagen ?? undefined}
             alt={item.producto.nombre}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -54,7 +53,6 @@ export default function CartItem({ item }: CartItemProps) {
         </div>
       </Link>
 
-      {/* Información y Controles */}
       <div className="flex-1 min-w-0 flex flex-col justify-between">
         <div className="flex justify-between items-start gap-2">
           <div className="space-y-1">
@@ -66,11 +64,11 @@ export default function CartItem({ item }: CartItemProps) {
             </Link>
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-widest font-bold text-[#A3B18A]">
-                {item.producto.categoria}
+                {item.producto.categoria || 'Magistral'}
               </span>
               <span className="text-[#D6D6C2]">•</span>
               <span className="text-[9px] uppercase tracking-widest text-[#5B6350] font-medium italic">
-                Ref: {String(item.producto.id).padStart(4, '0')}
+                Ref: {String(item.producto.id).split('-')[0].padStart(4, '0')}
               </span>
             </div>
           </div>
@@ -80,7 +78,6 @@ export default function CartItem({ item }: CartItemProps) {
             size="sm"
             onClick={handleRemove}
             className="text-[#D6D6C2] hover:text-red-500 hover:bg-red-50 transition-all rounded-full h-8 w-8 p-0"
-            aria-label="Eliminar del laboratorio"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -88,7 +85,6 @@ export default function CartItem({ item }: CartItemProps) {
 
         <div className="flex items-end justify-between mt-4">
           <div className="flex items-center gap-4">
-            {/* Controles de cantidad estilo "Capsule" */}
             <div className="flex items-center bg-[#F9F9F7] border border-[#E9E9E0] rounded-xl overflow-hidden h-9 shadow-sm">
               <Button
                 variant="ghost"
@@ -108,7 +104,7 @@ export default function CartItem({ item }: CartItemProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleQuantityChange(item.cantidad + 1)}
-                disabled={isUpdating || item.cantidad >= 10}
+                disabled={isUpdating}
                 className="px-3 hover:bg-[#E9E9E0] text-[#4A5D45] h-full rounded-none"
               >
                 <Plus className="h-3 w-3" />
@@ -121,7 +117,6 @@ export default function CartItem({ item }: CartItemProps) {
             </div>
           </div>
 
-          {/* Subtotal Total con tipografía serif */}
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold mb-0.5">Subtotal</p>
             <div className="font-serif font-bold text-lg text-[#4A5D45]">

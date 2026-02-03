@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import prisma from '@/lib/prisma'
 import ProductDetail from '@/components/productos/ProductDetail'
 
-// 🔹 Obtener producto por slug
+// 🔹 Obtener producto por slug (Actualizado con include)
 async function getProducto(slug: string) {
   try {
     const producto = await prisma.producto.findFirst({
@@ -11,6 +11,9 @@ async function getProducto(slug: string) {
         slug,
         activo: true,
       },
+      include: {
+        presentaciones: true, // 👈 VITAL: Sin esto el componente ProductDetail no recibe los tamaños
+      }
     })
 
     return producto
@@ -76,7 +79,7 @@ export default async function ProductoPage({
   return (
     <div className="container mx-auto px-4 py-8">
       <ProductDetail
-        producto={producto}
+        producto={producto as any}
         productosRelacionados={productosRelacionados}
       />
     </div>

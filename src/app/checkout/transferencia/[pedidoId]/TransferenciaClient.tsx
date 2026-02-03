@@ -5,7 +5,6 @@ import ClearCartOnMount from './ClearCartOnMount'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-// IMPORTANTE: Verifica estas tres líneas
 import { Separator } from '@/components/ui/separator'
 import {
     Copy,
@@ -16,12 +15,13 @@ import {
     ChevronRight,
     ClipboardCheck,
     FlaskConical,
-    Loader2 // Asegúrate de que Loader2 esté aquí
+    Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
-import Link from 'next/link' // Añadido para los enlaces del final
+
 type Pedido = {
     id: number
+    numero: string // ✅ Agregamos el campo numero al tipo
     total: number
     descuento: number
     estado: string
@@ -34,25 +34,6 @@ function formatARS(n: number) {
         currency: 'ARS',
         maximumFractionDigits: 0,
     }).format(n)
-}
-
-function prettyEstado(estado?: string | null) {
-    const e = (estado || '').toLowerCase()
-    const map: Record<string, string> = {
-        pending_payment_transfer: 'Pendiente de transferencia',
-        transfer_proof_sent: 'Comprobante en revisión',
-        confirmado: 'Confirmado',
-        pagado: 'Pago Acreditado',
-        pendiente: 'Pendiente',
-        cancelado: 'Cancelado',
-        cancelled_expired: 'Expirado',
-        enviado: 'Despachado',
-        entregado: 'Entregado',
-        en_produccion: 'En Laboratorio',
-        listo_envio: 'Listo para envío',
-        listo_retiro: 'Listo para retiro',
-    }
-    return map[e] || 'En proceso'
 }
 
 export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) {
@@ -162,7 +143,8 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
                         <CheckCircle2 className="w-10 h-10 text-[#4A5D45]" />
                     </div>
                     <h1 className="text-3xl font-serif font-bold text-[#3A4031]">¡Reserva Exitosa!</h1>
-                    <p className="text-[#5B6350] uppercase tracking-[0.2em] text-[10px] font-bold">Pedido #{pedidoId}</p>
+                    {/* ✅ Cambiado pedidoId por pedido.numero */}
+                    <p className="text-[#5B6350] uppercase tracking-[0.2em] text-[10px] font-bold">Pedido {pedido?.numero}</p>
                 </div>
 
                 {/* Status Cards */}
@@ -236,8 +218,9 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
                         </div>
 
                         <div className="pt-4 text-center">
-                            <p className="text-[10px] text-[#A3B18A] italic">
-                                * Por favor, incluí el número <b>#{pedidoId}</b> en el concepto de la transferencia.
+                            <p className="text-[12px] text-[#A3B18A] italic">
+                                {/* ✅ Cambiado pedidoId por pedido.numero */}
+                                * Por favor, incluí el número <b>{pedido?.numero}</b> en el concepto de la transferencia.
                             </p>
                         </div>
                     </div>

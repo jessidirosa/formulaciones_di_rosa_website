@@ -2,67 +2,87 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getProvider } from "@/lib/shipping"
-import type { Carrier } from "@/lib/shipping/providers/types"
+import { generarRotuloYTracking } from "@/lib/shipping"
+import { sendEmail } from "@/lib/email"
+import { emailPedidoEnviado } from "@/lib/emailTemplates"
 
-export async function POST(_req: NextRequest, { params }: { params: any }) {
+export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
     try {
-        const id = Number(params?.id)
-        if (Number.isNaN(id)) {
-            return NextResponse.json({ ok: false, error: "ID inválido" }, { status: 400 })
-        }
+        const { id } = params
+        const pedidoId = Number(id)
 
         const session = await getServerSession(authOptions)
-        const role = (session as any)?.user?.role
-        if (!session?.user?.email) return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 })
-        if (role !== "ADMIN") return NextResponse.json({ ok: false, error: "Sin permisos" }, { status: 403 })
+        const user = session?.user as any
+        if (!session || user?.role !== "ADMIN") {
+            return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 })
+        }
 
-        const pedido = await prisma.pedido.findUnique({ where: { id } })
+        const pedido = await prisma.pedido.findUnique({ where: { id: pedidoId } })
         if (!pedido) return NextResponse.json({ ok: false, error: "Pedido no encontrado" }, { status: 404 })
 
-        // Validaciones mínimas para shipping
-        if (!pedido.direccion || !pedido.ciudad || !pedido.provincia || !pedido.codigoPostal) {
-            return NextResponse.json(
-                { ok: false, error: "Faltan datos de envío (dirección/ciudad/provincia/CP)" },
-                { status: 400 }
-            )
+
+        // 1. Identificar el tipo de entrega
+        const esSucursal = pedido.tipoEntrega === "SUCURSAL_CORREO" || !!pedido.sucursalId;
+        const esRetiroLocal = pedido.metodoEnvio?.toLowerCase().includes("local");
+
+        // 2. Aplicar validación según el tipo (SOLO UNA VEZ)
+        if (esRetiroLocal) {
+            return NextResponse.json({ ok: false, error: "No se genera rótulo para retiro en local." }, { status: 400 });
         }
 
-        const carrier = ((pedido.carrier || "CORREO_ARGENTINO") as Carrier)
-        const provider = getProvider(carrier)
-
-        // Armar input común (lo vas a adaptar según API real)
-        const input = {
-            pedidoId: pedido.id,
-            numero: pedido.numero,
-            nombre: `${pedido.nombreCliente ?? ""} ${pedido.apellidoCliente ?? ""}`.trim(),
-            telefono: pedido.telefonoCliente,
-            email: pedido.emailCliente,
-            direccion: pedido.direccion,
-            ciudad: pedido.ciudad,
-            provincia: pedido.provincia,
-            codigoPostal: pedido.codigoPostal,
-            sucursalId: pedido.sucursalId,
-            sucursalNombre: pedido.sucursalNombre ?? pedido.sucursalCorreo,
-            total: pedido.total,
+        if (esSucursal) {
+            // 🔹 FLEXIBILIDAD: Si no hay ID pero hay nombre, permitimos continuar
+            // Algunos carriers permiten buscar la sucursal por nombre o CP si el ID falla
+            if (!pedido.sucursalId && !pedido.sucursalNombre) {
+                return NextResponse.json({
+                    ok: false,
+                    error: "Faltan datos de la sucursal (se requiere ID o Nombre de sucursal)."
+                }, { status: 400 });
+            }
+        } else {
+            if (!pedido.direccion || !pedido.ciudad || !pedido.provincia) {
+                return NextResponse.json({
+                    ok: false,
+                    error: "Faltan datos de domicilio (Calle/Ciudad/Provincia)."
+                }, { status: 400 });
+            }
         }
 
-        const label = await provider.createLabel(input)
+        // 3. Proceder con el servicio de shipping
+        const result = await generarRotuloYTracking(pedido)
 
         const updated = await prisma.pedido.update({
-            where: { id },
+            where: { id: pedidoId },
             data: {
-                trackingNumber: label.trackingCode,
-                trackingUrl: label.trackingUrl ?? null,
-                labelUrl: label.labelUrl,
+                trackingNumber: result.trackingNumber,
+                trackingUrl: result.trackingUrl,
+                labelUrl: (result as any).labelUrl || null,
                 estado: "enviado",
                 shippedAt: new Date(),
             },
         })
 
+        try {
+            if (updated.emailCliente) {
+                await sendEmail(
+                    updated.emailCliente,
+                    "🚚 ¡Tu pedido Di Rosa está en camino!",
+                    emailPedidoEnviado({
+                        nombre: updated.nombreCliente || "",
+                        pedidoNumero: updated.numero,
+                        trackingNumber: updated.trackingNumber,
+                        trackingUrl: updated.trackingUrl,
+                        carrier: updated.carrier
+                    })
+                )
+            }
+        } catch (emailErr) {
+            console.error("⚠️ Error al enviar mail de despacho:", emailErr)
+        }
+
         return NextResponse.json({ ok: true, pedido: updated })
-    } catch (e) {
+    } catch (e: any) {
         console.error("❌ generar-rotulo:", e)
-        return NextResponse.json({ ok: false, error: "Error interno" }, { status: 500 })
+        return NextResponse.json({ ok: false, error: e.message || "Error interno" }, { status: 500 })
     }
 }

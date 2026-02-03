@@ -1,90 +1,113 @@
-"use client"
+'use client'
 
-import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
-import { useUser } from "@/contexts/UserContext"
+import { useState } from 'react'
+import Link from 'next/link'
 import { useCart } from "@/contexts/CartContext"
+import { useUser } from "@/contexts/UserContext"
 import { Button } from "@/components/ui/button"
-import logo from '@/logo.png';
+// ✅ Importamos el banner que ya tenías
+import AnnouncementBanner from "@/components/ui/AnnouncementBanner"
+import { ShoppingCart, User, Menu, X, LogOut, Settings } from "lucide-react"
 
 export default function Header() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { user, isAuthenticated, isLoading, logout } = useUser()
   const { state } = useCart()
+  const { user, logout, isAuthenticated } = useUser()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [logoError, setLogoError] = useState(false)
 
-  const totalItems = state.items.reduce(
-    (acc: number, item: any) => acc + item.cantidad,
-    0
-  )
-
-  const handleLogout = async () => {
-    await logout()
-    router.push("/")
-  }
-
-  // Color Musgo para el link activo
-  const isActive = (href: string) =>
-    pathname === href ? "text-[#4A5D45] font-bold border-b-2 border-[#4A5D45]" : "text-gray-600 hover:text-[#4A5D45]"
+  // ✅ LOGICA DE LOGO: 
+  // Podés subir tu logo a Cloudinary y pegar la URL acá, 
+  // o ponerlo en /public/logo.png y usar '/logo.png'
+  const logoSrc = !logoError
+    ? 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1769794235/logo_m6yjjl.png'
+    : 'https://placehold.co/200x60/4A5D45/F5F5F0?text=DI+ROSA'
 
   return (
-    <header className="border-b bg-white sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo con mejor centrado */}
-        <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
-          <img src={logo.src} alt="Formulaciones Di Rosa" className="h-12 w-auto object-contain" />
-        </Link>
+    <header className="w-full z-50">
+      {/* Banner de Anuncios */}
+      <AnnouncementBanner />
 
-        {/* Navegación - Text-xs para un aire más profesional */}
-        <nav className="hidden md:flex items-center gap-8 text-[13px] uppercase tracking-widest">
-          <Link href="/" className={`${isActive("/")} transition-all pb-1`}>Inicio</Link>
-          <Link href="/tienda" className={`${isActive("/tienda")} transition-all pb-1`}>Tienda</Link>
-          <Link href="/sobre-nosotros" className={`${isActive("/sobre-nosotros")} transition-all pb-1`}>Nosotros</Link>
-          <Link href="/contacto" className={`${isActive("/contacto")} transition-all pb-1`}>Contacto</Link>
-        </nav>
+      <nav className="bg-white/80 backdrop-blur-md border-b border-[#E9E9E0] py-4">
+        <div className="container mx-auto px-4 flex items-center justify-between">
 
-        {/* Acciones derecha */}
-        <div className="flex items-center gap-4">
-          <Link href="/carrito" className="group relative">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-100 bg-gray-50 group-hover:bg-[#E9E9E0] transition-colors">
-              <span className="text-xl">🛒</span>
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#4A5D45] text-[10px] font-bold text-white shadow-sm">
-                  {totalItems}
-                </span>
-              )}
+          {/* Logo con lógica de error */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="h-10 w-auto">
+              <img
+                src={logoSrc}
+                alt="Laboratorio Di Rosa"
+                className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                onError={() => setLogoError(true)}
+              />
             </div>
           </Link>
 
-          {isLoading ? (
-            <div className="h-9 w-24 bg-gray-50 rounded-full animate-pulse" />
-          ) : isAuthenticated && user ? (
-            <div className="flex items-center gap-2">
-              <Link href="/mi-cuenta">
-                <Button variant="ghost" className="text-[#3A4031] font-semibold text-sm">
-                  Hola, {user.nombre}
+          {/* Menú Desktop */}
+          <div className="hidden md:flex items-center gap-8">
+            <Link href="/tienda" className="text-[10px] uppercase font-bold tracking-widest text-[#3A4031] hover:text-[#A3B18A] transition-colors">Tienda</Link>
+            <Link href="/sobre-nosotros" className="text-[10px] uppercase font-bold tracking-widest text-[#3A4031] hover:text-[#A3B18A] transition-colors">Nosotros</Link>
+            <Link href="/contacto" className="text-[10px] uppercase font-bold tracking-widest text-[#3A4031] hover:text-[#A3B18A] transition-colors">Contacto</Link>
+          </div>
+
+          {/* Acciones */}
+          <div className="flex items-center gap-2">
+            {isAuthenticated && user?.role === "ADMIN" && (
+              <Link href="/admin">
+                <Button variant="ghost" size="icon" className="text-[#4A5D45]">
+                  <Settings className="h-5 w-5" />
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" onClick={handleLogout} className="text-xs border-[#D6D6C2] rounded-full">
-                Salir
+            )}
+
+            <Link href="/carrito">
+              <Button variant="ghost" size="icon" className="relative text-[#4A5D45]">
+                <ShoppingCart className="h-5 w-5" />
+                {state.items.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#A3B18A] text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                    {state.items.length}
+                  </span>
+                )}
               </Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
+            </Link>
+
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2 ml-2">
+                <Link href="/mi-cuenta">
+                  <Button variant="ghost" size="sm" className="hidden md:flex items-center gap-2 text-[#4A5D45] font-bold text-[10px] uppercase tracking-tighter">
+                    <User className="h-4 w-4" /> {user?.nombre || 'Mi Cuenta'}
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={logout} className="text-red-400">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
               <Link href="/mi-cuenta/login">
-                <Button variant="ghost" size="sm" className="text-gray-600 text-xs font-bold uppercase tracking-wider">
-                  Ingresar
+                <Button variant="ghost" size="icon" className="text-[#4A5D45]">
+                  <User className="h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/mi-cuenta/registro">
-                <Button size="sm" className="bg-[#4A5D45] hover:bg-[#3D4C39] text-white text-xs font-bold uppercase tracking-wider rounded-full px-5">
-                  Registrarme
-                </Button>
-              </Link>
-            </div>
+            )}
+
+            {/* Botón Móvil */}
+            <Button variant="ghost" size="icon" className="md:hidden ml-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Menú Móvil */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white border-b border-[#E9E9E0] p-6 space-y-4 animate-in slide-in-from-top duration-300 text-left">
+          <Link href="/tienda" className="block text-xs font-bold uppercase tracking-widest text-[#3A4031]" onClick={() => setIsMenuOpen(false)}>Tienda</Link>
+          <Link href="/sobre-nosotros" className="block text-xs font-bold uppercase tracking-widest text-[#3A4031]" onClick={() => setIsMenuOpen(false)}>Nosotros</Link>
+          <Link href="/contacto" className="block text-xs font-bold uppercase tracking-widest text-[#3A4031]" onClick={() => setIsMenuOpen(false)}>Contacto</Link>
+          {isAuthenticated && (
+            <Link href="/mi-cuenta" className="block text-xs font-bold uppercase tracking-widest text-[#4A5D45]" onClick={() => setIsMenuOpen(false)}>Mi Perfil</Link>
           )}
         </div>
-      </div>
+      )}
     </header>
   )
 }

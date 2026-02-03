@@ -5,7 +5,7 @@ import ProductFilters from '@/components/productos/ProductFilters'
 import { Separator } from '@/components/ui/separator'
 import CategoriesMenu from "@/components/productos/CategoriesMenu"
 
-// 1. LÓGICA DE DATOS (Mantenida intacta)
+// 1. LÓGICA DE DATOS (Actualizada para incluir presentaciones)
 async function getProductos(searchParams?: {
   categoria?: string
   busqueda?: string
@@ -39,6 +39,7 @@ async function getProductos(searchParams?: {
       where,
       orderBy,
       include: {
+        presentaciones: true, // 👈 AGREGADO: Vital para que la ProductCard vea precios y stock
         categorias: { include: { categoria: true } },
       },
     })

@@ -21,9 +21,9 @@ export default function CheckoutForm({ data, onChange, onNext }: CheckoutFormPro
     const newErrors: Record<string, string> = {}
     if (!data.nombre.trim()) newErrors.nombre = 'El nombre es requerido'
     if (!data.apellido.trim()) newErrors.apellido = 'El apellido es requerido'
-    if (!data.email.trim()) {
+    if (!data.emailCliente.trim()) {
       newErrors.email = 'El email es requerido'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.emailCliente)) {
       newErrors.email = 'El email no es válido'
     }
     if (!data.telefono.trim()) {
@@ -97,10 +97,11 @@ export default function CheckoutForm({ data, onChange, onNext }: CheckoutFormPro
           <Input
             id="email"
             type="email"
-            value={data.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-            placeholder="paciente@correo.com"
+            value={data.emailCliente || ""}
+            onChange={(e) => onChange({ emailCliente: e.target.value })}
+            placeholder="tu@email.com"
             className={`bg-[#F9F9F7] border-[#E9E9E0] rounded-xl h-11 focus:ring-[#A3B18A] ${errors.email ? 'border-red-400' : ''}`}
+            required
           />
           {errors.email && <p className="text-[10px] text-red-500 font-bold italic">{errors.email}</p>}
         </div>
@@ -121,7 +122,7 @@ export default function CheckoutForm({ data, onChange, onNext }: CheckoutFormPro
 
           <div className="space-y-2">
             <Label htmlFor="dni" className="text-xs font-bold text-[#5B6350] uppercase tracking-wider flex items-center gap-2">
-              DNI <span className="text-[10px] text-[#A3B18A] lowercase font-normal">(Para envíos por Andreani)</span>
+              DNI * <span className="text-[10px] text-[#A3B18A] lowercase font-normal">(Para envíos por Andreani)</span>
             </Label>
             <Input
               id="dni"

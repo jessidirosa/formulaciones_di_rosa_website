@@ -1,13 +1,5 @@
 pagina web:
 
 - no se pueden eliminar categorías que no sean la ultima que añadiste
-- error al buscar pedidos por id
-- no toma el apellido como tal
-- cuando desde el carrito tocas las categorías que te aparecen no las muestra
-- faltan credenciales de Gmail
-- id del pedido por transferencia no es id del pedido como tal
 - api correo para que haga los rotulos
-- generar rotulo pide datos de envio que si es a sucursal no los tiene que llenar
-- estados de pedido: el confirmar no modifica el menu desplegable, y el confirmar del menu no confirma el pedido
-- estado enviado -> ver tema tracking
-- los productos deben tener distintos valores dentro para los volumenes
+- paginas terminos y condiciones y politica de envios

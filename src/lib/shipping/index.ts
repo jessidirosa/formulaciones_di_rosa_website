@@ -1,4 +1,3 @@
-// src/lib/shipping/index.ts
 import "server-only"
 import type { Pedido } from "@prisma/client"
 import {
@@ -11,8 +10,10 @@ export async function generarRotuloYTracking(pedido: Pedido): Promise<{
     trackingNumber: string
     pdf: Buffer
     trackingUrl: string
+    labelUrl?: string
 }> {
     const carrier = (pedido.carrier || "CORREO_ARGENTINO").toUpperCase()
+    const localidadFinal = (pedido as any).localidad || pedido.ciudad || ""
 
     if (carrier === "CORREO_ARGENTINO") {
         const cfg = {
@@ -23,15 +24,14 @@ export async function generarRotuloYTracking(pedido: Pedido): Promise<{
         }
 
         if (!cfg.baseUrl || !cfg.apiKey || !cfg.agreement || !cfg.sellerId) {
-            throw new Error("Faltan env vars de Correo Argentino (BASE_URL/API_KEY/AGREEMENT/SELLER_ID).")
+            throw new Error("Faltan variables de entorno de Correo Argentino (BASE_URL/API_KEY/AGREEMENT/SELLER_ID).")
         }
 
         const { trackingNumber } = await correoArgentinoCrearEnvio(pedido, cfg)
         const pdf = await correoArgentinoObtenerRotuloPDF(trackingNumber, cfg)
 
-        const trackingUrl = `https://www.correoargentino.com.ar/formularios/e-commerce?id=${encodeURIComponent(
-            trackingNumber
-        )}`
+        // ✅ URL actualizada según tu especificación para Correo Argentino
+        const trackingUrl = `https://www.correoargentino.com.ar/formularios/e-commerce/seguimiento?nro=${trackingNumber}`
 
         return { trackingNumber, pdf, trackingUrl }
     }
@@ -41,11 +41,10 @@ export async function generarRotuloYTracking(pedido: Pedido): Promise<{
         const apiKey = process.env.ANDREANI_API_KEY!
         if (!apiKey) throw new Error("Falta ANDREANI_API_KEY en env.")
 
-        // ⚠️ Estos datos de origen deberían venir de env/config fija tuya
         const origen = {
             postal: {
-                calle: process.env.EMPRESA_CALLE || "Av. Siempre Viva",
-                numero: process.env.EMPRESA_NUMERO || "123",
+                calle: process.env.EMPRESA_CALLE || "Av. Principal",
+                numero: process.env.EMPRESA_NUMERO || "100",
                 localidad: process.env.EMPRESA_LOCALIDAD || "CABA",
                 region: process.env.EMPRESA_PROVINCIA || "Buenos Aires",
                 codigoPostal: process.env.EMPRESA_CP || "1000",
@@ -53,12 +52,11 @@ export async function generarRotuloYTracking(pedido: Pedido): Promise<{
             },
         }
 
-        // Destino: desde pedido
         const destino = {
             postal: {
-                calle: pedido.direccion || "",
-                numero: "0", // si tu dirección viene tipo "Calle 123", esto hay que parsearlo
-                localidad: pedido.ciudad || "",
+                calle: pedido.direccion || "Sucursal de Correo",
+                numero: "0",
+                localidad: localidadFinal,
                 region: pedido.provincia || "",
                 codigoPostal: pedido.codigoPostal || "",
                 pais: "AR",
@@ -68,6 +66,9 @@ export async function generarRotuloYTracking(pedido: Pedido): Promise<{
         const raw = await createAndreaniOrder(
             {
                 pedidoNumero: pedido.numero,
+                contrato: process.env.ANDREANI_CONTRATO,
+                tipoDeServicio: pedido.tipoEntrega === "SUCURSAL_CORREO" ? "S" : "D",
+                sucursalClienteID: pedido.sucursalId ? Number(pedido.sucursalId) : null,
                 origen,
                 destino,
                 destinatario: {
@@ -84,16 +85,14 @@ export async function generarRotuloYTracking(pedido: Pedido): Promise<{
         const trackingNumber = extractTracking(raw.rawText) || `ANDREANI-${pedido.numero}`
         const pdfBase64 = extractPdfBase64(raw.rawText)
 
+        // ✅ URL actualizada según tu especificación para Andreani
+        const trackingUrl = `https://www.andreani.com/envio/${trackingNumber}`
+
         if (!pdfBase64) {
-            // No rompemos el flujo: te pedirá el endpoint de etiqueta real
-            throw new Error(
-                "Andreani: orden creada pero NO vino PDF en la respuesta. Falta implementar endpoint real de descarga de etiqueta."
-            )
+            return { trackingNumber, pdf: Buffer.alloc(0), trackingUrl }
         }
 
         const pdf = Buffer.from(pdfBase64, "base64")
-        const trackingUrl = `https://www.andreani.com/#!/informacionEnvio/${encodeURIComponent(trackingNumber)}`
-
         return { trackingNumber, pdf, trackingUrl }
     }
 

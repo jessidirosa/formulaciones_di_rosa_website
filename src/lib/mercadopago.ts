@@ -24,65 +24,46 @@ export interface PreferenceItem {
   picture_url?: string
 }
 
-export interface PreferencePayload {
-  items: PreferenceItem[]
-  back_urls: {
-    success: string
-    failure: string
-    pending: string
-  }
-  auto_return: 'approved' | 'all'
-  external_reference: string
-  notification_url?: string
-  payer?: {
-    name?: string
-    surname?: string
-    email?: string
-    phone?: {
-      area_code?: string
-      number?: string
-    }
-    address?: {
-      zip_code?: string
-      street_name?: string
-      street_number?: string
-    }
-  }
-  payment_methods?: {
-    excluded_payment_types?: Array<{ id: string }>
-    excluded_payment_methods?: Array<{ id: string }>
-    installments?: number
-  }
-  shipments?: {
-    cost?: number
-    mode?: string
-  }
-}
-
 /**
  * Crea una preferencia de pago en Mercado Pago
  */
 export async function crearPreferencia(payload: any) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  // Aseguramos que la URL base no tenga una barra al final para evitar // en la URL
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 
-  // Armamos un body MINIMAL para Mercado Pago,
-  // sin auto_return así no molesta.
+  // Es vital que el pedidoId llegue en metadata desde create-order
+  const pedidoId = payload.metadata?.pedidoId;
+
+  if (!pedidoId) {
+    console.error('❌ Error: Se intentó crear una preferencia sin pedidoId en metadata.');
+    throw new Error('Falta el ID del pedido para procesar el pago.');
+  }
+
+  // Armamos el body asegurando que los tipos sean correctos para la API de MP
   const body: any = {
-    items: payload.items,
-    payer: payload.payer,
+    items: payload.items.map((it: any) => ({
+      ...it,
+      unit_price: Number(it.unit_price) // Forzamos que sea número
+    })),
+    payer: {
+      name: payload.payer?.name || '',
+      surname: payload.payer?.surname || '',
+      email: payload.payer?.email || '',
+    },
     notification_url: `${baseUrl}/api/mercadopago/webhook`,
-    external_reference: payload.external_reference,
-    payment_methods: payload.payment_methods,
+    external_reference: String(payload.external_reference),
     metadata: payload.metadata,
-    // si querés, también podés mandar statement_descriptor:
-    statement_descriptor: 'FORMULACIONES DI ROSA',
+    statement_descriptor: 'DI ROSA FORMULACIONES',
+    back_urls: {
+      success: `${baseUrl}/checkout/confirmacion/${pedidoId}?status=approved`,
+      failure: `${baseUrl}/checkout/confirmacion/${pedidoId}?status=rejected`,
+      pending: `${baseUrl}/checkout/confirmacion/${pedidoId}?status=pending`,
+    },
+    // No usamos auto_return para evitar el error de validación estricta en localhost
   };
 
   try {
-    console.log('🎯 Creando preferencia en Mercado Pago:', {
-      items: body.items?.length,
-      external_reference: body.external_reference,
-    });
+    console.log('🎯 Intentando crear preferencia para Pedido ID:', pedidoId);
 
     const preferenceResponse = await preference.create({ body });
 
@@ -93,13 +74,14 @@ export async function crearPreferencia(payload: any) {
       init_point: preferenceResponse.init_point,
       sandbox_init_point: preferenceResponse.sandbox_init_point,
     };
-  } catch (error) {
-    console.error('❌ Error al crear preferencia:', error);
+  } catch (error: any) {
+    // Log detallado para saber EXACTAMENTE qué campo rechaza Mercado Pago
+    console.error('❌ Error detallado al crear preferencia:', error.message);
+    if (error.cause) console.error('Causa del error:', JSON.stringify(error.cause, null, 2));
+
     throw new Error('Error al crear preferencia de pago');
   }
 }
-
-
 
 /**
  * Obtiene información de un pago por su ID

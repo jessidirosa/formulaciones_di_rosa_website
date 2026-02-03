@@ -31,6 +31,7 @@ export async function GET(
 
         const now = new Date()
 
+        // Mantenemos la lógica de expiración para actualizar el estado antes de devolverlo
         await prisma.pedido.updateMany({
             where: {
                 id,
@@ -45,6 +46,7 @@ export async function GET(
             where: { id, userId: user.id },
             select: {
                 id: true,
+                numero: true, // ✅ Agregado: para que el cliente vea el ID institucional (P-...)
                 total: true,
                 descuento: true,
                 estado: true,

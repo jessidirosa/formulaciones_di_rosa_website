@@ -13,12 +13,9 @@ model Producto {
   nombre           String
   slug             String   @unique
   descripcionCorta String?
-  descripcionLarga String?   // 👈 NUEVO
-
-  /// si querés conservar una categoría principal de texto:
+  descripcionLarga String?
   categoria        String?
-
-  precio           Float
+  precio           Float    // Mantener como "Precio base" o referencia
   imagen           String?
   stock            Int?     @default(0)
   activo           Boolean  @default(true)
@@ -27,12 +24,21 @@ model Producto {
   creadoEn         DateTime @default(now())
   actualizadoEn    DateTime @updatedAt
 
-  itemsPedido PedidoItem[]
-
-  // 🔹 Relación muchas-a-muchas con Categoría
-  categorias ProductosCategorias[]
+  itemsPedido      PedidoItem[]
+  categorias       ProductosCategorias[]
+  
+  // 🔹 NUEVO: Relación con presentaciones
+  presentaciones   Presentacion[] 
 }
 
+model Presentacion {
+  id         Int      @id @default(autoincrement())
+  nombre     String   // Ej: "30ml", "60ml"
+  precio     Float
+  stock      Int      @default(0)
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+}
 model Categoria {
   id    Int    @id @default(autoincrement())
   nombre String
@@ -55,9 +61,11 @@ model ProductosCategorias {
 
 model User {
   id           Int      @id @default(autoincrement())
-  name         String?
+  nombre       String?  // Cambiado de name a nombre
+  apellido     String?  // Agregado apellido
   email        String   @unique
   passwordHash String
+  telefono     String?  // Agregado para que también se autocomplete
   role         String   @default("USER")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -77,6 +85,12 @@ model Pedido {
   metodoPago String?   @default("MERCADOPAGO")
   expiresAt  DateTime?
   publicToken String?  @unique
+
+  cuponCodigo      String?
+  cuponDescuento   Float?   @default(0)
+
+  mercadopagoUrl String?
+  
   transferProofStatus String?   // "none" | "sent"
   transferProofNote   String?
   transferProofUrl    String?
@@ -96,6 +110,12 @@ model Pedido {
   customerEmailSentAt DateTime?
   confirmedEmailSentAt DateTime?
 
+// Nuevos campos para detalle de pago
+  mpPaymentMethod String?  // Ej: "visa", "mastercard", "account_money"
+  mpPaymentType   String?  // Ej: "credit_card", "debit_card", "account_money"
+  mpInstallments  Int?     @default(1)
+  mpFee           Float?   // Comisión real cobrada por MP (opcional)
+  netoReal        Float?   // El valor final que te queda después de comisiones
 
   // 🔹 Relación con el usuario (opcional)
   userId Int?
@@ -116,6 +136,7 @@ model Pedido {
   tipoEntrega    String?
   direccion      String?
   ciudad         String?
+  localidad      String?
   provincia      String?
   codigoPostal   String?
   sucursalCorreo String?
@@ -134,4 +155,23 @@ model PedidoItem {
 
   pedido   Pedido    @relation(fields: [pedidoId], references: [id])
   producto Producto? @relation(fields: [productoId], references: [id])
+}
+
+model Cupon {
+  id               Int      @id @default(autoincrement())
+  codigo           String   @unique
+  descripcion      String?
+  tipo             TipoCupon // PORCENTAJE o MONTO_FIJO
+  valor            Float
+  montoMinimo      Float?
+  limiteUsos       Int?
+  usos             Int      @default(0)
+  activo           Boolean  @default(true)
+  fechaVencimiento DateTime?
+  createdAt        DateTime @default(now())
+}
+
+enum TipoCupon {
+  PORCENTAJE
+  MONTO_FIJO
 }
