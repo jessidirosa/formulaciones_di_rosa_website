@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, TipoCupon } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -8,38 +8,40 @@ async function main() {
 
   // 1. Crear usuario administrador
   const adminPassword = await bcrypt.hash('admin123', 12)
-  const admin = await prisma.user.upsert({ // ✅ Cambiado 'usuario' por 'user'
+  const admin = await prisma.user.upsert({ // ✅ Cambiado a .user
     where: { email: 'admin@formulacionesdirosa.com' },
     update: {},
     create: {
       email: 'admin@formulacionesdirosa.com',
-      passwordHash: adminPassword, // ✅ Cambiado 'password' por 'passwordHash'
+      passwordHash: adminPassword, // ✅ Campo correcto: passwordHash
       nombre: 'Administrador',
       apellido: 'Sistema',
       telefono: '+541122334455',
-      role: 'ADMIN' // ✅ Cambiado 'esAdmin: true' por 'role: ADMIN'
+      role: 'ADMIN' // ✅ Campo correcto: role
     }
   })
   console.log('✅ Usuario admin creado:', admin.email)
 
   // 2. Crear usuario de prueba
   const userPassword = await bcrypt.hash('usuario123', 12)
-  const testUser = await prisma.user.upsert({ // ✅ Cambiado 'usuario' por 'user'
+  const testUser = await prisma.user.upsert({ // ✅ Cambiado a .user
     where: { email: 'cliente@ejemplo.com' },
     update: {},
     create: {
       email: 'cliente@ejemplo.com',
-      passwordHash: userPassword, // ✅ Cambiado 'password' por 'passwordHash'
+      passwordHash: userPassword, // ✅ Campo correcto: passwordHash
       nombre: 'María',
       apellido: 'González',
       telefono: '+541134567890',
-      role: 'USER' // ✅ Cambiado 'esAdmin: false' por 'role: USER'
+      role: 'USER'
     }
   })
   console.log('✅ Usuario test creado:', testUser.email)
 
-  // 3. Crear productos de ejemplo (Mantenemos tu lógica)
-  const productos = [
+  // 3. Crear productos de ejemplo
+  // Nota: Eliminé campos que no existen en tu modelo Producto (beneficios, modoUso, tiposPiel)
+  // para evitar errores de compilación.
+  const productosData = [
     {
       nombre: 'Crema Antiage con Retinol Natural',
       slug: 'crema-antiage-retinol-natural',
@@ -48,26 +50,47 @@ async function main() {
       categoria: 'Antiage',
       precio: 12500,
       imagen: 'https://placehold.co/500x500?text=Crema+Antiage+Retinol+Natural',
-      beneficios: 'Reduce arrugas|Estimula colágeno|Mejora textura|Antioxidante',
-      modoUso: 'Aplicar por las noches sobre rostro limpio.',
-      tiposPiel: 'Normal|Mixta|Madura',
       destacado: true,
       stock: 25
+    },
+    {
+      nombre: 'Serum Antimanchas con Vitamina C',
+      slug: 'serum-antimanchas-vitamina-c',
+      descripcionCorta: 'Serum concentrado que unifica el tono y reduce manchas',
+      descripcionLarga: 'Serum facial con alta concentración de vitamina C estabilizada que ayuda a unificar el tono de la piel, reduce las manchas y aporta luminosidad.',
+      categoria: 'Manchas',
+      precio: 9800,
+      imagen: 'https://placehold.co/500x500?text=Serum+Vitamina+C+Antimanchas',
+      destacado: true,
+      stock: 30
     }
-    // ... podés dejar el resto de tus productos igual
   ]
 
-  for (const producto of productos) {
+  for (const p of productosData) {
     await prisma.producto.upsert({
-      where: { slug: producto.slug },
-      update: producto,
-      create: producto
+      where: { slug: p.slug },
+      update: {},
+      create: p
     })
   }
   console.log('✅ Productos creados')
 
-  // 4. Configuraciones y Cupones (Tu código original estaba bien aquí)
-  // ... (mantené el resto igual)
+  // 4. Crear cupones de ejemplo
+  const cupon = await prisma.cupon.upsert({
+    where: { codigo: 'BIENVENIDO10' },
+    update: {},
+    create: {
+      codigo: 'BIENVENIDO10',
+      descripcion: 'Descuento de bienvenida del 10%',
+      tipo: TipoCupon.PORCENTAJE, // ✅ Uso del Enum correcto
+      valor: 10,
+      montoMinimo: 5000,
+      fechaVencimiento: new Date('2025-12-31'),
+      activo: true,
+      limiteUsos: 100
+    }
+  })
+  console.log('✅ Cupón creado:', cupon.codigo)
 
   console.log('🎉 Seed completado exitosamente!')
 }
