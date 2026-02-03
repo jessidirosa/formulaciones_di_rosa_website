@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("postgresql://postgres.nsbxiiksaucgcmohrwkj:X!G-n!4s4bx!ak7@aws-0-us-west-2.pooler.supabase.com:6543/postgres")   // Aquí va la URL con puerto 6543 (Pooler)
-  directUrl = env("postgresql://postgres:X!G-n!4s4bx!ak7@db.nsbxiiksaucgcmohrwkj.supabase.co:5432/postgres")     // Aquí va la URL con puerto 5432 (Directa)
+  url       = env("DATABASE_URL")   // ✅ Solo el nombre de la variable
+  directUrl = env("DIRECT_URL")     // ✅ Solo el nombre de la variable
 }
 
 model Producto {
