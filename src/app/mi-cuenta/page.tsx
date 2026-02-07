@@ -49,7 +49,7 @@ export default function MiCuentaPage() {
   const [editForm, setEditForm] = useState({
     nombre: '',
     apellido: '',
-    email: '', // Agregado campo email
+    email: '',
     telefono: '',
     currentPassword: '',
     newPassword: ''
@@ -68,7 +68,7 @@ export default function MiCuentaPage() {
       setEditForm({
         nombre: user.nombre || '',
         apellido: user.apellido || '',
-        email: user.email || '', // Inicializado con el email del usuario
+        email: user.email || '',
         telefono: user.telefono || '',
         currentPassword: '',
         newPassword: ''
@@ -104,14 +104,18 @@ export default function MiCuentaPage() {
 
       if (response.ok) {
         toast.success("Perfil actualizado correctamente")
+
+        // Si el email cambió, NextAuth necesita re-autenticar. 
+        // Lo más seguro es desloguear para evitar errores de sesión.
+        if (editForm.email !== user?.email) {
+          toast.info("Email actualizado. Por seguridad, iniciá sesión nuevamente.")
+          setTimeout(() => handleLogout(), 2000)
+          return
+        }
+
         if (refreshUser) await refreshUser()
         setIsEditModalOpen(false)
         setEditForm(prev => ({ ...prev, currentPassword: '', newPassword: '' }))
-
-        // Si el email cambió, podrías opcionalmente cerrar sesión o avisar al usuario
-        if (editForm.email !== user?.email) {
-          toast.info("Has cambiado tu email de acceso.")
-        }
       } else {
         toast.error(data.error || "Error al actualizar el perfil")
       }
@@ -173,7 +177,7 @@ export default function MiCuentaPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 border-l-4 border-[#4A5D45] pl-6 gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-[#3A4031]">Tu cuenta</h1>
-            <p className="text-[#5B6350] font-medium italic mt-1">
+            <p className="text-[#5B6350] font-medium italic mt-1 text-left">
               Bienvenid@, {user.nombre}. Gestioná tus fórmulas y pedidos.
             </p>
           </div>
@@ -348,7 +352,6 @@ export default function MiCuentaPage() {
                     </div>
                   </div>
 
-                  {/* Campo de Email Agregado */}
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-[#A3B18A] flex items-center gap-1">
                       <Mail className="w-3 h-3" /> Email de acceso
@@ -387,6 +390,7 @@ export default function MiCuentaPage() {
                         onChange={e => setEditForm({ ...editForm, currentPassword: e.target.value })}
                         className="rounded-xl bg-white"
                         placeholder="••••••••"
+                        autoComplete="current-password"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -397,6 +401,7 @@ export default function MiCuentaPage() {
                         onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })}
                         className="rounded-xl bg-white"
                         placeholder="Mínimo 6 caracteres"
+                        autoComplete="new-password"
                       />
                     </div>
                   </div>

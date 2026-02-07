@@ -39,7 +39,16 @@ export async function PATCH(req: NextRequest) {
   try {
     const { nombre, apellido, email, telefono, currentPassword, newPassword } = await req.json()
 
-    // 1. Si el usuario intenta cambiar el email, verificamos disponibilidad
+    // Buscamos al usuario actual una sola vez para validaciones
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+    }
+
+    // 1. Si intenta cambiar el email, verificamos que no esté en uso por OTRO
     if (email && email !== session.user.email) {
       const existingUser = await prisma.user.findUnique({
         where: { email }
@@ -49,15 +58,12 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // 2. Lógica para cambio de contraseña si se envían ambos campos
+    // 2. Lógica para cambio de contraseña
     let passwordUpdate = {}
-    if (currentPassword && newPassword) {
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email }
-      })
-
-      if (!user) {
-        return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+    if (currentPassword || newPassword) {
+      // Si envió uno pero no el otro
+      if (!currentPassword || !newPassword) {
+        return NextResponse.json({ error: "Debes ingresar la contraseña actual y la nueva" }, { status: 400 })
       }
 
       const isMatch = await bcrypt.compare(currentPassword, user.passwordHash)
@@ -65,25 +71,30 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: "La contraseña actual es incorrecta" }, { status: 400 })
       }
 
+      if (newPassword.length < 6) {
+        return NextResponse.json({ error: "La nueva contraseña debe tener al menos 6 caracteres" }, { status: 400 })
+      }
+
       const newPasswordHash = await bcrypt.hash(newPassword, 12)
       passwordUpdate = { passwordHash: newPasswordHash }
     }
 
-    // 3. Actualización en la base de datos
+    // 3. Actualización final en la base de datos
+    // Usamos el ID del usuario (que es inmutable) en lugar del email para evitar errores si el email cambia
     const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
+      where: { id: user.id },
       data: {
-        nombre,
-        apellido,
-        email, // Actualizamos el email
-        telefono,
+        nombre: nombre || user.nombre,
+        apellido: apellido || user.apellido,
+        email: email || user.email,
+        telefono: telefono || user.telefono,
         ...passwordUpdate
       }
     })
 
     return NextResponse.json({
       ok: true,
-      message: "Perfil actualizado",
+      message: "Perfil actualizado con éxito",
       user: {
         nombre: updatedUser.nombre,
         apellido: updatedUser.apellido,
@@ -93,6 +104,6 @@ export async function PATCH(req: NextRequest) {
     })
   } catch (error) {
     console.error("❌ Error al actualizar perfil:", error)
-    return NextResponse.json({ error: "Error al actualizar los datos" }, { status: 500 })
+    return NextResponse.json({ error: "Error interno al actualizar los datos" }, { status: 500 })
   }
 }
