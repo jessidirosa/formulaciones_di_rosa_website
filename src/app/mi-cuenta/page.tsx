@@ -21,7 +21,8 @@ import {
   FlaskConical,
   Pencil,
   Loader2,
-  X
+  X,
+  Lock
 } from 'lucide-react'
 
 interface Pedido {
@@ -42,9 +43,15 @@ export default function MiCuentaPage() {
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [pedidosLoading, setPedidosLoading] = useState(true)
 
-  // Estados para Edición de Perfil
+  // Estados para Edición de Perfil y Clave
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editForm, setEditForm] = useState({ nombre: '', apellido: '', telefono: '' })
+  const [editForm, setEditForm] = useState({
+    nombre: '',
+    apellido: '',
+    telefono: '',
+    currentPassword: '',
+    newPassword: ''
+  })
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -59,16 +66,16 @@ export default function MiCuentaPage() {
       setEditForm({
         nombre: user.nombre || '',
         apellido: user.apellido || '',
-        telefono: user.telefono || ''
+        telefono: user.telefono || '',
+        currentPassword: '',
+        newPassword: ''
       })
     }
   }, [isAuthenticated, user])
 
   const fetchPedidos = async () => {
     try {
-      const response = await fetch('/api/pedidos/mis-pedidos', {
-        credentials: 'include'
-      })
+      const response = await fetch('/api/pedidos/mis-pedidos', { credentials: 'include' })
       if (response.ok) {
         const data = await response.json()
         setPedidos(data.pedidos || [])
@@ -90,12 +97,15 @@ export default function MiCuentaPage() {
         body: JSON.stringify(editForm)
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         toast.success("Perfil actualizado correctamente")
         if (refreshUser) await refreshUser()
         setIsEditModalOpen(false)
+        setEditForm(prev => ({ ...prev, currentPassword: '', newPassword: '' }))
       } else {
-        toast.error("Error al actualizar el perfil")
+        toast.error(data.error || "Error al actualizar el perfil")
       }
     } catch (error) {
       toast.error("Error de conexión")
@@ -131,12 +141,8 @@ export default function MiCuentaPage() {
   const getEstadoBadge = (estado: string) => {
     const e = (estado || "").toLowerCase()
     const baseClass = "font-bold uppercase text-[10px] tracking-wider px-3"
-
     if (e === "pending_payment_transfer") return <Badge variant="outline" className={`${baseClass} border-amber-200 text-amber-600`}>Esperando Transferencia</Badge>
-
-    // ✅ NUEVO: Estilo para Mercado Pago Pendiente
     if (e === "pendiente_mercadopago") return <Badge variant="outline" className={`${baseClass} border-blue-200 text-blue-600 bg-blue-50`}>Pago en Proceso</Badge>
-
     if (e === "transfer_proof_sent") return <Badge className={`${baseClass} bg-blue-100 text-blue-700 border-none`}>Comprobante enviado</Badge>
     if (e === "confirmado") return <Badge className={`${baseClass} bg-[#4A5D45] text-white border-none`}>Confirmado</Badge>
     if (e === "en_produccion") return <Badge className={`${baseClass} bg-[#4A5D45]/80 text-white border-none animate-pulse`}>En Preparación</Badge>
@@ -144,30 +150,25 @@ export default function MiCuentaPage() {
     if (e === "enviado") return <Badge className={`${baseClass} bg-[#3A4031] text-white border-none`}>En camino</Badge>
     if (e === "entregado") return <Badge className={`${baseClass} bg-[#3A4031] text-white border-none opacity-50`}>Entregado</Badge>
     if (e.includes("cancelado") || e.includes("expired")) return <Badge variant="destructive" className={baseClass}>Cancelado</Badge>
-
     return <Badge variant="secondary" className={baseClass}>Pendiente</Badge>
   }
+
   if (isLoading) return <LoadingSkeleton />
   if (!isAuthenticated || !user) return null
 
-  // 🔹 CORRECCIÓN: Verificar por user.role en lugar de user.esAdmin
   const isAdmin = user.role === "ADMIN"
 
   return (
     <div className="min-h-screen bg-[#F5F5F0] py-12">
       <div className="container mx-auto px-4 max-w-6xl">
 
-        {/* Header Personalizado */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 border-l-4 border-[#4A5D45] pl-6 gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-[#3A4031]">
-              Tu cuenta
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-[#3A4031]">Tu cuenta</h1>
             <p className="text-[#5B6350] font-medium italic mt-1">
               Bienvenid@, {user.nombre}. Gestioná tus fórmulas y pedidos.
             </p>
           </div>
-
           {isAdmin && (
             <Link href="/admin">
               <Button className="bg-[#3A4031] hover:bg-[#4A5D45] text-[#F5F5F0] rounded-full shadow-lg">
@@ -178,9 +179,7 @@ export default function MiCuentaPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* Sidebar: Perfil */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
           <div className="space-y-6">
             <Card className="border-none shadow-md rounded-2xl overflow-hidden">
               <CardHeader className="bg-white border-b border-[#F5F5F0]">
@@ -196,16 +195,13 @@ export default function MiCuentaPage() {
                   { label: "Nombre", value: `${user.nombre} ${user.apellido || ""}` },
                   { label: "Email", value: user.email },
                   { label: "Teléfono", value: user.telefono || "No registrado" },
-                  //{ label: "Paciente desde", value: formatDate(user?.creadoEn) }
                 ].map((item, i) => (
                   <div key={i}>
                     <p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">{item.label}</p>
                     <p className="font-semibold text-[#3A4031]">{item.value}</p>
                   </div>
                 ))}
-
                 <Separator className="bg-[#F5F5F0]" />
-
                 <div className="space-y-2">
                   <Button
                     variant="ghost"
@@ -223,7 +219,6 @@ export default function MiCuentaPage() {
               </CardContent>
             </Card>
 
-            {/* Ayuda Magistral */}
             <div className="bg-[#4A5D45] p-6 rounded-2xl text-[#F5F5F0] shadow-xl relative overflow-hidden">
               <FlaskConical className="absolute -right-4 -bottom-4 h-24 w-24 opacity-10 rotate-12" />
               <h3 className="font-bold mb-2 text-sm uppercase tracking-widest">Asesoramiento Directo</h3>
@@ -239,8 +234,7 @@ export default function MiCuentaPage() {
             </div>
           </div>
 
-          {/* Principal: Listado de Pedidos */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 text-left">
             <Card className="border-none shadow-md rounded-2xl">
               <CardHeader className="bg-white border-b border-[#F5F5F0]">
                 <CardTitle className="flex items-center gap-2 text-[#4A5D45] text-lg">
@@ -280,7 +274,6 @@ export default function MiCuentaPage() {
                               {formatDate(pedido.fechaCreacion)} • {pedido.cantidadItems} {pedido.cantidadItems === 1 ? 'producto' : 'productos'}
                             </p>
                           </div>
-
                           <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-none pt-3 md:pt-0">
                             <div className="text-left md:text-right">
                               <p className="text-[10px] text-[#A3B18A] font-bold uppercase tracking-tighter">Total</p>
@@ -301,11 +294,10 @@ export default function MiCuentaPage() {
               </CardContent>
             </Card>
 
-            {/* Guía de Estados */}
             <Card className="border-none bg-[#E9E9E0]/50 shadow-inner rounded-2xl">
               <CardContent className="p-6">
-                <h3 className="text-xs font-bold text-[#4A5D45] uppercase tracking-[0.2em] mb-4">Guía de Seguimiento</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-[11px] text-[#5B6350] leading-tight">
+                <h3 className="text-xs font-bold text-[#4A5D45] uppercase tracking-[0.2em] mb-4 text-left">Guía de Seguimiento</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-[11px] text-[#5B6350] leading-tight text-left">
                   <p><strong className="text-[#3A4031]">Confirmado:</strong> Pago validado correctamente.</p>
                   <p><strong className="text-[#3A4031]">En Preparación:</strong> Elaborando tus productos.</p>
                   <p><strong className="text-[#3A4031]">Listo p/ Envío:</strong> Control de calidad finalizado.</p>
@@ -316,33 +308,36 @@ export default function MiCuentaPage() {
           </div>
         </div>
 
-        {/* MODAL DE EDICIÓN */}
+        {/* MODAL DE EDICIÓN CON CAMBIO DE CLAVE */}
         {isEditModalOpen && (
           <div className="fixed inset-0 bg-[#3A4031]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md rounded-3xl shadow-2xl border-none bg-white overflow-hidden">
+            <Card className="w-full max-w-md rounded-3xl shadow-2xl border-none bg-white overflow-hidden text-left">
               <div className="p-6 border-b border-[#F5F5F0] flex justify-between items-center">
                 <h3 className="font-bold text-[#3A4031] uppercase tracking-widest text-sm">Editar mis datos</h3>
                 <button onClick={() => setIsEditModalOpen(false)}><X className="h-5 w-5 text-[#A3B18A]" /></button>
               </div>
               <form onSubmit={handleUpdateProfile}>
-                <CardContent className="p-8 space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Nombre</label>
-                    <Input
-                      value={editForm.nombre}
-                      onChange={e => setEditForm({ ...editForm, nombre: e.target.value })}
-                      className="rounded-xl bg-[#F9F9F7]"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Apellido</label>
-                    <Input
-                      value={editForm.apellido}
-                      onChange={e => setEditForm({ ...editForm, apellido: e.target.value })}
-                      className="rounded-xl bg-[#F9F9F7]"
-                      required
-                    />
+                <CardContent className="p-8 space-y-4 overflow-y-auto max-h-[70vh]">
+                  {/* Datos Personales */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Nombre</label>
+                      <Input
+                        value={editForm.nombre}
+                        onChange={e => setEditForm({ ...editForm, nombre: e.target.value })}
+                        className="rounded-xl bg-[#F9F9F7]"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Apellido</label>
+                      <Input
+                        value={editForm.apellido}
+                        onChange={e => setEditForm({ ...editForm, apellido: e.target.value })}
+                        className="rounded-xl bg-[#F9F9F7]"
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Teléfono</label>
@@ -352,6 +347,35 @@ export default function MiCuentaPage() {
                       className="rounded-xl bg-[#F9F9F7]"
                       placeholder="+54 11 ..."
                     />
+                  </div>
+
+                  <Separator className="my-2 opacity-50" />
+
+                  {/* Cambio de Contraseña */}
+                  <div className="p-4 bg-[#F9F9F7] rounded-2xl space-y-4 border border-[#E9E9E0]">
+                    <p className="text-[10px] font-bold uppercase text-[#4A5D45] flex items-center gap-2">
+                      <Lock className="w-3 h-3" /> Cambio de Contraseña (Opcional)
+                    </p>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Contraseña Actual</label>
+                      <Input
+                        type="password"
+                        value={editForm.currentPassword}
+                        onChange={e => setEditForm({ ...editForm, currentPassword: e.target.value })}
+                        className="rounded-xl bg-white"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Nueva Contraseña</label>
+                      <Input
+                        type="password"
+                        value={editForm.newPassword}
+                        onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })}
+                        className="rounded-xl bg-white"
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                    </div>
                   </div>
                 </CardContent>
                 <div className="p-8 pt-0 flex gap-3">
@@ -375,7 +399,6 @@ export default function MiCuentaPage() {
             </Card>
           </div>
         )}
-
       </div>
     </div>
   )
@@ -384,7 +407,7 @@ export default function MiCuentaPage() {
 function LoadingSkeleton() {
   return (
     <div className="min-h-screen bg-[#F5F5F0] py-16">
-      <div className="container mx-auto px-4 max-w-6xl space-y-8 animate-pulse">
+      <div className="container mx-auto px-4 max-w-6xl space-y-8 animate-pulse text-left">
         <div className="h-10 bg-[#E9E9E0] rounded w-1/3" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="h-64 bg-white rounded-2xl" />

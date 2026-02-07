@@ -89,7 +89,10 @@ export default function LoginPage() {
                   <label className="text-[10px] uppercase tracking-widest font-bold text-[#5B6350] flex items-center gap-2">
                     <Lock className="w-3 h-3" /> Contraseña
                   </label>
-                  <Link href="#" className="text-[10px] text-[#A3B18A] hover:text-[#4A5D45] transition-colors font-bold uppercase underline">
+                  <Link
+                    href="/mi-cuenta/recuperar" // Cambiado de "#" a una ruta de recuperación
+                    className="text-[10px] text-[#A3B18A] hover:text-[#4A5D45] transition-colors font-bold uppercase underline"
+                  >
                     ¿Olvidaste tu clave?
                   </Link>
                 </div>
