@@ -29,7 +29,7 @@ export async function GET() {
   }
 }
 
-// PATCH: Actualizar datos y/o Contraseña
+// PATCH: Actualizar datos (incluyendo Email) y/o Contraseña
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session || !session.user?.email) {
@@ -37,16 +37,30 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const { nombre, apellido, telefono, currentPassword, newPassword } = await req.json()
+    const { nombre, apellido, email, telefono, currentPassword, newPassword } = await req.json()
 
-    // Lógica para cambio de contraseña si se envían ambos campos
+    // 1. Si el usuario intenta cambiar el email, verificamos disponibilidad
+    if (email && email !== session.user.email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email }
+      })
+      if (existingUser) {
+        return NextResponse.json({ error: "El email ya está registrado por otro usuario" }, { status: 400 })
+      }
+    }
+
+    // 2. Lógica para cambio de contraseña si se envían ambos campos
     let passwordUpdate = {}
     if (currentPassword && newPassword) {
       const user = await prisma.user.findUnique({
         where: { email: session.user.email }
       })
 
-      const isMatch = await bcrypt.compare(currentPassword, user!.passwordHash)
+      if (!user) {
+        return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash)
       if (!isMatch) {
         return NextResponse.json({ error: "La contraseña actual es incorrecta" }, { status: 400 })
       }
@@ -55,11 +69,13 @@ export async function PATCH(req: NextRequest) {
       passwordUpdate = { passwordHash: newPasswordHash }
     }
 
+    // 3. Actualización en la base de datos
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
       data: {
         nombre,
         apellido,
+        email, // Actualizamos el email
         telefono,
         ...passwordUpdate
       }
@@ -71,6 +87,7 @@ export async function PATCH(req: NextRequest) {
       user: {
         nombre: updatedUser.nombre,
         apellido: updatedUser.apellido,
+        email: updatedUser.email,
         telefono: updatedUser.telefono
       }
     })
