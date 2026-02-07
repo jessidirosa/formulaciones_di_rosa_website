@@ -68,7 +68,7 @@ export default function ServiciosPage() {
 
                     <div className="relative">
                         <div className="aspect-[4/5] bg-[#E9E9E0] rounded-[4rem] overflow-hidden shadow-2xl transform rotate-2">
-                            <img src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=800" alt="Marca Propia" className="w-full h-full object-cover mix-blend-multiply opacity-90" />
+                            <img src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770507944/IMG_4980_kno1vp.jpg" alt="Marca Propia" className="w-full h-full object-cover mix-blend-multiply opacity-90" />
                         </div>
                         <div className="absolute -bottom-10 -right-5 bg-[#3A4031] p-10 rounded-[2rem] shadow-2xl max-w-xs border border-white/10">
                             <p className="text-[#F5F5F0] font-serif italic text-xl leading-snug">"Convertimos el conocimiento farmacéutico en el ADN de tu marca."</p>

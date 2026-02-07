@@ -49,7 +49,7 @@ const SobreNosotros: React.FC = () => {
                     <div className="relative group">
                         <div className="absolute -inset-4 bg-[#A3B18A] opacity-20 rounded-2xl group-hover:opacity-30 transition-opacity"></div>
                         <img
-                            src="https://images.unsplash.com/photo-1581093588401-fbb62a02f120?auto=format&fit=crop&q=80&w=800"
+                            src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770507459/AZw6dylnqY9zVgCBAkPfMA-AZw6dylnJWA4KAKUyt9mMA_q3ckjo.png"
                             alt="Laboratorio Artesanal"
                             className="relative rounded-xl shadow-2xl z-10 grayscale-[20%] hover:grayscale-0 transition-all duration-700"
                         />
