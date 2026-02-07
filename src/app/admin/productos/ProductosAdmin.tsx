@@ -25,7 +25,8 @@ import {
     X,
     Sparkles,
     Loader2,
-    TrendingUp
+    TrendingUp,
+    PackageSearch // Icono para cuando no hay productos
 } from "lucide-react"
 
 // --- Interfaces ---
@@ -104,8 +105,14 @@ export default function ProductosAdmin() {
             setLoading(true)
             const res = await fetch("/api/admin/productos")
             const data = await res.json()
+            // Aseguramos que productos siempre sea un array
             setProductos(data.productos || [])
-        } catch (error) { toast.error("Error al cargar inventario") } finally { setLoading(false) }
+        } catch (error) {
+            toast.error("Error al cargar inventario")
+            setProductos([]) // Fallback en caso de error
+        } finally {
+            setLoading(false)
+        }
     }
 
     async function fetchCategorias() {
@@ -191,8 +198,6 @@ export default function ProductosAdmin() {
         } catch (error) { toast.error("Error al guardar") } finally { setSavingEdit(false) }
     }
 
-
-
     return (
         <div className="container mx-auto px-4 py-10 space-y-10 bg-[#F9F9F7] min-h-screen">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E9E9E0] pb-6">
@@ -200,7 +205,6 @@ export default function ProductosAdmin() {
                     <h1 className="text-3xl font-serif font-bold text-[#3A4031]">Gestión de Fórmulas</h1>
                     <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#A3B18A] mt-1">Panel Administrativo Magistral</p>
                 </div>
-
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
@@ -232,6 +236,7 @@ export default function ProductosAdmin() {
                             <form onSubmit={handleCreate} className="space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-[#A3B18A]">Imagen de Producto</label>
+                                    {/* Componente que gestiona Cloudinary */}
                                     <AdminImageUpload
                                         value={form.imagen}
                                         onChange={(url) => setForm({ ...form, imagen: url })}
@@ -242,7 +247,7 @@ export default function ProductosAdmin() {
                                 <Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="Slug (opcional)" className="rounded-xl" />
                                 <Input value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} placeholder="Categoría Texto (ej: Rostro)" className="rounded-xl" />
                                 <Input value={form.descripcionCorta} onChange={e => setForm({ ...form, descripcionCorta: e.target.value })} placeholder="Descripción corta" className="rounded-xl" />
-                                <Textarea value={form.descripcionLarga} onChange={e => setForm({ ...form, descripcionLarga: e.target.value })} placeholder="Descripción detallada (admite saltos de línea)" className="rounded-xl min-h-[100px]" />
+                                <Textarea value={form.descripcionLarga} onChange={e => setForm({ ...form, descripcionLarga: e.target.value })} placeholder="Descripción detallada" className="rounded-xl min-h-[100px]" />
 
                                 <div className="space-y-3 bg-[#F9F9F7] p-4 rounded-2xl border border-[#E9E9E0]">
                                     <p className="text-[10px] font-bold uppercase text-[#4A5D45] flex items-center gap-1"><Sparkles className="w-3 h-3" /> Presentaciones</p>
@@ -290,42 +295,56 @@ export default function ProductosAdmin() {
                 <div className="lg:col-span-2">
                     <Card className="rounded-[2.5rem] shadow-2xl border-none bg-white overflow-hidden">
                         <CardContent className="px-8 py-8">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="border-[#F5F5F0]">
-                                        <TableHead className="text-[10px] uppercase font-bold text-[#A3B18A]">Imagen</TableHead>
-                                        <TableHead className="text-[10px] uppercase font-bold text-[#A3B18A]">Fórmula</TableHead>
-                                        <TableHead className="text-center text-[10px] uppercase font-bold text-[#A3B18A]">Estado</TableHead>
-                                        <TableHead className="text-right text-[10px] uppercase font-bold text-[#A3B18A]">Acciones</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {productos.map((p) => (
-                                        <TableRow key={p.id} className="border-[#F5F5F0]">
-                                            <TableCell>
-                                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#F5F5F0] border border-[#E9E9E0]">
-                                                    <img src={p.imagen || "https://placehold.co/100"} className="w-full h-full object-cover" alt="" />
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-[#3A4031] text-sm uppercase">{p.nombre}</span>
-                                                    <div className="flex gap-2 mt-1">
-                                                        {p.destacado && <Badge className="bg-[#4A5D45] text-[8px] h-4">Destacado</Badge>}
-                                                        <span className="text-[9px] text-[#A3B18A] uppercase font-bold">{p.categoria || 'Sin Categoría'}</span>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                {p.activo ? <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold uppercase">Activo</span> : <span className="text-[9px] bg-gray-100 text-gray-400 px-2 py-1 rounded-full font-bold uppercase">Oculto</span>}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(p)} className="text-[#A3B18A] hover:text-[#4A5D45]"><Pencil className="w-4 h-4" /></Button>
-                                            </TableCell>
+                            {/* --- Lógica para cuando NO hay productos --- */}
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-[#A3B18A]">
+                                    <Loader2 className="w-10 h-10 animate-spin mb-4" />
+                                    <p className="text-[10px] uppercase tracking-widest font-bold">Cargando inventario...</p>
+                                </div>
+                            ) : productos.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-[#A3B18A] border-2 border-dashed border-[#E9E9E0] rounded-[2rem]">
+                                    <PackageSearch className="w-12 h-12 mb-4 opacity-20" />
+                                    <p className="text-[10px] uppercase tracking-widest font-bold">No hay fórmulas registradas</p>
+                                    <p className="text-xs text-[#5B6350] mt-1">Comienza creando tu primer producto a la izquierda.</p>
+                                </div>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="border-[#F5F5F0]">
+                                            <TableHead className="text-[10px] uppercase font-bold text-[#A3B18A]">Imagen</TableHead>
+                                            <TableHead className="text-[10px] uppercase font-bold text-[#A3B18A]">Fórmula</TableHead>
+                                            <TableHead className="text-center text-[10px] uppercase font-bold text-[#A3B18A]">Estado</TableHead>
+                                            <TableHead className="text-right text-[10px] uppercase font-bold text-[#A3B18A]">Acciones</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {productos.map((p) => (
+                                            <TableRow key={p.id} className="border-[#F5F5F0]">
+                                                <TableCell>
+                                                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#F5F5F0] border border-[#E9E9E0]">
+                                                        <img src={p.imagen || "https://placehold.co/100"} className="w-full h-full object-cover" alt="" />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-[#3A4031] text-sm uppercase">{p.nombre}</span>
+                                                        <div className="flex gap-2 mt-1">
+                                                            {p.destacado && <Badge className="bg-[#4A5D45] text-[8px] h-4">Destacado</Badge>}
+                                                            <span className="text-[9px] text-[#A3B18A] uppercase font-bold">{p.categoria || 'Sin Categoría'}</span>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {p.activo ? <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold uppercase">Activo</span> : <span className="text-[9px] bg-gray-100 text-gray-400 px-2 py-1 rounded-full font-bold uppercase">Oculto</span>}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(p)} className="text-[#A3B18A] hover:text-[#4A5D45]"><Pencil className="w-4 h-4" /></Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
