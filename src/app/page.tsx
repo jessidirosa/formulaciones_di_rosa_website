@@ -49,7 +49,7 @@ export default async function HomePage() {
               </div>
               <h1 className="text-5xl md:text-7xl font-bold text-[#F5F5F0] leading-[1.1] tracking-tight">
                 Ciencia pura <br />
-                <span className="text-[#A3B18A] font-serif font-light italic italic">con alma botánica</span>
+                <span className="text-[#A3B18A] font-serif font-light italic italic">con alma natural</span>
               </h1>
               <p className="text-xl text-[#F5F5F0]/80 leading-relaxed max-w-xl font-light">
                 Más de 20 años desarrollando cosmética avanzada y salud capilar. Calidad farmacéutica diseñada para potenciar tu belleza natural.

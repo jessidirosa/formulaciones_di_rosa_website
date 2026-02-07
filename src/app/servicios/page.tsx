@@ -30,7 +30,7 @@ export default function ServiciosPage() {
                     <div className="space-y-8 text-left">
                         <div className="inline-flex items-center gap-3 text-[#A3B18A] border-b border-[#A3B18A]/20 pb-2">
                             <Sparkles className="w-5 h-5" />
-                            <span className="font-bold uppercase tracking-[0.2em] text-[10px]">Marca Blanca & Personalizada</span>
+                            <span className="font-bold uppercase tracking-[0.2em] text-[10px]">Marca Propia & Personalizada</span>
                         </div>
                         <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#3A4031] leading-tight">Lanzá tu línea de cosmética personalizada</h2>
                         <p className="text-[#5B6350] text-lg leading-relaxed">
@@ -94,11 +94,18 @@ export default function ServiciosPage() {
                             { icon: <FlaskConical />, title: "Cupón Activo", desc: "Te generamos un código personalizado para tus compras." },
                             { icon: <CheckCircle2 />, title: "Compra Online", desc: "Aplicá tu descuento al finalizar el carrito y listo." }
                         ].map((item, i) => (
-                            <div key={i} className="bg-white p-10 rounded-[3rem] border border-[#E9E9E0] hover:border-[#A3B18A] transition-colors group relative shadow-sm">
-                                <div className="text-[#A3B18A] mb-6 group-hover:scale-110 transition-transform duration-500">{item.icon}</div>
-                                <h4 className="font-bold text-[#3A4031] uppercase tracking-widest text-xs mb-3">{item.title}</h4>
-                                <p className="text-sm text-[#5B6350] leading-relaxed">{item.desc}</p>
-                                <span className="absolute bottom-6 right-8 text-4xl font-serif font-bold text-[#F5F5F0] group-hover:text-[#F9F9F7] transition-colors">0{i + 1}</span>
+                            <div key={i} className="bg-white p-10 rounded-[3rem] border border-[#E9E9E0] hover:border-[#A3B18A] transition-colors group relative shadow-sm overflow-hidden">
+                                {/* Icono y Texto con z-10 para quedar arriba */}
+                                <div className="relative z-10">
+                                    <div className="text-[#A3B18A] mb-6 group-hover:scale-110 transition-transform duration-500">{item.icon}</div>
+                                    <h4 className="font-bold text-[#3A4031] uppercase tracking-widest text-xs mb-3">{item.title}</h4>
+                                    <p className="text-sm text-[#5B6350] leading-relaxed">{item.desc}</p>
+                                </div>
+
+                                {/* Número decorativo con z-0 para quedar detrás */}
+                                <span className="absolute bottom-2 right-6 text-7xl font-serif font-bold text-[#F5F5F0] group-hover:text-[#F9F9F7] transition-colors z-0 pointer-events-none select-none">
+                                    0{i + 1}
+                                </span>
                             </div>
                         ))}
                     </div>
