@@ -13,6 +13,9 @@ import BenefitsSection from "@/components/home/BenefitsSection"
 import { ArrowRight, Award, Sparkles, Phone } from 'lucide-react'
 import ProBanner from "@/components/home/ProBanner"
 
+// Forzamos que la página no use caché estática para que los cambios en "destacados" se vean al instante
+export const revalidate = 0;
+
 function formatPrice(value: number) {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -26,13 +29,21 @@ export default async function HomePage() {
     orderBy: { nombre: 'asc' }
   })
 
+  // Consulta optimizada para asegurar que traiga los productos marcados como destacados: true
   const productosDestacados = await prisma.producto.findMany({
-    where: { activo: true, destacado: true },
+    where: {
+      activo: true,
+      destacado: true
+    },
     orderBy: { orden: 'asc' },
     take: 3,
     include: {
       presentaciones: true,
-      categorias: { include: { categoria: true } },
+      categorias: {
+        include: {
+          categoria: true
+        }
+      },
     },
   })
 
@@ -70,7 +81,11 @@ export default async function HomePage() {
             </div>
             <div className="relative group hidden lg:block">
               <div className="absolute -inset-10 bg-[#A3B18A] opacity-10 rounded-full blur-[100px]" />
-              <img src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506909/Dise%C3%B1o_sin_t%C3%ADtulo_bookba.png" />
+              <img
+                src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506909/Dise%C3%B1o_sin_t%C3%ADtulo_bookba.png"
+                alt="Laboratorio Di Rosa Hero"
+                className="relative z-10 w-full h-auto object-contain"
+              />
             </div>
           </div>
         </div>
@@ -78,7 +93,7 @@ export default async function HomePage() {
 
       <BenefitsSection />
 
-      {/* ✅ BANNER DE CAPTACIÓN PROFESIONAL (Usando el componente oficial) */}
+      {/* ✅ BANNER DE CAPTACIÓN PROFESIONAL */}
       <ProBanner />
 
       {/* Navegá por categorías */}
@@ -118,19 +133,27 @@ export default async function HomePage() {
           </div>
 
           {productosDestacados.length === 0 ? (
-            <p className="text-center text-[#5B6350] italic">Preparando la próxima tanda de fórmulas destacadas... 🌿</p>
+            <p className="text-center text-[#5B6350] italic py-10">Próximamente verás nuestras fórmulas estrella aquí 🌿</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               {productosDestacados.map((producto) => {
+                // Obtenemos el nombre de la categoría del array de relaciones
                 const categoriaPrincipal = producto.categorias[0]?.categoria?.nombre || "Exclusivo"
+                const imagenSrc = producto.imagen || `https://placehold.co/400x500?text=${encodeURIComponent(producto.nombre)}`
                 const tienePresentaciones = producto.presentaciones && producto.presentaciones.length > 0
-                const precioMostrar = tienePresentaciones ? Math.min(...producto.presentaciones.map(p => p.precio)) : (producto.precio || 0)
+                const precioMostrar = tienePresentaciones
+                  ? Math.min(...producto.presentaciones.map(p => p.precio))
+                  : (producto.precio || 0)
 
                 return (
                   <Card key={producto.id} className="group border-none bg-transparent shadow-none text-left">
                     <Link href={`/tienda/${producto.slug}`}>
                       <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] mb-8 shadow-xl shadow-[#3A4031]/5 border border-[#F5F5F0] transition-all group-hover:shadow-2xl">
-                        <img src={producto.imagen || `https://placehold.co/400x500?text=${producto.nombre}`} alt={producto.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                        <img
+                          src={imagenSrc}
+                          alt={producto.nombre}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                        />
                         <div className="absolute top-6 left-6">
                           <Badge className="bg-white/90 backdrop-blur-md text-[#4A5D45] border-none px-4 py-1.5 uppercase text-[9px] font-bold shadow-sm">Magistral</Badge>
                         </div>
@@ -163,7 +186,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CTA Final - Refinado con Marca Blanca */}
+      {/* CTA Final */}
       <section className="bg-[#1A1C18] py-28 px-6 relative overflow-hidden">
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#A3B18A] to-transparent opacity-30" />
         <div className="max-w-4xl mx-auto text-center relative z-10 text-[#F5F5F0]">
