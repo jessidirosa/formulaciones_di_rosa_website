@@ -11,6 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import BenefitsSection from "@/components/home/BenefitsSection"
 import { ArrowRight, Award, Sparkles, Phone } from 'lucide-react'
+import ProBanner from "@/components/home/ProBanner"
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -38,9 +39,9 @@ export default async function HomePage() {
   return (
     <main className="bg-[#F5F5F0] min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#4A5D45] py-28 px-4">
+      <section className="relative overflow-hidden bg-[#4A5D45] py-28 px-4 text-left">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-[#A3B18A] opacity-10 rounded-l-full blur-3xl pointer-events-none" />
-        <div className="container mx-auto max-w-6xl relative z-10 text-left">
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-10">
               <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 px-5 py-2 rounded-full">
@@ -77,38 +78,19 @@ export default async function HomePage() {
 
       <BenefitsSection />
 
-      {/* ✅ BANNER DE CAPTACIÓN PROFESIONAL (NUEVO) */}
-      <section className="py-12 container mx-auto px-4">
-        <Link href="/servicios">
-          <div className="group relative bg-[#3A4031] rounded-[3rem] p-8 md:p-12 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 cursor-pointer shadow-2xl transition-all hover:scale-[1.01]">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#A3B18A] opacity-10 rounded-full -mr-20 -mt-20 blur-3xl transition-transform group-hover:scale-125" />
-            <div className="flex items-center gap-6 text-left relative z-10">
-              <div className="hidden md:flex w-20 h-20 bg-[#4A5D45] rounded-3xl items-center justify-center shadow-inner">
-                <Award className="w-10 h-10 text-[#A3B18A]" />
-              </div>
-              <div>
-                <Badge className="bg-[#A3B18A] text-white border-none mb-3 px-3 uppercase text-[9px] font-bold">Exclusivo Profesionales</Badge>
-                <h3 className="text-2xl md:text-3xl font-serif font-bold text-[#F5F5F0]">¿Sos profesional de la estética o salud?</h3>
-                <p className="text-[#F5F5F0]/70 mt-1 max-w-md">Accedé a descuentos exclusivos y solicitá tus formulaciones a pedido.</p>
-              </div>
-            </div>
-            <Button className="bg-[#F5F5F0] text-[#3A4031] hover:bg-white rounded-2xl px-8 h-14 font-bold uppercase text-[10px] tracking-widest relative z-10">
-              Obtener mi descuento <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
-          </div>
-        </Link>
-      </section>
+      {/* ✅ BANNER DE CAPTACIÓN PROFESIONAL (Usando el componente oficial) */}
+      <ProBanner />
 
       {/* Navegá por categorías */}
       {categorias.length > 0 && (
-        <section className="py-16 px-4 bg-[#E9E9E0] border-y border-[#D6D6C2]">
-          <div className="container mx-auto max-w-6xl text-left">
+        <section className="py-16 px-4 bg-[#E9E9E0] border-y border-[#D6D6C2] text-left">
+          <div className="container mx-auto max-w-6xl">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
               <div>
                 <h2 className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-[0.3em] mb-3">Especialidades Magistrales</h2>
                 <h3 className="text-3xl font-bold text-[#3A4031] leading-tight">Navegá por nuestras líneas</h3>
               </div>
-              <Link href="/tienda" className="text-[#4A5D45] font-bold text-xs hover:tracking-widest transition-all flex items-center gap-2 uppercase">
+              <Link href="/tienda" className="text-[#4A5D45] font-bold text-sm hover:tracking-widest transition-all flex items-center gap-2 uppercase">
                 Ver todo el catálogo <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -127,11 +109,11 @@ export default async function HomePage() {
       )}
 
       {/* Productos Destacados */}
-      <section className="py-24 px-4 bg-white rounded-t-[4rem] -mt-10 shadow-2xl relative z-20">
+      <section className="py-24 px-4 bg-white rounded-t-[4rem] -mt-10 shadow-2xl relative z-20 text-left">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-20">
             <Badge variant="outline" className="border-[#A3B18A] text-[#A3B18A] uppercase px-4 py-1 text-[9px] font-bold tracking-[0.2em]">Formulaciones Estrella</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#3A4031] mt-6 mb-6 leading-tight">Nuestra selección curada</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-[#3A4031] mt-6 mb-6 leading-tight">Nuestra selección de productos</h2>
             <div className="w-20 h-1.5 bg-[#A3B18A] mx-auto rounded-full" />
           </div>
 
@@ -188,7 +170,7 @@ export default async function HomePage() {
           <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
             ¿Tenés un proyecto en mente?
           </h2>
-          <p className="text-xl mb-12 opacity-70 font-light leading-relaxed max-w-2xl mx-auto italic">
+          <p className="text-xl mb-12 opacity-70 font-light leading-relaxed max-w-2xl mx-auto italic text-center">
             Desde asesoramiento personalizado hasta la creación de tu propia marca. Estamos aquí para hacerlo realidad.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
