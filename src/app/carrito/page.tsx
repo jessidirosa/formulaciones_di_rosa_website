@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react' // Importamos useState
 import { useCart } from '@/contexts/CartContext'
 import { useUser } from '@/contexts/UserContext'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation' // Para la navegación manual
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -10,13 +12,25 @@ import { Badge } from '@/components/ui/badge'
 import CartItem from '@/components/carrito/CartItem'
 import CartSummary from '@/components/carrito/CartSummary'
 import EstimatedDate from '@/components/carrito/EstimatedDate'
-import { ShoppingBag, ArrowRight, ShieldCheck, Truck } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog"
+import { ShoppingBag, ArrowRight, ShieldCheck, Truck, AlertCircle, UserPlus, Ghost } from 'lucide-react'
 
 export default function CarritoPage() {
   const { state } = useCart()
   const { isAuthenticated, user } = useUser()
+  const router = useRouter()
 
-  // 1. ESTADO: CARRITO VACÍO (Refinado con estética Di Rosa)
+  // Estado para el modal de advertencia de invitado
+  const [showGuestModal, setShowGuestModal] = useState(false)
+
+  // 1. ESTADO: CARRITO VACÍO
   if (state.items.length === 0) {
     return (
       <div className="min-h-[70vh] flex items-center bg-[#F5F5F0]">
@@ -72,10 +86,10 @@ export default function CarritoPage() {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-10 border-l-4 border-[#4A5D45] pl-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#3A4031] mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#3A4031] mb-2 text-left">
             Tu Selección Magistral
           </h1>
-          <p className="text-[#5B6350] font-medium italic">
+          <p className="text-[#5B6350] font-medium italic text-left">
             {state.cantidadItems} producto{state.cantidadItems !== 1 ? 's' : ''} listo{state.cantidadItems !== 1 ? 's' : ''} para preparar
           </p>
         </div>
@@ -96,7 +110,7 @@ export default function CarritoPage() {
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 text-left">
                 <div className="divide-y divide-[#F5F5F0]">
                   {state.items.map((item) => (
                     <div key={item.producto.id} className="p-6 hover:bg-[#F9F9F7] transition-colors">
@@ -107,9 +121,11 @@ export default function CarritoPage() {
               </CardContent>
             </Card>
 
-            <Link href="/tienda" className="inline-flex items-center gap-2 text-[#4A5D45] font-bold text-sm hover:underline ml-2">
-              ← Seguir explorando productos
-            </Link>
+            <div className="text-left">
+              <Link href="/tienda" className="inline-flex items-center gap-2 text-[#4A5D45] font-bold text-sm hover:underline ml-2">
+                ← Seguir explorando productos
+              </Link>
+            </div>
           </div>
 
           {/* Columna Derecha: Resumen y Checkout */}
@@ -146,7 +162,7 @@ export default function CarritoPage() {
                         <div className="w-8 h-8 bg-[#A3B18A] rounded-full flex items-center justify-center text-white text-xs font-bold">
                           {user?.nombre?.charAt(0)}
                         </div>
-                        <p className="text-xs text-[#5B6350]">
+                        <p className="text-xs text-[#5B6350] text-left">
                           Comprando como <span className="font-bold text-[#3A4031]">{user?.nombre} {user?.apellido}</span>
                         </p>
                       </div>
@@ -170,12 +186,15 @@ export default function CarritoPage() {
                         <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-[#A3B18A] font-bold">o también</span></div>
                       </div>
 
-                      <Link href="/checkout" className="block">
-                        <Button variant="outline" className="w-full border-[#D6D6C2] text-[#5B6350] hover:bg-[#F9F9F7] h-12 rounded-xl font-bold">
-                          Continuar como Invitado
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
+                      {/* Disparamos el Modal en lugar del Link directo */}
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowGuestModal(true)}
+                        className="w-full border-[#D6D6C2] text-[#5B6350] hover:bg-[#F9F9F7] h-12 rounded-xl font-bold"
+                      >
+                        Continuar como Invitado
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -183,7 +202,7 @@ export default function CarritoPage() {
             </div>
 
             {/* Banner de Envío Gratis mejorado */}
-            <div className="bg-[#E9E9E0] border border-[#D6D6C2] p-5 rounded-2xl">
+            <div className="bg-[#E9E9E0] border border-[#D6D6C2] p-5 rounded-2xl text-left">
               <div className="flex items-center gap-4">
                 <div className="bg-[#4A5D45] p-2 rounded-lg">
                   <Truck className="w-5 h-5 text-white" />
@@ -200,6 +219,45 @@ export default function CarritoPage() {
           </div>
         </div>
       </div>
+
+      {/* MODAL DE ADVERTENCIA PARA INVITADOS */}
+      <Dialog open={showGuestModal} onOpenChange={setShowGuestModal}>
+        <DialogContent className="max-w-md rounded-[2.5rem] border-none p-0 overflow-hidden bg-white shadow-2xl">
+          <div className="p-8 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="bg-[#F9F9F7] p-4 rounded-full border border-[#E9E9E0]">
+                <AlertCircle className="w-10 h-10 text-[#A3B18A]" />
+              </div>
+            </div>
+
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-serif font-bold text-[#3A4031] text-center">
+                ¿Comprar como invitado?
+              </DialogTitle>
+              <DialogDescription className="text-[#5B6350] text-sm leading-relaxed text-center">
+                Al comprar sin cuenta, no podrás realizar el <b>seguimiento online</b> de tu fórmula ni ver el historial de tus pedidos magistrales.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-8 flex flex-col gap-3">
+              <Button
+                onClick={() => router.push('/mi-cuenta/register')}
+                className="w-full bg-[#4A5D45] hover:bg-[#3D4C39] text-white h-14 rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-900/10 flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" /> Crear mi cuenta ahora
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/checkout')}
+                className="w-full text-[#A3B18A] hover:text-[#4A5D45] text-[10px] uppercase font-bold tracking-tighter h-10 flex items-center justify-center gap-2"
+              >
+                <Ghost className="w-4 h-4" /> Correré el riesgo, continuar como invitado
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
