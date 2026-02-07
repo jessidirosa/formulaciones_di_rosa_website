@@ -70,7 +70,7 @@ export default async function HomePage() {
             </div>
             <div className="relative group hidden lg:block">
               <div className="absolute -inset-10 bg-[#A3B18A] opacity-10 rounded-full blur-[100px]" />
-              <img src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770503340/portada_homepage_flu1fn.png" />
+              <img src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506909/Dise%C3%B1o_sin_t%C3%ADtulo_bookba.png" />
             </div>
           </div>
         </div>

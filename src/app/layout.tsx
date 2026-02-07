@@ -12,7 +12,11 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Formulaciones Di Rosa - Cosmética Magistral & Natural",
   description: "Preparaciones cosméticas magistrales y naturales. Productos personalizados para el cuidado de tu piel. Cruelty free. Envíos a todo el país.",
-  // ... resto de tus metadatos intactos
+  icons: {
+    icon: 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506232/logo_nuevo_2_-_Editado_fkfjnm.png', // Tu link de Cloudinary
+    shortcut: 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506232/logo_nuevo_2_-_Editado_fkfjnm.png',
+    apple: 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506232/logo_nuevo_2_-_Editado_fkfjnm.png',
+  },
 }
 
 export default function RootLayout({
