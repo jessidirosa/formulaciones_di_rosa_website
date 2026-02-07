@@ -191,9 +191,7 @@ export default function ProductosAdmin() {
         } catch (error) { toast.error("Error al guardar") } finally { setSavingEdit(false) }
     }
 
-    if (productos.length === 0) {
-        return <div>No hay productos cargados aún. ¡Empezá subiendo uno!</div>
-    }
+
 
     return (
         <div className="container mx-auto px-4 py-10 space-y-10 bg-[#F9F9F7] min-h-screen">
