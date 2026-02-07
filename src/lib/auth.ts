@@ -5,6 +5,8 @@ import prisma from "./prisma"
 import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
+  // ✅ Agregamos el secret explícitamente para producción
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
@@ -34,7 +36,9 @@ export const authOptions: NextAuthOptions = {
 
         if (!ok) return null
 
-        const isAdmin = user.email === process.env.ADMIN_EMAIL
+        // ✅ Verificamos si es admin comparando con la variable de entorno o por el rol en DB
+        const isAdminEmail = user.email === process.env.ADMIN_EMAIL
+        const hasAdminRole = user.role === "ADMIN"
 
         return {
           id: user.id.toString(),
@@ -42,7 +46,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           apellido: user.apellido || "",
           telefono: user.telefono || "",
-          role: isAdmin ? "ADMIN" : user.role ?? "USER",
+          role: (isAdminEmail || hasAdminRole) ? "ADMIN" : "USER",
         }
       },
     }),
