@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { CheckoutData } from '@/app/checkout/page'
-import { Truck, Bike, ChevronRight, Store, Loader2, MapPin, ExternalLink, AlertCircle } from 'lucide-react'
+import { Truck, Bike, ChevronRight, Store, Loader2, MapPin, ExternalLink, AlertCircle, Search } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ShippingOptionsProps {
@@ -88,7 +88,6 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
     const value = v as CheckoutData['tipoEntrega'];
     onChange({
       tipoEntrega: value,
-      // Al cambiar tipo, reseteamos datos específicos de sucursal pero MANTENEMOS provincia y localidad
       sucursalId: '',
       sucursalNombre: '',
       sucursalCorreo: '',
@@ -167,34 +166,47 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
       )}
 
       {data.tipoEntrega === 'SUCURSAL_CORREO' && (
-        <div className="space-y-4 pt-4 border-t text-left">
-          <div className="flex justify-between items-center">
-            <Label className="text-xs font-bold uppercase">Datos de la Sucursal</Label>
+        <div className="space-y-5 pt-4 border-t text-left">
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase">Ubicación para Retiro</Label>
             {currentCarrierLink && (
-              <a href={currentCarrierLink} target="_blank" className="text-[10px] text-[#A3B18A] flex items-center gap-1 hover:underline font-bold uppercase">
-                <ExternalLink className="w-3 h-3" /> Buscá el nombre de tu sucursal en la página oficial del correo
+              <a href={currentCarrierLink} target="_blank" className="text-[9px] text-[#A3B18A] flex items-center gap-1 hover:underline font-bold uppercase leading-tight">
+                <ExternalLink className="w-3 h-3" /> Ver mapa oficial de sucursales
               </a>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input value={data.provincia || ''} onChange={e => onChange({ provincia: e.target.value })} placeholder="Provincia" className="bg-[#F9F9F7] rounded-xl h-11" />
-            <div className="flex gap-2">
-              <Input value={data.localidad || ''} onChange={e => onChange({ localidad: e.target.value })} placeholder="Localidad" className="bg-[#F9F9F7] rounded-xl h-11 flex-1" />
-              <Button type="button" onClick={buscarSucursales} disabled={loadingSucursales} className="bg-[#A3B18A] text-white rounded-xl h-11">
-                {loadingSucursales ? <Loader2 className="animate-spin h-4 w-4" /> : "Buscar"}
-              </Button>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input value={data.provincia || ''} onChange={e => onChange({ provincia: e.target.value })} placeholder="Provincia" className="bg-[#F9F9F7] rounded-xl h-11" />
+              <Input value={data.localidad || ''} onChange={e => onChange({ localidad: e.target.value })} placeholder="Localidad" className="bg-[#F9F9F7] rounded-xl h-11" />
             </div>
+
+            <Button
+              type="button"
+              onClick={buscarSucursales}
+              disabled={loadingSucursales}
+              className="w-full bg-[#A3B18A] hover:bg-[#8fa172] text-white rounded-xl h-11 uppercase text-[10px] font-bold tracking-widest transition-all"
+            >
+              {loadingSucursales ? (
+                <><Loader2 className="animate-spin h-4 w-4 mr-2" /> Buscando...</>
+              ) : (
+                <><Search className="h-4 w-4 mr-2" /> Buscar Sucursales Disponibles</>
+              )}
+            </Button>
           </div>
 
           {/* Mostrar lista si hay resultados */}
           {listaSucursales.length > 0 && (
-            <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto mt-2">
+            <div className="grid grid-cols-1 gap-2 max-h-56 overflow-y-auto mt-4 p-1">
+              <p className="text-[10px] uppercase font-bold text-[#A3B18A] mb-1">Resultados encontrados:</p>
               {listaSucursales.map(s => (
                 <button key={s.id} type="button" onClick={() => onChange({ sucursalId: s.id, sucursalNombre: s.nombre, sucursalCorreo: `${s.nombre} - ${s.direccion}` })}
-                  className={`p-3 text-left rounded-xl border-2 text-[11px] ${data.sucursalId === s.id ? 'border-[#4A5D45] bg-[#F9F9F7]' : 'border-gray-100'}`}>
-                  <div className="font-bold">{s.nombre}</div>
-                  <div className="text-gray-500">{s.direccion}</div>
+                  className={`p-4 text-left rounded-2xl border-2 transition-all ${data.sucursalId === s.id ? 'border-[#4A5D45] bg-[#F9F9F7]' : 'border-[#F5F5F0] hover:border-[#E9E9E0]'}`}>
+                  <div className="font-bold text-[#3A4031] text-xs uppercase">{s.nombre}</div>
+                  <div className="text-[11px] text-[#5B6350] mt-1 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> {s.direccion}
+                  </div>
                 </button>
               ))}
             </div>
@@ -203,20 +215,20 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
           {/* MODO MANUAL */}
           {busquedaIntentada && listaSucursales.length === 0 && !loadingSucursales && (
             <div className="space-y-4 animate-in fade-in duration-300">
-              <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                 <div className="text-[10px] text-amber-800 leading-relaxed">
                   <p className="font-bold uppercase mb-1">Carga Manual de Sucursal</p>
-                  No pudimos conectar con el servidor de correos. Podés ingresar el nombre de tu sucursal manualmente debajo. Por favor sé bien específico/a para evitar errores en la entrega.
+                  No encontramos resultados automáticos para esa zona. Podés ingresar el nombre de la sucursal manualmente debajo.
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] text-gray-500 uppercase font-bold">Nombre de la Sucursal de Retiro</Label>
+                <Label className="text-[10px] text-[#5B6350] uppercase font-bold">Nombre / Dirección de la Sucursal</Label>
                 <Input
                   value={data.sucursalCorreo || ''}
                   onChange={e => onChange({ sucursalCorreo: e.target.value, sucursalId: '', sucursalNombre: e.target.value })}
-                  placeholder="Ej: Sucursal Caseros Centro"
-                  className="bg-white border-[#A3B18A] rounded-xl h-11"
+                  placeholder="Ej: Correo Argentino - Av. Rivadavia 1234"
+                  className="bg-white border-[#A3B18A] rounded-xl h-12"
                 />
               </div>
             </div>
@@ -228,7 +240,7 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
         <Button variant="ghost" onClick={onBack} className="text-[#A3B18A] font-bold uppercase text-[10px] tracking-widest">
           ← Volver
         </Button>
-        <Button onClick={() => validateForm() && onNext()} className="flex-1 bg-[#4A5D45] hover:bg-[#3A4031] text-white rounded-2xl h-14 font-bold uppercase text-xs tracking-widest shadow-lg">
+        <Button onClick={() => validateForm() && onNext()} className="flex-1 bg-[#4A5D45] hover:bg-[#3A4031] text-white rounded-2xl h-14 font-bold uppercase text-xs tracking-widest shadow-lg transition-transform active:scale-[0.98]">
           Continuar al Pago <ChevronRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
