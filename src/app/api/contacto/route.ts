@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendEmail, ADMIN_EMAIL } from "@/lib/email";
 import { emailNuevaConsultaAdmin } from "@/lib/emailTemplates";
+import { sendEmail, CONTACT_EMAIL } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
     try {
+        // 1. Primero obtenemos los datos del formulario
         const body = await req.json().catch(() => null);
 
         if (!body) {
@@ -12,18 +13,19 @@ export async function POST(req: NextRequest) {
 
         const { nombre, email, telefono, tipo, mensaje } = body;
 
-        // Validación de campos obligatorios
+        // 2. Validación de campos obligatorios
         if (!nombre || !email || !telefono || !mensaje) {
             console.error("Faltan datos en el body:", body);
             return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
         }
 
-        // Generamos el HTML incluyendo el nuevo campo teléfono
+        // 3. Generamos el HTML con la plantilla
         const html = emailNuevaConsultaAdmin({ nombre, email, telefono, tipo, mensaje });
 
-        // Enviamos el mail al admin
+        // 4. Enviamos el mail al mail de contacto (info@...)
+        // Usamos CONTACT_EMAIL que definimos en lib/email.ts
         await sendEmail(
-            ADMIN_EMAIL,
+            CONTACT_EMAIL,
             `📩 Consulta Web: ${tipo} - ${nombre}`,
             html
         );

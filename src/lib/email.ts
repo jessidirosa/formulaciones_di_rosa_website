@@ -7,9 +7,10 @@ const pass = process.env.SMTP_PASS
 const from = process.env.EMAIL_FROM
 
 // ✅ Ahora toma el valor de las variables de entorno de Vercel
-// Si no encuentra la variable, usa el Gmail como "respaldo" (fallback)
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "formulacionesdr@gmail.com"
+// Agregamos una variable específica para consultas
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pedidos@formulacionesdirosa.com";
 let cachedTransporter: nodemailer.Transporter | null = null
+export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "info@formulacionesdirosa.com";
 
 function getTransporter() {
     if (cachedTransporter) return cachedTransporter
