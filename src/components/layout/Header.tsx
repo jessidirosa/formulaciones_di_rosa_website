@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useCart } from "@/contexts/CartContext"
 import { useUser } from "@/contexts/UserContext"
 import { Button } from "@/components/ui/button"
-// ✅ Importamos el banner que ya tenías
 import AnnouncementBanner from "@/components/ui/AnnouncementBanner"
 import { ShoppingCart, User, Menu, X, LogOut, Settings } from "lucide-react"
 
@@ -15,16 +14,13 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
 
-  // ✅ LOGICA DE LOGO: 
-  // Podés subir tu logo a Cloudinary y pegar la URL acá, 
-  // o ponerlo en /public/logo.png y usar '/logo.png'
+  // URL optimizada sin timestamp de versión para evitar errores de carga
   const logoSrc = !logoError
-    ? 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1769794235/logo_m6yjjl.png'
+    ? 'https://res.cloudinary.com/dj71ufqjc/image/upload/logo_m6yjjl.png'
     : 'https://placehold.co/200x60/4A5D45/F5F5F0?text=DI+ROSA'
 
   return (
     <header className="w-full z-50">
-      {/* Banner de Anuncios */}
       <AnnouncementBanner />
 
       <nav className="bg-white/80 backdrop-blur-md border-b border-[#E9E9E0] py-4">
@@ -32,11 +28,11 @@ export default function Header() {
 
           {/* Logo con lógica de error */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="h-10 w-auto">
+            <div className="h-12 w-auto flex items-center">
               <img
                 src={logoSrc}
                 alt="Laboratorio Di Rosa"
-                className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-105"
                 onError={() => setLogoError(true)}
               />
             </div>
@@ -89,7 +85,6 @@ export default function Header() {
               </Link>
             )}
 
-            {/* Botón Móvil */}
             <Button variant="ghost" size="icon" className="md:hidden ml-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>

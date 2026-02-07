@@ -7,8 +7,9 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
   const [logoError, setLogoError] = useState(false)
 
+  // URL directa de Cloudinary
   const logoSrc = !logoError
-    ? 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1769794235/logo_m6yjjl.png'
+    ? 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1770505920/logo_nuevo_2_r8nwl7.png'
     : 'https://placehold.co/200x60/4A5D45/F5F5F0?text=DI+ROSA'
 
   return (
@@ -19,12 +20,14 @@ export default function Footer() {
           {/* Logo y descripción */}
           <div className="col-span-1 md:col-span-2 space-y-6">
             <Link href="/" className="inline-block transition-all hover:opacity-80">
-              <img
-                src={logoSrc}
-                alt="Formulaciones Di Rosa"
-                className={`h-14 w-auto object-contain ${!logoError ? 'brightness-0 invert' : ''}`}
-                onError={() => setLogoError(true)}
-              />
+              <div className="h-14 w-auto flex items-center">
+                <img
+                  src={logoSrc}
+                  alt="Formulaciones Di Rosa"
+                  className={`h-full w-auto object-contain ${!logoError ? 'brightness-0 invert' : ''}`}
+                  onError={() => setLogoError(true)}
+                />
+              </div>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
               Más de 20 años de experiencia en <strong>formulaciones magistrales</strong>.

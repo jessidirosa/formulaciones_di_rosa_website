@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
-// GET: Obtener datos completos
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session || !session.user?.email) {
@@ -29,7 +28,6 @@ export async function GET() {
   }
 }
 
-// PATCH: Actualizar datos (incluyendo Email) y/o Contraseña
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session || !session.user?.email) {
@@ -39,7 +37,6 @@ export async function PATCH(req: NextRequest) {
   try {
     const { nombre, apellido, email, telefono, currentPassword, newPassword } = await req.json()
 
-    // Buscamos al usuario actual una sola vez para validaciones
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
@@ -48,39 +45,42 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
     }
 
-    // 1. Si intenta cambiar el email, verificamos que no esté en uso por OTRO
+    // 1. Validación de Email
     if (email && email !== session.user.email) {
       const existingUser = await prisma.user.findUnique({
         where: { email }
       })
       if (existingUser) {
-        return NextResponse.json({ error: "El email ya está registrado por otro usuario" }, { status: 400 })
+        return NextResponse.json({ error: "El email ya está en uso" }, { status: 400 })
       }
     }
 
-    // 2. Lógica para cambio de contraseña
+    // 2. Lógica de Contraseña mejorada (Solo actúa si hay texto real)
     let passwordUpdate = {}
-    if (currentPassword || newPassword) {
-      // Si envió uno pero no el otro
-      if (!currentPassword || !newPassword) {
-        return NextResponse.json({ error: "Debes ingresar la contraseña actual y la nueva" }, { status: 400 })
+
+    // Solo intentamos actualizar si AMBOS campos tienen contenido y no son solo espacios
+    if (currentPassword?.trim() || newPassword?.trim()) {
+
+      if (!currentPassword?.trim() || !newPassword?.trim()) {
+        return NextResponse.json({
+          error: "Para cambiar la contraseña, debés completar ambos campos (actual y nueva)."
+        }, { status: 400 })
       }
 
       const isMatch = await bcrypt.compare(currentPassword, user.passwordHash)
       if (!isMatch) {
-        return NextResponse.json({ error: "La contraseña actual es incorrecta" }, { status: 400 })
+        return NextResponse.json({ error: "La contraseña actual es incorrecta." }, { status: 400 })
       }
 
       if (newPassword.length < 6) {
-        return NextResponse.json({ error: "La nueva contraseña debe tener al menos 6 caracteres" }, { status: 400 })
+        return NextResponse.json({ error: "La nueva contraseña debe tener al menos 6 caracteres." }, { status: 400 })
       }
 
       const newPasswordHash = await bcrypt.hash(newPassword, 12)
       passwordUpdate = { passwordHash: newPasswordHash }
     }
 
-    // 3. Actualización final en la base de datos
-    // Usamos el ID del usuario (que es inmutable) en lugar del email para evitar errores si el email cambia
+    // 3. Update usando el ID
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -94,7 +94,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: "Perfil actualizado con éxito",
+      message: "Perfil actualizado correctamente",
       user: {
         nombre: updatedUser.nombre,
         apellido: updatedUser.apellido,
@@ -102,8 +102,9 @@ export async function PATCH(req: NextRequest) {
         telefono: updatedUser.telefono
       }
     })
+
   } catch (error) {
-    console.error("❌ Error al actualizar perfil:", error)
-    return NextResponse.json({ error: "Error interno al actualizar los datos" }, { status: 500 })
+    console.error("❌ Error en PATCH /api/auth/me:", error)
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
   }
 }
