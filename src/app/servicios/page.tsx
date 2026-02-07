@@ -67,8 +67,13 @@ export default function ServiciosPage() {
                     </div>
 
                     <div className="relative">
+                        {/* Se eliminó mix-blend-multiply para evitar el parpadeo de renderizado */}
                         <div className="aspect-[4/5] bg-[#E9E9E0] rounded-[4rem] overflow-hidden shadow-2xl transform rotate-2">
-                            <img src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770507944/IMG_4980_kno1vp.jpg" alt="Marca Propia" className="w-full h-full object-cover mix-blend-multiply opacity-90" />
+                            <img
+                                src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770507944/IMG_4980_kno1vp.jpg"
+                                alt="Marca Propia"
+                                className="w-full h-full object-cover opacity-100"
+                            />
                         </div>
                         <div className="absolute -bottom-10 -right-5 bg-[#3A4031] p-10 rounded-[2rem] shadow-2xl max-w-xs border border-white/10">
                             <p className="text-[#F5F5F0] font-serif italic text-xl leading-snug">"Convertimos el conocimiento farmacéutico en el ADN de tu marca."</p>
@@ -94,15 +99,13 @@ export default function ServiciosPage() {
                             { icon: <FlaskConical />, title: "Cupón Activo", desc: "Te generamos un código personalizado para tus compras." },
                             { icon: <CheckCircle2 />, title: "Compra Online", desc: "Aplicá tu descuento al finalizar el carrito y listo." }
                         ].map((item, i) => (
-                            <div key={i} className="bg-white p-10 rounded-[3rem] border border-[#E9E9E0] hover:border-[#A3B18A] transition-colors group relative shadow-sm overflow-hidden">
-                                {/* Icono y Texto con z-10 para quedar arriba */}
+                            <div key={i} className="bg-white p-10 rounded-[3rem] border border-[#E9E9E0] hover:border-[#A3B18A] transition-colors group relative shadow-sm overflow-hidden text-left">
                                 <div className="relative z-10">
                                     <div className="text-[#A3B18A] mb-6 group-hover:scale-110 transition-transform duration-500">{item.icon}</div>
                                     <h4 className="font-bold text-[#3A4031] uppercase tracking-widest text-xs mb-3">{item.title}</h4>
                                     <p className="text-sm text-[#5B6350] leading-relaxed">{item.desc}</p>
                                 </div>
 
-                                {/* Número decorativo con z-0 para quedar detrás */}
                                 <span className="absolute bottom-2 right-6 text-7xl font-serif font-bold text-[#F5F5F0] group-hover:text-[#F9F9F7] transition-colors z-0 pointer-events-none select-none">
                                     0{i + 1}
                                 </span>
@@ -110,7 +113,7 @@ export default function ServiciosPage() {
                         ))}
                     </div>
 
-                    <div className="mt-16">
+                    <div className="mt-16 text-center">
                         <a href="https://wa.me/541137024467" target="_blank">
                             <Button variant="outline" className="border-[#4A5D45] text-[#4A5D45] hover:bg-[#4A5D45] hover:text-white rounded-full px-12 h-14 font-bold uppercase text-[10px] tracking-[0.2em] transition-all shadow-md">
                                 Solicitar Cupón Profesional
