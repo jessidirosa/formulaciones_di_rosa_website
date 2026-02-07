@@ -7,14 +7,12 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
   const [logoError, setLogoError] = useState(false)
 
-  // ✅ LOGICA DE LOGO: 
-  // Podés usar la URL de Cloudinary aquí. Si falla, carga el placeholder.
   const logoSrc = !logoError
     ? 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1769794235/logo_m6yjjl.png'
     : 'https://placehold.co/200x60/4A5D45/F5F5F0?text=DI+ROSA'
 
   return (
-    <footer className="bg-[#1A1C18] text-[#F5F5F0]"> {/* Color carbón orgánico */}
+    <footer className="bg-[#1A1C18] text-[#F5F5F0]">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
 
@@ -61,14 +59,14 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-gray-400">
               <li><Link href="/politicas/envios" className="hover:text-white transition-colors">Política de envíos</Link></li>
               <li><Link href="/politicas/terminos-condiciones" className="hover:text-white transition-colors">Términos y condiciones</Link></li>
-              <li><Link href="/politicas/privacidad" className="hover:text-white transition-colors">Privacidad</Link></li>
+              <li><Link href="/servicios" className="hover:text-white transition-colors">Nuestros Servicios</Link></li>
             </ul>
           </div>
         </div>
 
         {/* Separador y copyright */}
         <div className="border-t border-[#3A4031] mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 text-xs">
+          <p className="text-gray-500 text-xs text-left">
             © {currentYear} Formulaciones Di Rosa. Todos los derechos reservados.
           </p>
           <p className="text-[#A3B18A] text-[10px] font-bold uppercase tracking-widest">
