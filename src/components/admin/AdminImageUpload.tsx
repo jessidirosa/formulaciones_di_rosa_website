@@ -15,7 +15,8 @@ export default function AdminImageUpload({ value, onChange, onRemove }: AdminIma
         <div className="space-y-4 w-full text-left">
             <div className="flex items-center gap-4">
                 <CldUploadWidget
-                    uploadPreset="dirosa_presets"
+                    // Usamos el preset del código o uno de la variable de entorno
+                    uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "dirosa_presets"}
                     onSuccess={(result: any) => {
                         if (result.info && typeof result.info !== 'string') {
                             onChange(result.info.secure_url);
