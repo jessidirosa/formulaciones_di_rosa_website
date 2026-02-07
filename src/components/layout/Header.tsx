@@ -16,7 +16,7 @@ export default function Header() {
 
   // URL optimizada sin timestamp de versión para evitar errores de carga
   const logoSrc = !logoError
-    ? 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1770505920/logo_nuevo_2_r8nwl7.pnghttps://res.cloudinary.com/dj71ufqjc/image/upload/v1770506232/logo_nuevo_2_-_Editado_fkfjnm.png'
+    ? 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506232/logo_nuevo_2_-_Editado_fkfjnm.png'
     : 'https://placehold.co/200x60/4A5D45/F5F5F0?text=DI+ROSA'
 
   return (
