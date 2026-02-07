@@ -22,8 +22,11 @@ function RestablecerContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
+        // Limpiamos cualquier toast anterior
+        toast.dismiss()
+
         if (!token) {
-            toast.error("Token de recuperación ausente")
+            toast.error("Token de recuperación ausente. Por favor, solicitá un nuevo enlace.")
             return
         }
 
@@ -49,13 +52,18 @@ function RestablecerContent() {
 
             if (res.ok) {
                 setSuccess(true)
-                toast.success("Contraseña actualizada")
-                setTimeout(() => router.push("/mi-cuenta/login"), 3000)
+                toast.success("Contraseña actualizada con éxito")
+                // Redirigimos al login después de un breve delay
+                setTimeout(() => {
+                    router.push("/mi-cuenta/login")
+                }, 3000)
             } else {
-                toast.error(data.error || "Error al restablecer")
+                // Si el backend devuelve un error (ej: token expirado)
+                toast.error(data.error || "Error al restablecer la contraseña")
             }
         } catch (error) {
-            toast.error("Error de conexión")
+            console.error("Error en la petición:", error)
+            toast.error("Error de conexión. Intentá de nuevo.")
         } finally {
             setLoading(false)
         }
@@ -67,7 +75,12 @@ function RestablecerContent() {
                 <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
                 <h2 className="text-xl font-bold text-[#3A4031]">Enlace inválido</h2>
                 <p className="text-sm text-[#5B6350] mt-2">Este enlace no contiene un token válido. Por favor, solicitá uno nuevo.</p>
-                <Button onClick={() => router.push("/mi-cuenta/recuperar")} className="mt-6 bg-[#4A5D45] rounded-xl uppercase text-[10px] font-bold tracking-widest text-white">Volver a intentar</Button>
+                <Button
+                    onClick={() => router.push("/mi-cuenta/recuperar")}
+                    className="mt-6 bg-[#4A5D45] hover:bg-[#3A4031] rounded-xl uppercase text-[10px] font-bold tracking-widest text-white transition-all"
+                >
+                    Volver a intentar
+                </Button>
             </Card>
         )
     }
@@ -94,12 +107,12 @@ function RestablecerContent() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Mínimo 6 caracteres"
-                                        className="bg-[#F9F9F7] border-[#E9E9E0] h-12 rounded-xl pr-10"
+                                        className="bg-[#F9F9F7] border-[#E9E9E0] h-12 rounded-xl pr-10 focus:ring-[#A3B18A] focus:border-[#A3B18A]"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3B18A]"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3B18A] hover:text-[#4A5D45] transition-colors"
                                     >
                                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -114,21 +127,31 @@ function RestablecerContent() {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Repetí tu clave"
-                                    className="bg-[#F9F9F7] border-[#E9E9E0] h-12 rounded-xl"
+                                    className="bg-[#F9F9F7] border-[#E9E9E0] h-12 rounded-xl focus:ring-[#A3B18A] focus:border-[#A3B18A]"
                                 />
                             </div>
                         </div>
 
-                        <Button disabled={loading} className="w-full bg-[#4A5D45] hover:bg-[#3D4C39] h-12 rounded-xl font-bold uppercase text-[10px] tracking-widest text-white">
-                            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : "Actualizar Contraseña"}
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-[#4A5D45] hover:bg-[#3D4C39] h-12 rounded-xl font-bold uppercase text-[10px] tracking-widest text-white shadow-lg shadow-emerald-900/10 transition-all active:scale-[0.98]"
+                        >
+                            {loading ? (
+                                <span className="flex items-center gap-2">
+                                    <Loader2 className="animate-spin h-4 w-4" /> Procesando...
+                                </span>
+                            ) : (
+                                "Actualizar Contraseña"
+                            )}
                         </Button>
                     </form>
                 ) : (
-                    <div className="text-center py-6 space-y-4">
-                        <CheckCircle2 className="w-16 h-16 text-[#A3B18A] mx-auto animate-bounce" />
+                    <div className="text-center py-6 space-y-4 animate-in fade-in zoom-in duration-500">
+                        <CheckCircle2 className="w-16 h-16 text-[#A3B18A] mx-auto" />
                         <h3 className="font-bold text-[#3A4031] text-lg">¡Clave restablecida!</h3>
                         <p className="text-sm text-[#5B6350]">
-                            Tu contraseña ha sido actualizada correctamente. <br /> Redirigiendo al login...
+                            Tu contraseña ha sido actualizada correctamente. <br /> Redirigiendo al login en instantes...
                         </p>
                     </div>
                 )}
@@ -142,7 +165,10 @@ export default function RestablecerClavePage() {
         <div className="min-h-[80vh] flex items-center justify-center bg-[#F5F5F0] px-4 py-12">
             <div className="w-full max-w-md">
                 <Suspense fallback={
-                    <div className="flex justify-center"><Loader2 className="animate-spin text-[#4A5D45] w-10 h-10" /></div>
+                    <div className="flex justify-center flex-col items-center gap-4">
+                        <Loader2 className="animate-spin text-[#4A5D45] w-10 h-10" />
+                        <p className="text-[10px] uppercase font-bold text-[#A3B18A] tracking-widest">Cargando...</p>
+                    </div>
                 }>
                     <RestablecerContent />
                 </Suspense>
