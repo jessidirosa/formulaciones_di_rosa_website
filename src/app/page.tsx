@@ -155,7 +155,7 @@ export default async function HomePage() {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                         />
                         <div className="absolute top-6 left-6">
-                          <Badge className="bg-white/90 backdrop-blur-md text-[#4A5D45] border-none px-4 py-1.5 uppercase text-[9px] font-bold shadow-sm">Magistral</Badge>
+                          <Badge className="bg-white/90 backdrop-blur-md text-[#4A5D45] border-none px-4 py-1.5 uppercase text-[9px] font-bold shadow-sm">Destacado</Badge>
                         </div>
                       </div>
                     </Link>
