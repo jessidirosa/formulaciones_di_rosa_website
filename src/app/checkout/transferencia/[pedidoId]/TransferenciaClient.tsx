@@ -15,7 +15,8 @@ import {
     ChevronRight,
     ClipboardCheck,
     FlaskConical,
-    Loader2
+    Loader2,
+    Check
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -44,6 +45,10 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
     const [sending, setSending] = useState(false)
     const [sentOk, setSentOk] = useState(false)
 
+    // Estados para feedback visual de copiado
+    const [copiedCBU, setCopiedCBU] = useState(false)
+    const [copiedAlias, setCopiedAlias] = useState(false)
+
     const datos = {
         titular: process.env.NEXT_PUBLIC_TRANSFER_TITULAR || 'Laboratorio Di Rosa',
         banco: process.env.NEXT_PUBLIC_TRANSFER_BANCO || 'Banco Santander',
@@ -56,6 +61,15 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
         try {
             await navigator.clipboard.writeText(text)
             toast.success(`${label} copiado al portapapeles`)
+
+            // Feedback visual en el botón
+            if (label === 'CBU') {
+                setCopiedCBU(true)
+                setTimeout(() => setCopiedCBU(false), 2000)
+            } else {
+                setCopiedAlias(true)
+                setTimeout(() => setCopiedAlias(false), 2000)
+            }
         } catch {
             toast.error('No se pudo copiar')
         }
@@ -67,11 +81,9 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
     }, [])
 
     const loadPedido = async () => {
-        // Quitamos el requerimiento estricto de credenciales para permitir consulta de invitados
         const res = await fetch(`/api/pedidos/${pedidoId}`)
         const json = await res.json()
         if (!res.ok || !json.ok) {
-            // Si el error es 401, lo traducimos a algo más amigable
             if (res.status === 401) {
                 throw new Error('No tienes permiso para ver este pedido o la sesión expiró.')
             }
@@ -218,7 +230,14 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
                                 <span className="text-[10px] text-[#A3B18A] font-bold uppercase">CBU</span>
                                 <div className="flex items-center justify-between bg-[#F9F9F7] p-3 rounded-xl border border-[#E9E9E0]">
                                     <code className="text-[#3A4031] font-mono text-sm break-all">{datos.cbu}</code>
-                                    <Button variant="ghost" size="sm" onClick={() => handleCopy(datos.cbu, 'CBU')} className="text-[#4A5D45] hover:bg-white"><Copy className="w-4 h-4" /></Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleCopy(datos.cbu, 'CBU')}
+                                        className="text-[#4A5D45] hover:bg-white"
+                                    >
+                                        {copiedCBU ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                                    </Button>
                                 </div>
                             </div>
 
@@ -226,7 +245,14 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
                                 <span className="text-[10px] text-[#A3B18A] font-bold uppercase">Alias</span>
                                 <div className="flex items-center justify-between bg-[#F9F9F7] p-3 rounded-xl border border-[#E9E9E0]">
                                     <code className="text-[#3A4031] font-mono text-base font-bold">{datos.alias}</code>
-                                    <Button variant="ghost" size="sm" onClick={() => handleCopy(datos.alias, 'Alias')} className="text-[#4A5D45] hover:bg-white"><Copy className="w-4 h-4" /></Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleCopy(datos.alias, 'Alias')}
+                                        className="text-[#4A5D45] hover:bg-white"
+                                    >
+                                        {copiedAlias ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                                    </Button>
                                 </div>
                             </div>
                         </div>
