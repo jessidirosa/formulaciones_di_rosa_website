@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import prisma from '@/lib/prisma'
 import ProductDetail from '@/components/productos/ProductDetail'
 
+export const dynamic = 'force-dynamic';
 // 🔹 Obtener producto por slug (Actualizado con include)
 async function getProducto(slug: string) {
   try {

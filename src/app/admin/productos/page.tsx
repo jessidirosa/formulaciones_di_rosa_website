@@ -4,6 +4,8 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import ProductosAdmin from "./ProductosAdmin"
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminProductosPage() {
     const session = await getServerSession(authOptions)
     const user = session?.user as any
