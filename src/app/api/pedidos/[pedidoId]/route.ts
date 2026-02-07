@@ -16,22 +16,9 @@ export async function GET(
         }
 
         const session = await getServerSession(authOptions)
-        if (!session?.user?.email) {
-            return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 })
-        }
-
-        const user = await prisma.user.findUnique({
-            where: { email: session.user.email },
-            select: { id: true },
-        })
-
-        if (!user) {
-            return NextResponse.json({ ok: false, error: "Usuario no encontrado" }, { status: 404 })
-        }
-
         const now = new Date()
 
-        // Mantenemos la lógica de expiración para actualizar el estado antes de devolverlo
+        // 1. Mantenemos la lógica de expiración
         await prisma.pedido.updateMany({
             where: {
                 id,
@@ -42,21 +29,45 @@ export async function GET(
             data: { estado: "cancelled_expired" },
         })
 
-        const pedido = await prisma.pedido.findFirst({
-            where: { id, userId: user.id },
+        // 2. Buscamos el pedido
+        const pedidoData = await prisma.pedido.findUnique({
+            where: { id },
             select: {
                 id: true,
-                numero: true, // ✅ Agregado: para que el cliente vea el ID institucional (P-...)
+                numero: true,
                 total: true,
                 descuento: true,
                 estado: true,
                 expiresAt: true,
+                userId: true, // Lo necesitamos para validar propiedad
             },
         })
 
-        if (!pedido) {
+        if (!pedidoData) {
             return NextResponse.json({ ok: false, error: "Pedido no encontrado" }, { status: 404 })
         }
+
+        // 3. VALIDACIÓN DE SEGURIDAD
+        // Si el pedido pertenece a un usuario registrado, solo ese usuario puede verlo
+        if (pedidoData.userId !== null) {
+            if (!session?.user?.email) {
+                return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 })
+            }
+
+            const user = await prisma.user.findUnique({
+                where: { email: session.user.email },
+                select: { id: true },
+            })
+
+            if (!user || pedidoData.userId !== user.id) {
+                return NextResponse.json({ ok: false, error: "No tienes permiso para ver este pedido" }, { status: 403 })
+            }
+        }
+        // Si userId es null, significa que es un invitado. 
+        // Permitimos el acceso ya que el pedidoId en la URL actúa como "token" de acceso.
+
+        // Extraemos solo lo necesario para no devolver el userId al cliente
+        const { userId, ...pedido } = pedidoData
 
         return NextResponse.json({ ok: true, pedido })
     } catch (error) {

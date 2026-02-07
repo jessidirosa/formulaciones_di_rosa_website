@@ -21,7 +21,7 @@ import { toast } from 'sonner'
 
 type Pedido = {
     id: number
-    numero: string // ✅ Agregamos el campo numero al tipo
+    numero: string
     total: number
     descuento: number
     estado: string
@@ -67,17 +67,30 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
     }, [])
 
     const loadPedido = async () => {
-        const res = await fetch(`/api/pedidos/${pedidoId}`, { credentials: 'include' })
+        // Quitamos el requerimiento estricto de credenciales para permitir consulta de invitados
+        const res = await fetch(`/api/pedidos/${pedidoId}`)
         const json = await res.json()
-        if (!res.ok || !json.ok) throw new Error(json.error || 'No se pudo cargar el pedido')
+        if (!res.ok || !json.ok) {
+            // Si el error es 401, lo traducimos a algo más amigable
+            if (res.status === 401) {
+                throw new Error('No tienes permiso para ver este pedido o la sesión expiró.')
+            }
+            throw new Error(json.error || 'No se pudo cargar el pedido')
+        }
         setPedido(json.pedido)
     }
 
     useEffect(() => {
         const run = async () => {
-            try { await loadPedido() }
-            catch (e: any) { setError(e?.message || 'Error') }
-            finally { setLoading(false) }
+            try {
+                await loadPedido()
+            }
+            catch (e: any) {
+                setError(e?.message || 'Error al cargar los datos del pedido')
+            }
+            finally {
+                setLoading(false)
+            }
         }
         run()
     }, [pedidoId])
@@ -98,8 +111,7 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
         try {
             setSending(true)
             const res = await fetch(`/api/pedidos/${pedidoId}/ya-abone`, {
-                method: 'POST',
-                credentials: 'include',
+                method: 'POST'
             })
             if (!res.ok) throw new Error('Error al enviar el aviso')
             setSentOk(true)
@@ -126,7 +138,10 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
                     <AlertCircle className="w-16 h-16 text-red-500 mx-auto" />
                     <h2 className="text-xl font-bold text-[#3A4031]">Hubo un inconveniente</h2>
                     <p className="text-sm text-[#5B6350]">{error}</p>
-                    <Button onClick={() => window.location.reload()} className="bg-[#4A5D45] text-white rounded-xl uppercase font-bold text-xs tracking-widest">Reintentar</Button>
+                    <div className="flex flex-col gap-2">
+                        <Button onClick={() => window.location.reload()} className="bg-[#4A5D45] text-white rounded-xl uppercase font-bold text-xs tracking-widest">Reintentar</Button>
+                        <Button variant="ghost" onClick={() => window.location.href = '/'} className="text-[#A3B18A] text-[10px] uppercase font-bold">Volver al inicio</Button>
+                    </div>
                 </div>
             </Card>
         </div>
@@ -135,7 +150,7 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
     return (
         <div className="min-h-screen bg-[#F5F5F0] py-12 px-4">
             <ClearCartOnMount />
-            <div className="container mx-auto max-w-2xl space-y-6">
+            <div className="container mx-auto max-w-2xl space-y-6 text-left">
 
                 {/* Cabecera de Confirmación */}
                 <div className="text-center space-y-3 mb-8">
@@ -143,7 +158,6 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
                         <CheckCircle2 className="w-10 h-10 text-[#4A5D45]" />
                     </div>
                     <h1 className="text-3xl font-serif font-bold text-[#3A4031]">¡Reserva Exitosa!</h1>
-                    {/* ✅ Cambiado pedidoId por pedido.numero */}
                     <p className="text-[#5B6350] uppercase tracking-[0.2em] text-[10px] font-bold">Pedido {pedido?.numero}</p>
                 </div>
 
@@ -219,7 +233,6 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
 
                         <div className="pt-4 text-center">
                             <p className="text-[12px] text-[#A3B18A] italic">
-                                {/* ✅ Cambiado pedidoId por pedido.numero */}
                                 * Por favor, incluí el número <b>{pedido?.numero}</b> en el concepto de la transferencia.
                             </p>
                         </div>
