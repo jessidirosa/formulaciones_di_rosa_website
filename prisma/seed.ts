@@ -9,7 +9,7 @@ async function main() {
   // 1. Crear usuario administrador
   const adminPassword = await bcrypt.hash('admin123', 12)
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@formulacionesdirosa.com' },
+    where: { email: 'formulacionesdr@gmail.com' },
     update: {
       passwordHash: adminPassword, // ✅ Ahora sí actualiza la clave si ya existe
       telefono: '+5491137024467',  // 👈 PONÉ ACÁ EL TELÉFONO CORRECTO
@@ -17,7 +17,7 @@ async function main() {
       role: 'ADMIN'
     },
     create: {
-      email: 'admin@formulacionesdirosa.com',
+      email: 'formulacionesdr@gmail.com',
       passwordHash: adminPassword,
       nombre: 'Administrador',
       apellido: 'Sistema',
