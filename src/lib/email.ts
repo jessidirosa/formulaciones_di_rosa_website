@@ -6,9 +6,9 @@ const user = process.env.SMTP_USER
 const pass = process.env.SMTP_PASS
 const from = process.env.EMAIL_FROM
 
-// Aquí puedes dejar fijo tu email de admin para recibir avisos
-export const ADMIN_EMAIL = "formulacionesdr@gmail.com"
-
+// ✅ Ahora toma el valor de las variables de entorno de Vercel
+// Si no encuentra la variable, usa el Gmail como "respaldo" (fallback)
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "formulacionesdr@gmail.com"
 let cachedTransporter: nodemailer.Transporter | null = null
 
 function getTransporter() {
