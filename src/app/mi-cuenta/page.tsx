@@ -22,7 +22,8 @@ import {
   Pencil,
   Loader2,
   X,
-  Lock
+  Lock,
+  Mail
 } from 'lucide-react'
 
 interface Pedido {
@@ -48,6 +49,7 @@ export default function MiCuentaPage() {
   const [editForm, setEditForm] = useState({
     nombre: '',
     apellido: '',
+    email: '', // Agregado campo email
     telefono: '',
     currentPassword: '',
     newPassword: ''
@@ -66,6 +68,7 @@ export default function MiCuentaPage() {
       setEditForm({
         nombre: user.nombre || '',
         apellido: user.apellido || '',
+        email: user.email || '', // Inicializado con el email del usuario
         telefono: user.telefono || '',
         currentPassword: '',
         newPassword: ''
@@ -104,6 +107,11 @@ export default function MiCuentaPage() {
         if (refreshUser) await refreshUser()
         setIsEditModalOpen(false)
         setEditForm(prev => ({ ...prev, currentPassword: '', newPassword: '' }))
+
+        // Si el email cambió, podrías opcionalmente cerrar sesión o avisar al usuario
+        if (editForm.email !== user?.email) {
+          toast.info("Has cambiado tu email de acceso.")
+        }
       } else {
         toast.error(data.error || "Error al actualizar el perfil")
       }
@@ -308,7 +316,7 @@ export default function MiCuentaPage() {
           </div>
         </div>
 
-        {/* MODAL DE EDICIÓN CON CAMBIO DE CLAVE */}
+        {/* MODAL DE EDICIÓN CON CAMBIO DE CLAVE Y EMAIL */}
         {isEditModalOpen && (
           <div className="fixed inset-0 bg-[#3A4031]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md rounded-3xl shadow-2xl border-none bg-white overflow-hidden text-left">
@@ -339,6 +347,21 @@ export default function MiCuentaPage() {
                       />
                     </div>
                   </div>
+
+                  {/* Campo de Email Agregado */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-[#A3B18A] flex items-center gap-1">
+                      <Mail className="w-3 h-3" /> Email de acceso
+                    </label>
+                    <Input
+                      type="email"
+                      value={editForm.email}
+                      onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                      className="rounded-xl bg-[#F9F9F7]"
+                      required
+                    />
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Teléfono</label>
                     <Input

@@ -70,7 +70,7 @@ export default async function HomePage() {
             </div>
             <div className="relative group hidden lg:block">
               <div className="absolute -inset-10 bg-[#A3B18A] opacity-10 rounded-full blur-[100px]" />
-              <img src="https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&q=80&w=800" alt="Formulaciones Di Rosa" className="relative rounded-[4rem] shadow-2xl w-full border border-white/10 object-cover h-[550px] transform hover:rotate-1 transition-transform duration-1000" />
+              <img src="https://res.cloudinary.com/dj71ufqjc/image/upload/v1770503340/portada_homepage_flu1fn.png" />
             </div>
           </div>
         </div>
