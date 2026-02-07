@@ -97,7 +97,7 @@ const SobreNosotros: React.FC = () => {
                             Visitar Tienda
                         </Link>
                         <a
-                            href="https://wa.me/tu-numero"
+                            href="https://wa.me/+5491137024467"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-[#A3B18A] text-[#F5F5F0] px-12 py-4 rounded-full font-bold hover:bg-[#8FA173] transition-all shadow-lg flex items-center justify-center gap-2"
