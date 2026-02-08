@@ -19,7 +19,7 @@ async function getProductosBase(where: any, orderBy: any) {
   })
 }
 
-// 1. LÓGICA DE DATOS
+// 1. LÓGICA DE DATOS MEJORADA
 async function getProductos(searchParams?: {
   categoria?: string
   busqueda?: string
@@ -28,6 +28,7 @@ async function getProductos(searchParams?: {
   try {
     const { categoria, busqueda, orden } = searchParams || {}
 
+    // Función de normalización robusta
     const normalizar = (str: string) =>
       str ? str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') : ''
 
@@ -43,6 +44,7 @@ async function getProductos(searchParams?: {
 
     const where: any = { activo: true }
 
+    // Filtro por categoría desde el menú/sidebar
     if (categoria && categoria !== "todos") {
       where.categorias = {
         some: { categoria: { slug: categoria } },
@@ -51,41 +53,52 @@ async function getProductos(searchParams?: {
 
     const productosBase = await getProductosBase(where, orderBy);
 
-    let productosFiltrados = productosBase
-    // ✅ CORRECCIÓN DE TIPOS: Definimos los arrays con el tipo correcto
     let productosPorNombre: ProductoConRelaciones[] = []
     let productosPorCategoria: ProductoConRelaciones[] = []
 
     if (busqueda && busqueda.trim() !== '') {
       const terminos = normalizar(busqueda).split(' ').filter(t => t.length > 0)
 
-      productosPorNombre = productosFiltrados.filter((p) => {
+      // BÚSQUEDA GLOBAL: Nombre, Descripción Corta y Categoría Texto
+      productosPorNombre = productosBase.filter((p) => {
         const nombreNorm = normalizar(p.nombre)
         const descNorm = normalizar(p.descripcionCorta || '')
-        return terminos.every(term => nombreNorm.includes(term) || descNorm.includes(term))
+        const catTextoNorm = normalizar((p as any).categoria || '') // Búsqueda en el campo de texto 'categoria'
+
+        return terminos.every(term =>
+          nombreNorm.includes(term) ||
+          descNorm.includes(term) ||
+          catTextoNorm.includes(term)
+        )
       })
 
-      productosPorCategoria = productosFiltrados.filter((p) => {
+      // BÚSQUEDA EN RELACIONES: Categorías de la base de datos
+      productosPorCategoria = productosBase.filter((p) => {
         const enCategoriasRelacionadas = Array.isArray(p.categorias) &&
           p.categorias.some((pc: any) => {
-            const catNorm = normalizar(pc.categoria.nombre)
-            return terminos.some(term => catNorm.includes(term))
+            const catRelacionadaNorm = normalizar(pc.categoria.nombre)
+            return terminos.some(term => catRelacionadaNorm.includes(term))
           })
 
         const yaEstaEnNombre = productosPorNombre.some((n) => n.id === p.id)
         return enCategoriasRelacionadas && !yaEstaEnNombre
       })
     } else {
-      productosPorNombre = productosFiltrados
+      productosPorNombre = productosBase
     }
 
-    const categorias = await prisma.categoria.findMany({
+    const categoriasMenu = await prisma.categoria.findMany({
       orderBy: { nombre: "asc" },
     })
 
-    const productos = busqueda ? [...productosPorNombre, ...productosPorCategoria] : productosFiltrados
+    const productos = busqueda ? [...productosPorNombre, ...productosPorCategoria] : productosBase
 
-    return { productos, categorias, productosPorNombre, productosPorCategoria }
+    return {
+      productos,
+      categorias: categoriasMenu,
+      productosPorNombre,
+      productosPorCategoria
+    }
   } catch (error) {
     console.error('Error al obtener productos:', error)
     return { productos: [], categorias: [], productosPorNombre: [], productosPorCategoria: [] }
@@ -162,7 +175,7 @@ export default async function TiendaPage({
                 <div>
                   <h2 className="text-sm uppercase tracking-widest font-bold text-[#A3B18A] mb-6 flex items-center gap-2">
                     <span className="w-8 h-[1px] bg-[#A3B18A]"></span>
-                    Resultados por nombre y descripción
+                    Coincidencias encontradas
                   </h2>
                   <ProductGrid productos={productosPorNombre as any} />
                 </div>
