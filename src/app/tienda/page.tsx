@@ -5,7 +5,21 @@ import ProductFilters from '@/components/productos/ProductFilters'
 import { Separator } from '@/components/ui/separator'
 import CategoriesMenu from "@/components/productos/CategoriesMenu"
 
-// 1. LÓGICA DE DATOS (Actualizada para incluir presentaciones)
+// Definimos el tipo basado en lo que devuelve la consulta de Prisma para evitar errores de 'any'
+type ProductoConRelaciones = Awaited<ReturnType<typeof getProductosBase>>[number];
+
+async function getProductosBase(where: any, orderBy: any) {
+  return await prisma.producto.findMany({
+    where,
+    orderBy,
+    include: {
+      presentaciones: true,
+      categorias: { include: { categoria: true } },
+    },
+  })
+}
+
+// 1. LÓGICA DE DATOS
 async function getProductos(searchParams?: {
   categoria?: string
   busqueda?: string
@@ -15,7 +29,7 @@ async function getProductos(searchParams?: {
     const { categoria, busqueda, orden } = searchParams || {}
 
     const normalizar = (str: string) =>
-      str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      str ? str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') : ''
 
     let orderBy: any = { orden: 'asc' }
 
@@ -35,35 +49,37 @@ async function getProductos(searchParams?: {
       }
     }
 
-    const productosBase = await prisma.producto.findMany({
-      where,
-      orderBy,
-      include: {
-        presentaciones: true, // 👈 AGREGADO: Vital para que la ProductCard vea precios y stock
-        categorias: { include: { categoria: true } },
-      },
-    })
+    const productosBase = await getProductosBase(where, orderBy);
 
     let productosFiltrados = productosBase
-    let productosPorNombre = productosFiltrados
-    let productosPorCategoria: typeof productosFiltrados = []
+    // ✅ CORRECCIÓN DE TIPOS: Definimos los arrays con el tipo correcto
+    let productosPorNombre: ProductoConRelaciones[] = []
+    let productosPorCategoria: ProductoConRelaciones[] = []
 
     if (busqueda && busqueda.trim() !== '') {
-      const term = normalizar(busqueda)
-      productosPorNombre = productosFiltrados.filter((p) =>
-        normalizar(p.nombre).includes(term)
-      )
-      productosPorCategoria = productosFiltrados.filter((p: any) => {
-        const enCategoriaPrincipal = p.categoria ? normalizar(p.categoria).includes(term) : false
-        const enCategoriasRelacionadas = Array.isArray(p.categorias) &&
-          p.categorias.some((pc: any) => normalizar(pc.categoria.nombre).includes(term))
-        const yaEstaEnNombre = productosPorNombre.some((n) => n.id === p.id)
-        return (enCategoriaPrincipal || enCategoriasRelacionadas) && !yaEstaEnNombre
+      const terminos = normalizar(busqueda).split(' ').filter(t => t.length > 0)
+
+      productosPorNombre = productosFiltrados.filter((p) => {
+        const nombreNorm = normalizar(p.nombre)
+        const descNorm = normalizar(p.descripcionCorta || '')
+        return terminos.every(term => nombreNorm.includes(term) || descNorm.includes(term))
       })
+
+      productosPorCategoria = productosFiltrados.filter((p) => {
+        const enCategoriasRelacionadas = Array.isArray(p.categorias) &&
+          p.categorias.some((pc: any) => {
+            const catNorm = normalizar(pc.categoria.nombre)
+            return terminos.some(term => catNorm.includes(term))
+          })
+
+        const yaEstaEnNombre = productosPorNombre.some((n) => n.id === p.id)
+        return enCategoriasRelacionadas && !yaEstaEnNombre
+      })
+    } else {
+      productosPorNombre = productosFiltrados
     }
 
     const categorias = await prisma.categoria.findMany({
-      select: { nombre: true, slug: true },
       orderBy: { nombre: "asc" },
     })
 
@@ -98,14 +114,11 @@ export default async function TiendaPage({
   } = await getProductos(params)
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]"> {/* Fondo Beige Di Rosa */}
-
-      {/* Menú de Categorías (Versión Mejorada) */}
+    <div className="min-h-screen bg-[#F5F5F0]">
       <CategoriesMenu categorias={categorias} />
 
       <main className="container mx-auto px-4 py-12">
-        {/* Header de la tienda */}
-        <div className="mb-12 border-l-4 border-[#4A5D45] pl-6">
+        <div className="mb-12 border-l-4 border-[#4A5D45] pl-6 text-left">
           <h1 className="text-4xl md:text-5xl font-bold text-[#3A4031] mb-4 tracking-tight">
             Laboratorio Magistral
           </h1>
@@ -115,7 +128,6 @@ export default async function TiendaPage({
           </p>
         </div>
 
-        {/* Filtros y búsqueda (Integrados en la paleta Musgo) */}
         <div className="mb-10">
           <Suspense fallback={<div className="animate-pulse h-20 bg-[#E9E9E0] rounded-xl"></div>}>
             <ProductFilters
@@ -129,9 +141,8 @@ export default async function TiendaPage({
 
         <Separator className="mb-10 bg-[#D6D6C2]" />
 
-        {/* Resultados y Contador */}
         <div className="mb-8 flex items-center justify-between">
-          <p className="text-[#5B6350] font-medium">
+          <div className="text-[#5B6350] font-medium text-left">
             {productos.length > 0
               ? <><span className="text-[#4A5D45] font-bold">{productos.length}</span> productos encontrados</>
               : 'No se encontraron resultados'}
@@ -141,10 +152,9 @@ export default async function TiendaPage({
                 &quot;{params.busqueda}&quot;
               </span>
             )}
-          </p>
+          </div>
         </div>
 
-        {/* Grid de productos con Lógica de Búsqueda */}
         <Suspense fallback={<TiendaSkeleton />}>
           {params.busqueda && params.busqueda.trim() !== '' ? (
             <div className="space-y-16">
@@ -152,7 +162,7 @@ export default async function TiendaPage({
                 <div>
                   <h2 className="text-sm uppercase tracking-widest font-bold text-[#A3B18A] mb-6 flex items-center gap-2">
                     <span className="w-8 h-[1px] bg-[#A3B18A]"></span>
-                    Resultados por nombre
+                    Resultados por nombre y descripción
                   </h2>
                   <ProductGrid productos={productosPorNombre as any} />
                 </div>
@@ -183,7 +193,6 @@ export default async function TiendaPage({
           )}
         </Suspense>
 
-        {/* Footer Informativo de la Tienda */}
         <div className="mt-24 pt-12 border-t border-[#D6D6C2]">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
             <div className="group">
@@ -213,8 +222,6 @@ export default async function TiendaPage({
     </div>
   )
 }
-
-// 3. SUB-COMPONENTES AUXILIARES (Estilo Musgo/Beige)
 
 function TiendaSkeleton() {
   return (
@@ -250,7 +257,6 @@ function EmptyState() {
   )
 }
 
-// METADATA (Mantenida intacta)
 export async function generateMetadata({
   searchParams,
 }: {
