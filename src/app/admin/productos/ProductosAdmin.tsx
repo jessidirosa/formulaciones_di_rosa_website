@@ -20,13 +20,15 @@ import {
 import {
     Pencil,
     Trash2,
-    FileDown,
     Plus,
     X,
     Sparkles,
     Loader2,
     TrendingUp,
-    PackageSearch // Icono para cuando no hay productos
+    PackageSearch,
+    Search,
+    Copy,
+    ArrowUpDown
 } from "lucide-react"
 
 // --- Interfaces ---
@@ -59,6 +61,10 @@ export default function ProductosAdmin() {
     const [productos, setProductos] = useState<Producto[]>([])
     const [categorias, setCategorias] = useState<Categoria[]>([])
     const [loading, setLoading] = useState(true)
+
+    // ✅ ESTADOS PARA BÚSQUEDA Y ORDEN
+    const [searchTerm, setSearchTerm] = useState("")
+    const [sortAsc, setSortAsc] = useState(true)
 
     const [porcentaje, setPorcentaje] = useState("")
     const [monto, setMonto] = useState("")
@@ -105,11 +111,10 @@ export default function ProductosAdmin() {
             setLoading(true)
             const res = await fetch("/api/admin/productos")
             const data = await res.json()
-            // Aseguramos que productos siempre sea un array
             setProductos(data.productos || [])
         } catch (error) {
             toast.error("Error al cargar inventario")
-            setProductos([]) // Fallback en caso de error
+            setProductos([])
         } finally {
             setLoading(false)
         }
@@ -122,6 +127,39 @@ export default function ProductosAdmin() {
             setCategorias(data.categorias || [])
         } catch (error) { console.error(error) }
     }
+
+    // ✅ LÓGICA DE COPIADO/DUPLICADO (Carga los datos en el form de creación)
+    const handleCopy = (p: Producto) => {
+        setForm({
+            nombre: `${p.nombre} (Copia)`,
+            slug: `${p.slug}-copia-${Math.floor(Math.random() * 1000)}`, // Slug único para evitar errores
+            precio: String(p.precio),
+            categoria: p.categoria || "",
+            descripcionCorta: p.descripcionCorta || "",
+            descripcionLarga: p.descripcionLarga || "",
+            imagen: p.imagen || "",
+            stock: String(p.stock || 0),
+            activo: false,
+            destacado: false,
+            categoriaIds: (p.categorias || []).map(c => c.categoria.id),
+            presentaciones: (p.presentaciones || []).map(pres => ({
+                nombre: pres.nombre,
+                precio: pres.precio,
+                stock: pres.stock
+            }))
+        })
+        toast.info("Datos de la fórmula copiados al formulario")
+        // Scroll hacia arriba para ver el formulario con los datos
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ✅ LÓGICA DE FILTRADO Y ORDENAMIENTO EN TIEMPO REAL
+    const filteredProducts = (productos || [])
+        .filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+        .sort((a, b) => {
+            if (sortAsc) return a.nombre.localeCompare(b.nombre);
+            return b.nombre.localeCompare(a.nombre);
+        });
 
     const handleAumentoMasivo = async () => {
         if (!porcentaje && !monto) return toast.error("Ingresa un valor para ajustar")
@@ -236,7 +274,6 @@ export default function ProductosAdmin() {
                             <form onSubmit={handleCreate} className="space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-[#A3B18A]">Imagen de Producto</label>
-                                    {/* Componente que gestiona Cloudinary */}
                                     <AdminImageUpload
                                         value={form.imagen}
                                         onChange={(url) => setForm({ ...form, imagen: url })}
@@ -292,20 +329,44 @@ export default function ProductosAdmin() {
                     </Card>
                 </div>
 
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-4">
+                    {/* ✅ BARRA DE BÚSQUEDA Y HERRAMIENTAS */}
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A3B18A]" />
+                            <Input
+                                placeholder="Buscar por nombre de fórmula..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 rounded-2xl bg-white border-none shadow-sm h-12"
+                            />
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => setSortAsc(!sortAsc)}
+                            className="rounded-2xl shadow-sm h-12 px-4 flex gap-2 text-[#4A5D45] font-bold text-[10px] uppercase border-none bg-white hover:bg-gray-50 transition-colors"
+                        >
+                            <ArrowUpDown className="w-4 h-4" />
+                            {sortAsc ? "A-Z" : "Z-A"}
+                        </Button>
+                    </div>
+
                     <Card className="rounded-[2.5rem] shadow-2xl border-none bg-white overflow-hidden">
                         <CardContent className="px-8 py-8">
-                            {/* --- Lógica para cuando NO hay productos --- */}
                             {loading ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-[#A3B18A]">
                                     <Loader2 className="w-10 h-10 animate-spin mb-4" />
                                     <p className="text-[10px] uppercase tracking-widest font-bold">Cargando inventario...</p>
                                 </div>
-                            ) : productos.length === 0 ? (
+                            ) : filteredProducts.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-[#A3B18A] border-2 border-dashed border-[#E9E9E0] rounded-[2rem]">
                                     <PackageSearch className="w-12 h-12 mb-4 opacity-20" />
-                                    <p className="text-[10px] uppercase tracking-widest font-bold">No hay fórmulas registradas</p>
-                                    <p className="text-xs text-[#5B6350] mt-1">Comienza creando tu primer producto a la izquierda.</p>
+                                    <p className="text-[10px] uppercase tracking-widest font-bold">
+                                        {searchTerm ? "No hay coincidencias" : "No hay fórmulas registradas"}
+                                    </p>
+                                    <p className="text-xs text-[#5B6350] mt-1">
+                                        {searchTerm ? "Prueba con otros términos" : "Comienza creando tu primer producto a la izquierda."}
+                                    </p>
                                 </div>
                             ) : (
                                 <Table>
@@ -318,7 +379,7 @@ export default function ProductosAdmin() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {productos.map((p) => (
+                                        {filteredProducts.map((p) => (
                                             <TableRow key={p.id} className="border-[#F5F5F0]">
                                                 <TableCell>
                                                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#F5F5F0] border border-[#E9E9E0]">
@@ -338,7 +399,26 @@ export default function ProductosAdmin() {
                                                     {p.activo ? <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold uppercase">Activo</span> : <span className="text-[9px] bg-gray-100 text-gray-400 px-2 py-1 rounded-full font-bold uppercase">Oculto</span>}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(p)} className="text-[#A3B18A] hover:text-[#4A5D45]"><Pencil className="w-4 h-4" /></Button>
+                                                    <div className="flex justify-end gap-1">
+                                                        {/* ✅ BOTÓN COPIAR */}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleCopy(p)}
+                                                            title="Duplicar datos para nueva fórmula"
+                                                            className="text-blue-400 hover:text-blue-600"
+                                                        >
+                                                            <Copy className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleOpenEdit(p)}
+                                                            className="text-[#A3B18A] hover:text-[#4A5D45]"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
