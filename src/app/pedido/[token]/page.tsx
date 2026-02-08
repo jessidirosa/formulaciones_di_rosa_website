@@ -14,6 +14,16 @@ function formatARS(n: number) {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n)
 }
 
+// Función para formatear la fecha estimada
+function formatFechaEstimada(fecha: string) {
+    if (!fecha) return ""
+    return new Date(fecha).toLocaleDateString("es-AR", {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+    })
+}
+
 const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, icon: any, color: string }> = {
     pending_payment_transfer: {
         title: "Esperando Transferencia",
@@ -87,7 +97,6 @@ export default function PedidoPublicPage({ params }: PageProps) {
         try {
             const res = await fetch(`/api/pedidos/public/${token}`)
 
-            // Verificamos si la respuesta es exitosa antes de intentar el .json()
             if (!res.ok) {
                 console.error("Error en la respuesta del servidor:", res.status)
                 setPedido(null)
@@ -147,6 +156,9 @@ export default function PedidoPublicPage({ params }: PageProps) {
 
     const subtotalItems = pedido.items.reduce((acc: number, item: any) => acc + (item.subtotal || 0), 0)
 
+    // Lógica para mostrar la fecha estimada (No mostrar en enviado, entregado o cancelado)
+    const mostrarFechaEstimada = !["enviado", "entregado", "cancelled_expired", "cancelado"].includes(estadoLwr)
+
     return (
         <div className="min-h-screen bg-[#F5F5F0] py-12 px-4">
             <div className="container mx-auto max-w-2xl space-y-6 text-left">
@@ -169,6 +181,17 @@ export default function PedidoPublicPage({ params }: PageProps) {
                                 <p className="text-sm font-medium">{info.desc}</p>
                             </div>
                         </div>
+
+                        {/* ✅ NUEVA SECCIÓN: FECHA ESTIMADA DE DESPACHO */}
+                        {mostrarFechaEstimada && pedido.fechaEstimadaEnvio && (
+                            <div className="mt-2 p-4 bg-white/40 rounded-xl border border-black/5 flex items-center gap-3">
+                                <Calendar className="w-4 h-4 opacity-70" />
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Fecha estimada de despacho</span>
+                                    <span className="text-xs font-bold capitalize">{formatFechaEstimada(pedido.fechaEstimadaEnvio)}</span>
+                                </div>
+                            </div>
+                        )}
 
                         {estadoLwr === "pending_payment_transfer" && (
                             <div className="mt-2 pt-4 border-t border-black/5">
