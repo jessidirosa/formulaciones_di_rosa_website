@@ -76,7 +76,7 @@ export async function POST(req: Request) {
 
     const pedido = await prisma.pedido.create({
       data: {
-        numero: codigoFinal, // ✅ Ahora garantizado que es único
+        numero: codigoFinal,
         userId,
         nombreCliente: data.nombreCliente,
         apellidoCliente: data.apellidoCliente,
@@ -105,8 +105,8 @@ export async function POST(req: Request) {
         publicToken: crypto.randomUUID(),
         metodoPago,
         expiresAt,
-        cuponCodigo: data.cuponCodigo || null,    // ✅ Guardamos el código
-        cuponDescuento: data.cuponDescuento || 0, // ✅ Guardamos el monto
+        cuponCodigo: data.cuponCodigo || null,
+        cuponDescuento: data.cuponDescuento || 0,
         items: { create: itemsCreate },
       },
       include: { items: true },
@@ -163,12 +163,34 @@ export async function POST(req: Request) {
     }
 
     // --- MERCADO PAGO ---
+
+    // 1. Mapeamos los productos del carrito
     const mpItems = (data.items || []).map((item: any) => ({
       title: item.nombreProducto,
       quantity: Number(item.cantidad),
       unit_price: Number(item.precioUnitario),
       currency_id: "ARS",
     }))
+
+    // 2. ✅ SOLUCIÓN AL ERROR GRAVE: Si hay costo de envío, lo agregamos como un item más
+    if (pedido.costoEnvio && pedido.costoEnvio > 0) {
+      mpItems.push({
+        title: `Envío: ${pedido.metodoEnvio}`,
+        quantity: 1,
+        unit_price: Number(pedido.costoEnvio),
+        currency_id: "ARS",
+      });
+    }
+
+    // 3. ✅ MANEJO DE DESCUENTOS: Si hay descuento, lo restamos como un item con precio negativo
+    if (pedido.descuento && pedido.descuento > 0) {
+      mpItems.push({
+        title: "Descuento Aplicado",
+        quantity: 1,
+        unit_price: Number(-pedido.descuento), // Precio negativo para restar
+        currency_id: "ARS",
+      });
+    }
 
     const preferencia = await crearPreferencia({
       items: mpItems,
