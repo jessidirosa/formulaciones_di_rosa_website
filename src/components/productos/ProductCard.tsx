@@ -16,6 +16,12 @@ interface Presentacion {
   stock: number
 }
 
+interface Categoria {
+  id: number
+  nombre: string
+  slug: string
+}
+
 interface Producto {
   id: string
   nombre: string
@@ -27,6 +33,7 @@ interface Producto {
   destacado: boolean
   stock: number
   presentaciones?: Presentacion[]
+  categorias?: { categoria: Categoria }[] // Relación con categorías de la DB
 }
 
 interface ProductCardProps {
@@ -114,12 +121,29 @@ export default function ProductCard({ producto }: ProductCardProps) {
       </Link>
 
       <CardHeader className="pt-4 pb-1 px-5">
-        <div className="space-y-0.5">
-          <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-[#A3B18A]">
-            {producto.categoria || 'Cosmética Magistral'}
-          </p>
+        <div className="space-y-1.5">
+          {/* ✅ TAGS DE CATEGORÍAS */}
+          <div className="flex flex-wrap gap-1">
+            {producto.categorias && producto.categorias.length > 0 ? (
+              producto.categorias.map((rel) => (
+                <Badge
+                  key={rel.categoria.id}
+                  variant="outline"
+                  className="bg-[#F5F5F0] border-[#D6D6C2] text-[#4A5D45] text-[8px] px-2 py-0 uppercase font-bold tracking-tighter"
+                >
+                  {rel.categoria.nombre}
+                </Badge>
+              ))
+            ) : (
+              <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-[#A3B18A]">
+                {producto.categoria || 'Cosmética Magistral'}
+              </p>
+            )}
+          </div>
+
           <Link href={`/tienda/${producto.slug}`}>
-            <h3 className="font-bold text-[#3A4031] text-base leading-tight group-hover:text-[#4A5D45] transition-colors line-clamp-1 uppercase tracking-tight">
+            {/* ✅ NOMBRE COMPLETO (Sin line-clamp-1) */}
+            <h3 className="font-bold text-[#3A4031] text-base leading-tight group-hover:text-[#4A5D45] transition-colors uppercase tracking-tight">
               {producto.nombre}
             </h3>
           </Link>

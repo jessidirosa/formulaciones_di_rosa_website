@@ -63,7 +63,7 @@ async function getProductos(searchParams?: {
       productosPorNombre = productosBase.filter((p) => {
         const nombreNorm = normalizar(p.nombre)
         const descNorm = normalizar(p.descripcionCorta || '')
-        const catTextoNorm = normalizar((p as any).categoria || '') // Búsqueda en el campo de texto 'categoria'
+        const catTextoNorm = normalizar((p as any).categoria || '')
 
         return terminos.every(term =>
           nombreNorm.includes(term) ||
@@ -126,6 +126,9 @@ export default async function TiendaPage({
     productosPorCategoria
   } = await getProductos(params)
 
+  // Lógica de agrupación: solo si no hay búsqueda y no se seleccionó una categoría específica
+  const mostrarAgrupado = !params.busqueda && (!params.categoria || params.categoria === 'todos')
+
   return (
     <div className="min-h-screen bg-[#F5F5F0]">
       <CategoriesMenu categorias={categorias} />
@@ -173,7 +176,7 @@ export default async function TiendaPage({
             <div className="space-y-16">
               {productosPorNombre.length > 0 && (
                 <div>
-                  <h2 className="text-sm uppercase tracking-widest font-bold text-[#A3B18A] mb-6 flex items-center gap-2">
+                  <h2 className="text-sm uppercase tracking-widest font-bold text-[#A3B18A] mb-6 flex items-center gap-2 text-left">
                     <span className="w-8 h-[1px] bg-[#A3B18A]"></span>
                     Coincidencias encontradas
                   </h2>
@@ -183,7 +186,7 @@ export default async function TiendaPage({
 
               {productosPorCategoria.length > 0 && (
                 <div>
-                  <h2 className="text-sm uppercase tracking-widest font-bold text-[#A3B18A] mb-6 flex items-center gap-2">
+                  <h2 className="text-sm uppercase tracking-widest font-bold text-[#A3B18A] mb-6 flex items-center gap-2 text-left">
                     <span className="w-8 h-[1px] bg-[#A3B18A]"></span>
                     Categorías relacionadas
                   </h2>
@@ -196,13 +199,37 @@ export default async function TiendaPage({
               )}
             </div>
           ) : (
-            <>
-              {productos.length > 0 ? (
-                <ProductGrid productos={productos as any} />
+            <div className="space-y-20">
+              {mostrarAgrupado ? (
+                categorias.map((cat) => {
+                  const productosDeEstaCategoria = productos.filter((p) =>
+                    p.categorias.some((pc) => pc.categoria.id === (cat as any).id)
+                  )
+
+                  if (productosDeEstaCategoria.length === 0) return null
+
+                  return (
+                    <div key={(cat as any).id} className="space-y-8">
+                      <div className="flex items-center gap-4">
+                        <h2 className="text-2xl font-serif font-bold text-[#3A4031] uppercase tracking-tight">
+                          {cat.nombre}
+                        </h2>
+                        <div className="h-[1px] flex-grow bg-[#D6D6C2]"></div>
+                      </div>
+                      <ProductGrid productos={productosDeEstaCategoria as any} />
+                    </div>
+                  )
+                })
               ) : (
-                <EmptyState />
+                <>
+                  {productos.length > 0 ? (
+                    <ProductGrid productos={productos as any} />
+                  ) : (
+                    <EmptyState />
+                  )}
+                </>
               )}
-            </>
+            </div>
           )}
         </Suspense>
 
@@ -254,10 +281,10 @@ function EmptyState() {
   return (
     <div className="text-center py-20 bg-white/50 rounded-3xl border-2 border-dashed border-[#D6D6C2]">
       <div className="max-w-md mx-auto">
-        <h3 className="text-xl font-bold text-[#4A5D45] mb-4">
+        <h3 className="text-xl font-bold text-[#4A5D45] mb-4 text-center">
           No encontramos productos
         </h3>
-        <p className="text-[#5B6350] mb-8 px-6">
+        <p className="text-[#5B6350] mb-8 px-6 text-center">
           Intentá ajustar los filtros o usá términos más generales para encontrar lo que buscás.
         </p>
         <div className="flex flex-col items-center gap-2 text-xs text-[#A3B18A] font-bold uppercase tracking-widest">
@@ -268,27 +295,4 @@ function EmptyState() {
       </div>
     </div>
   )
-}
-
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}) {
-  const resolvedSearchParams = await searchParams
-  const categoria = resolvedSearchParams.categoria as string
-  const busqueda = resolvedSearchParams.busqueda as string
-
-  let title = 'Tienda | Laboratorio Di Rosa'
-  let description = 'Cosmética magistral y natural. Productos personalizados para el cuidado de tu piel.'
-
-  if (categoria && categoria !== 'todos') {
-    title = `${categoria} | Di Rosa`
-  }
-
-  if (busqueda) {
-    title = `"${busqueda}" | Di Rosa`
-  }
-
-  return { title, description }
 }

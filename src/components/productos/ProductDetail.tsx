@@ -16,6 +16,12 @@ type Presentacion = {
   stock: number
 }
 
+type Categoria = {
+  id: number
+  nombre: string
+  slug: string
+}
+
 type ProductoDetalle = {
   id: number
   nombre: string
@@ -29,6 +35,7 @@ type ProductoDetalle = {
   destacado: boolean
   modoUso?: string | null
   presentaciones?: Presentacion[]
+  categorias?: { categoria: Categoria }[] // ✅ Relación con categorías de la DB
 }
 
 interface ProductDetailProps {
@@ -73,9 +80,9 @@ export default function ProductDetail({ producto, productosRelacionados }: Produ
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 text-left">
         <div className="space-y-4">
-          <Card className="overflow-hidden border-none shadow-xl rounded-[2.5rem] bg-white text-left">
+          <Card className="overflow-hidden border-none shadow-xl rounded-[2.5rem] bg-white">
             <div className="relative aspect-square">
               <img
                 src={imageSrc}
@@ -94,13 +101,26 @@ export default function ProductDetail({ producto, productosRelacionados }: Produ
           </Card>
         </div>
 
-        <div className="flex flex-col space-y-6 text-left">
-          <header className="space-y-2">
-            <div className="flex items-center gap-2">
-              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#A3B18A]">
-                {producto.categoria || 'Cosmética Magistral'}
-              </p>
+        <div className="flex flex-col space-y-6">
+          <header className="space-y-3">
+            {/* ✅ TAGS DE CATEGORÍAS MEJORADOS */}
+            <div className="flex flex-wrap gap-2">
+              {producto.categorias && producto.categorias.length > 0 ? (
+                producto.categorias.map((rel) => (
+                  <Badge
+                    key={rel.categoria.id}
+                    className="bg-[#A3B18A]/10 text-[#4A5D45] border-[#A3B18A]/20 px-3 py-1 text-[9px] uppercase tracking-[0.1em] font-bold"
+                  >
+                    {rel.categoria.nombre}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#A3B18A]">
+                  {producto.categoria || 'Cosmética Magistral'}
+                </p>
+              )}
             </div>
+
             <h1 className="text-4xl font-bold text-[#3A4031] uppercase tracking-tight">{producto.nombre}</h1>
             <p className="text-[#5B6350] text-lg italic whitespace-pre-line leading-relaxed border-l-4 border-[#A3B18A]/30 pl-4">
               {producto.descripcionCorta}
