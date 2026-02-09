@@ -17,7 +17,6 @@ export default function CategoriesMenu({
     const [showLeftArrow, setShowLeftArrow] = useState(false)
     const [showRightArrow, setShowRightArrow] = useState(true)
 
-    // Lógica para mostrar/ocultar flechas según el scroll
     const checkArrows = () => {
         if (scrollRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
@@ -30,9 +29,7 @@ export default function CategoriesMenu({
         const currentRef = scrollRef.current
         if (currentRef) {
             currentRef.addEventListener("scroll", checkArrows)
-            // Chequeo inicial
             checkArrows()
-            // Re-chequear si cambia el tamaño de la ventana
             window.addEventListener("resize", checkArrows)
         }
         return () => {
@@ -52,7 +49,7 @@ export default function CategoriesMenu({
     }
 
     return (
-        <div className="w-full mb-10 text-left">
+        <div className="w-full max-w-full mb-10 text-left overflow-hidden">
             {/* Título de sección sutil */}
             <div className="flex items-center gap-2 mb-4">
                 <FlaskConical className="w-4 h-4 text-[#A3B18A]" />
@@ -61,7 +58,7 @@ export default function CategoriesMenu({
                 </span>
             </div>
 
-            <div className="relative group">
+            <div className="relative group max-w-full">
                 {/* Flecha Izquierda */}
                 {showLeftArrow && (
                     <button
@@ -72,10 +69,10 @@ export default function CategoriesMenu({
                     </button>
                 )}
 
-                {/* Contenedor con scroll horizontal */}
+                {/* Contenedor con scroll horizontal - Corregido para no desbordar */}
                 <div
                     ref={scrollRef}
-                    className="flex items-center gap-3 overflow-x-auto pb-4 -mx-1 px-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    className="flex items-center gap-3 overflow-x-auto pb-4 px-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden w-full"
                 >
                     <Link href="/tienda" className="flex-shrink-0">
                         <Badge
@@ -117,10 +114,9 @@ export default function CategoriesMenu({
                     </button>
                 )}
 
-                {/* Degradados laterales para indicar que hay más (opcional, muy premium) */}
+                {/* Degradados laterales */}
                 <div className="absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-[#F5F5F0] to-transparent pointer-events-none z-10 hidden md:block opacity-60" />
             </div>
-
         </div>
     )
 }
