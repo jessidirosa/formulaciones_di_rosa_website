@@ -133,15 +133,16 @@ export default async function TiendaPage({
   const mostrarAgrupado = !params.busqueda && (!params.categoria || params.categoria === 'todos')
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
+    /* ✅ Agregado overflow-x-hidden para evitar el desplazamiento lateral */
+    <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden w-full relative">
       {/* Barra de categorías Sticky */}
-      <div className="sticky top-0 z-40 bg-[#F5F5F0]/80 backdrop-blur-md border-b border-[#D6D6C2] pt-4">
-        <div className="container mx-auto px-4">
+      <div className="sticky top-0 z-40 bg-[#F5F5F0]/80 backdrop-blur-md border-b border-[#D6D6C2] pt-4 w-full">
+        <div className="container mx-auto px-4 max-w-7xl">
           <CategoriesMenu categorias={categorias} />
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12 max-w-7xl">
         <div className="mb-12 border-l-4 border-[#4A5D45] pl-6 text-left">
           <h1 className="text-4xl md:text-5xl font-bold text-[#3A4031] mb-4 tracking-tight uppercase text-left">
             Laboratorio Magistral
@@ -246,7 +247,7 @@ function EmptyState() {
   return (
     <div className="text-center py-24 bg-white/50 rounded-[3rem] border-2 border-dashed border-[#D6D6C2]">
       <h3 className="text-xl font-bold text-[#4A5D45] mb-2 uppercase tracking-tighter">Sin resultados</h3>
-      <p className="text-[#5B6350] mb-8 font-light italic">Probá con otros términos o navegá por categorías.</p>
+      <p className="text-[#5B6350] mb-8 font-light italic text-center">Probá con otros términos o navegá por categorías.</p>
     </div>
   )
 }
