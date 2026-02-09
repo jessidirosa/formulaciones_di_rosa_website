@@ -75,7 +75,7 @@ export default function CategoriesMenu({
                 {/* Contenedor con scroll horizontal */}
                 <div
                     ref={scrollRef}
-                    className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-4 -mx-1 px-1 scroll-smooth"
+                    className="flex items-center gap-3 overflow-x-auto pb-4 -mx-1 px-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 >
                     <Link href="/tienda" className="flex-shrink-0">
                         <Badge
@@ -121,16 +121,6 @@ export default function CategoriesMenu({
                 <div className="absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-[#F5F5F0] to-transparent pointer-events-none z-10 hidden md:block opacity-60" />
             </div>
 
-            {/* Estilo local para ocultar scrollbar manteniendo funcionalidad */}
-            <style jsx global>{`
-            .no-scrollbar::-webkit-scrollbar {
-              display: none;
-            }
-            .no-scrollbar {
-              -ms-overflow-style: none;
-              scrollbar-width: none;
-            }
-          `}</style>
         </div>
     )
 }
