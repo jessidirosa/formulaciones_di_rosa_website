@@ -7,10 +7,14 @@ const ESTADOS = [
     { id: 'todos', label: 'Todos' },
     { id: 'pendiente_mercadopago', label: 'MP Pendiente' },
     { id: 'pending_payment_transfer', label: 'Transf. Pendiente' },
+    { id: 'transfer_proof_sent', label: 'Comprobante Enviado' },
     { id: 'confirmado', label: 'Confirmados' },
     { id: 'en_produccion', label: 'En Laboratorio' },
+    { id: 'listo_envio', label: 'Listo p/ Despacho' },
     { id: 'enviado', label: 'Enviados' },
+    { id: 'entregado', label: 'Entregados' },
     { id: 'cancelled_expired', label: 'Expirados' },
+    { id: 'cancelado', label: 'Cancelados' },
 ]
 
 export default function PedidosFiltros({ currentEstado }: { currentEstado: string }) {
@@ -36,8 +40,8 @@ export default function PedidosFiltros({ currentEstado }: { currentEstado: strin
                     size="sm"
                     onClick={() => handleFilter(est.id)}
                     className={`text-[10px] uppercase font-bold tracking-widest rounded-lg h-9 ${currentEstado === est.id
-                            ? 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'
-                            : 'border-[#E9E9E0] text-[#A3B18A] hover:bg-[#F9F9F7]'
+                        ? 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'
+                        : 'border-[#E9E9E0] text-[#A3B18A] hover:bg-[#F9F9F7]'
                         }`}
                 >
                     {est.label}

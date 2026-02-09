@@ -7,6 +7,7 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { ToastProvider } from "@/components/ui/toaster"
 import WhatsAppButton from '@/components/ui/WhatsAppButton'
+import PromoModal from '@/components/ui/PromoModal' // ✅ Importar aquí
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -38,6 +39,7 @@ export default function RootLayout({
 
               {/* ✅ El botón de WhatsApp va aquí, dentro del body único */}
               <WhatsAppButton />
+              <PromoModal />
 
             </CartProvider>
           </UserProvider>

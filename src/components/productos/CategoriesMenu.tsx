@@ -49,35 +49,35 @@ export default function CategoriesMenu({
     }
 
     return (
-        <div className="w-full max-w-full mb-10 text-left overflow-hidden">
-            {/* Título de sección sutil */}
-            <div className="flex items-center gap-2 mb-4">
-                <FlaskConical className="w-4 h-4 text-[#A3B18A]" />
-                <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#A3B18A]">
-                    Filtrar por Especialidad
+        <div className="w-full max-w-full text-left overflow-hidden">
+            {/* Título de sección sutil - Achicado para que el sticky sea menos alto */}
+            <div className="flex items-center gap-2 mb-2 px-1">
+                <FlaskConical className="w-3 h-3 text-[#A3B18A]" />
+                <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#A3B18A]">
+                    Especialidades
                 </span>
             </div>
 
-            <div className="relative group max-w-full">
+            <div className="relative group max-w-full px-1">
                 {/* Flecha Izquierda */}
                 {showLeftArrow && (
                     <button
                         onClick={() => scroll("left")}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 backdrop-blur-md border border-[#E9E9E0] p-1.5 rounded-full shadow-lg text-[#4A5D45] hover:bg-[#4A5D45] hover:text-white transition-all hidden md:flex"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur-md border border-[#E9E9E0] p-1.5 rounded-full shadow-lg text-[#4A5D45] hover:bg-[#4A5D45] hover:text-white transition-all hidden md:flex"
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </button>
                 )}
 
-                {/* Contenedor con scroll horizontal - Corregido para no desbordar */}
+                {/* Contenedor con scroll horizontal corregido */}
                 <div
                     ref={scrollRef}
-                    className="flex items-center gap-3 overflow-x-auto pb-4 px-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden w-full"
+                    className="flex items-center gap-2 overflow-x-auto pb-2 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden w-full"
                 >
                     <Link href="/tienda" className="flex-shrink-0">
                         <Badge
                             variant="outline"
-                            className={`px-6 py-2.5 cursor-pointer rounded-full transition-all duration-300 border font-bold uppercase text-[10px] tracking-widest
+                            className={`px-5 py-2 cursor-pointer rounded-full transition-all duration-300 border font-bold uppercase text-[9px] tracking-widest
                   ${categoriaActual === 'todos'
                                     ? "bg-[#4A5D45] border-[#4A5D45] text-[#F5F5F0] shadow-md shadow-emerald-900/20"
                                     : "bg-white border-[#E9E9E0] text-[#5B6350] hover:border-[#4A5D45] hover:bg-[#F9F9F7]"}`}
@@ -92,7 +92,7 @@ export default function CategoriesMenu({
                             <Link key={cat.slug} href={`/tienda?categoria=${cat.slug}`} className="flex-shrink-0">
                                 <Badge
                                     variant="outline"
-                                    className={`px-6 py-2.5 cursor-pointer rounded-full transition-all duration-300 border font-bold uppercase text-[10px] tracking-widest
+                                    className={`px-5 py-2 cursor-pointer rounded-full transition-all duration-300 border font-bold uppercase text-[9px] tracking-widest
                       ${isActive
                                             ? "bg-[#4A5D45] border-[#4A5D45] text-[#F5F5F0] shadow-md shadow-emerald-900/20"
                                             : "bg-white border-[#E9E9E0] text-[#5B6350] hover:border-[#4A5D45] hover:bg-[#F9F9F7]"}`}
@@ -108,14 +108,14 @@ export default function CategoriesMenu({
                 {showRightArrow && (
                     <button
                         onClick={() => scroll("right")}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 backdrop-blur-md border border-[#E9E9E0] p-1.5 rounded-full shadow-lg text-[#4A5D45] hover:bg-[#4A5D45] hover:text-white transition-all hidden md:flex"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur-md border border-[#E9E9E0] p-1.5 rounded-full shadow-lg text-[#4A5D45] hover:bg-[#4A5D45] hover:text-white transition-all hidden md:flex"
                     >
                         <ChevronRight className="w-4 h-4" />
                     </button>
                 )}
 
-                {/* Degradados laterales */}
-                <div className="absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-[#F5F5F0] to-transparent pointer-events-none z-10 hidden md:block opacity-60" />
+                {/* Degradados laterales sutiles */}
+                <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-[#F5F5F0] to-transparent pointer-events-none z-10 hidden md:block opacity-40" />
             </div>
         </div>
     )

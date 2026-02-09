@@ -14,14 +14,15 @@ function formatARS(n: number) {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n)
 }
 
-// Función para formatear la fecha estimada
-function formatFechaEstimada(fecha: string) {
+// ✅ Función corregida para mostrar el rango de fecha igual que en el checkout
+function formatFechaEstimadaConsistente(fecha: string) {
     if (!fecha) return ""
-    return new Date(fecha).toLocaleDateString("es-AR", {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-    })
+    const d = new Date(fecha)
+    const d2 = new Date(fecha)
+    d2.setDate(d2.getDate() + 2) // Rango de 48hs
+
+    const opciones: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }
+    return `${d.toLocaleDateString("es-AR", opciones)} al ${d2.toLocaleDateString("es-AR", opciones)}`
 }
 
 const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, icon: any, color: string }> = {
@@ -74,12 +75,26 @@ const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, 
         icon: Truck,
         color: "text-blue-700 bg-blue-50 border-blue-100"
     },
+    entregado: {
+        title: "Pedido Entregado",
+        desc: "¡Gracias por elegir Formulaciones Di Rosa! Esperamos que disfrutes tus productos.",
+        next: "Tu próxima rutina de cuidado.",
+        icon: CheckCircle2,
+        color: "text-green-700 bg-green-50 border-green-100"
+    },
     cancelled_expired: {
         title: "Expirado",
         desc: "El tiempo para pagar venció.",
         next: "Realizar un nuevo pedido.",
         icon: AlertCircle,
         color: "text-red-400 bg-red-50 border-red-100"
+    },
+    cancelado: {
+        title: "Pedido Cancelado",
+        desc: "La orden ha sido anulada.",
+        next: "Contactar con soporte si fue un error.",
+        icon: AlertCircle,
+        color: "text-red-600 bg-red-50 border-red-100"
     }
 }
 
@@ -96,13 +111,10 @@ export default function PedidoPublicPage({ params }: PageProps) {
     const loadPedido = async () => {
         try {
             const res = await fetch(`/api/pedidos/public/${token}`)
-
             if (!res.ok) {
-                console.error("Error en la respuesta del servidor:", res.status)
                 setPedido(null)
                 return
             }
-
             const data = await res.json()
             if (data.ok) {
                 setPedido(data.pedido)
@@ -155,8 +167,6 @@ export default function PedidoPublicPage({ params }: PageProps) {
     const info = INFO_ESTADOS[estadoLwr] || { title: pedido.estado, desc: "Procesando...", next: "Pronto habrá novedades.", icon: Package, color: "bg-gray-50 text-gray-700" }
 
     const subtotalItems = pedido.items.reduce((acc: number, item: any) => acc + (item.subtotal || 0), 0)
-
-    // Lógica para mostrar la fecha estimada (No mostrar en enviado, entregado o cancelado)
     const mostrarFechaEstimada = !["enviado", "entregado", "cancelled_expired", "cancelado"].includes(estadoLwr)
 
     return (
@@ -176,19 +186,18 @@ export default function PedidoPublicPage({ params }: PageProps) {
                     <CardContent className="p-5 flex flex-col gap-4">
                         <div className="flex gap-4">
                             <info.icon className="w-6 h-6 mt-1" />
-                            <div className="space-y-2 flex-1">
+                            <div className="space-y-2 flex-1 text-left">
                                 <h3 className="font-bold uppercase text-[10px] tracking-widest">Etapa Actual</h3>
                                 <p className="text-sm font-medium">{info.desc}</p>
                             </div>
                         </div>
 
-                        {/* ✅ NUEVA SECCIÓN: FECHA ESTIMADA DE DESPACHO */}
                         {mostrarFechaEstimada && pedido.fechaEstimadaEnvio && (
                             <div className="mt-2 p-4 bg-white/40 rounded-xl border border-black/5 flex items-center gap-3">
                                 <Calendar className="w-4 h-4 opacity-70" />
-                                <div className="flex flex-col">
+                                <div className="flex flex-col text-left">
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Fecha estimada de despacho</span>
-                                    <span className="text-xs font-bold capitalize">{formatFechaEstimada(pedido.fechaEstimadaEnvio)}</span>
+                                    <span className="text-xs font-bold capitalize">{formatFechaEstimadaConsistente(pedido.fechaEstimadaEnvio)}</span>
                                 </div>
                             </div>
                         )}
@@ -219,7 +228,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             </div>
                         )}
 
-                        <div className="pt-2 flex items-start gap-2 border-t border-black/5">
+                        <div className="pt-2 flex items-start gap-2 border-t border-black/5 text-left">
                             <ChevronRight className="w-3 h-3 mt-1" />
                             <p className="text-[11px] font-bold uppercase italic opacity-80">Próximo paso: {info.next}</p>
                         </div>
@@ -233,12 +242,10 @@ export default function PedidoPublicPage({ params }: PageProps) {
                                 <Truck className="w-6 h-6" />
                                 <h3 className="font-bold uppercase text-[10px] tracking-widest">Seguimiento de Envío</h3>
                             </div>
-
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-1 text-left">
                                 <p className="text-xs text-blue-600 font-medium">Empresa: <span className="font-bold">{pedido.carrier === 'CORREO_ARGENTINO' ? 'Correo Argentino' : 'Andreani'}</span></p>
                                 <p className="text-sm font-bold text-blue-900">Código: {pedido.trackingNumber}</p>
                             </div>
-
                             <a
                                 href={pedido.trackingUrl}
                                 target="_blank"
@@ -253,7 +260,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
 
                 <Card className="border-none shadow-xl rounded-3xl overflow-hidden bg-white">
                     <CardHeader className="bg-[#F9F9F7] border-b border-[#E9E9E0]">
-                        <CardTitle className="text-[10px] uppercase tracking-widest font-bold text-[#A3B18A]">Resumen de Inversión</CardTitle>
+                        <CardTitle className="text-[10px] uppercase tracking-widest font-bold text-[#A3B18A] text-left">Resumen de Inversión</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-4">
@@ -267,9 +274,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
                                 </div>
                             ))}
                         </div>
-
                         <Separator className="bg-[#F5F5F0]" />
-
                         <div className="space-y-2 text-[11px] uppercase tracking-wider font-bold text-[#5B6350]">
                             <div className="flex justify-between">
                                 <span>Subtotal</span>
@@ -281,16 +286,15 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             </div>
                             {pedido.descuento > 0 && (
                                 <div className="flex justify-between text-[#A3B18A]">
-                                    <span className="flex items-center gap-1"><Tag className="w-3 h-3" /> Descuento</span>
+                                    <span className="flex items-center gap-1 text-left"><Tag className="w-3 h-3" /> Descuento</span>
                                     <span>- {formatARS(pedido.descuento)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-[#4A5D45] pt-2 border-t border-[#F9F9F7]">
-                                <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> Método de Pago</span>
+                                <span className="flex items-center gap-1 text-left"><CreditCard className="w-3 h-3" /> Método de Pago</span>
                                 <span>{pedido.metodoPago === 'MERCADOPAGO' ? 'Mercado Pago' : 'Transferencia Bancaria'}</span>
                             </div>
                         </div>
-
                         <div className="flex justify-between items-baseline pt-4 border-t-2 border-[#F9F9F7]">
                             <span className="text-sm font-black text-[#3A4031] uppercase">Total</span>
                             <span className="text-3xl font-serif font-bold text-[#4A5D45]">{formatARS(pedido.total)}</span>

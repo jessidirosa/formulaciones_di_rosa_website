@@ -24,7 +24,7 @@ import ConfirmarPedidoButton from '@/components/admin/ConfirmarPedidoButton'
 import DespacharAccionesWrapper from "@/components/admin/DespacharAccionesWrapper"
 import { sendEmail } from "@/lib/email"
 import { emailPagoExpirado } from "@/lib/emailTemplates"
-import { Printer, Search, MessageSquare } from "lucide-react"
+import { Printer, Search, MessageSquare, User } from "lucide-react"
 import PedidosFiltros from "@/components/admin/PedidosFiltros"
 
 interface PedidosPageProps {
@@ -50,7 +50,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
     const desde = params.desde ?? ""
     const hasta = params.hasta ?? ""
 
-    // --- LÓGICA DE EXPIRACIÓN ---
     const now = new Date()
     const pedidosAExpirar = await prisma.pedido.findMany({
         where: {
@@ -83,9 +82,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
         })
     }
 
-    // --- FILTROS DE BÚSQUEDA ---
     const where: any = {}
-
     if (search) {
         const searchUpper = search.toUpperCase();
         where.OR = [
@@ -96,11 +93,9 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
             { emailCliente: { contains: search, mode: 'insensitive' } }
         ]
     }
-
     if (estado !== "todos") {
         where.estado = estado
     }
-
     if (desde || hasta) {
         where.createdAt = {}
         if (desde) where.createdAt.gte = new Date(desde)
@@ -149,7 +144,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#4A5D45] transition-colors" />
                     <Input
                         name="search"
-                        placeholder="Buscar por código (ej: BK92P), nombre o email..."
+                        placeholder="Buscar por código, nombre o email..."
                         defaultValue={search}
                         className="pl-10 border-[#E9E9E0] focus-visible:ring-[#4A5D45] rounded-xl"
                     />
@@ -158,21 +153,19 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                 <PedidosFiltros currentEstado={estado} />
             </div>
 
-            <Card className="border-gray-200">
+            <Card className="border-gray-200 overflow-hidden">
                 <CardHeader>
                     <CardTitle className="text-xl font-semibold text-gray-700">Listado de Órdenes</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    {pedidos.length === 0 ? (
-                        <div className="text-gray-500 text-sm text-center py-10">No se encontraron pedidos.</div>
-                    ) : (
+                <CardContent className="p-0 md:p-6">
+                    <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>N° Pedido</TableHead>
-                                    <TableHead>Fecha</TableHead>
+                                    <TableHead className="hidden md:table-cell">Fecha</TableHead>
                                     <TableHead>Estado / Gestión</TableHead>
-                                    <TableHead>Método envío</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Logística</TableHead>
                                     <TableHead>Total</TableHead>
                                     <TableHead></TableHead>
                                 </TableRow>
@@ -181,25 +174,24 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                 {pedidos.map((pedido) => (
                                     <Fragment key={pedido.id}>
                                         <TableRow className="border-t-2 border-gray-100">
-                                            <TableCell className="font-bold text-[#4A5D45]">{pedido.numero}</TableCell>
-                                            <TableCell className="text-xs">{new Date(pedido.createdAt).toLocaleString("es-AR")}</TableCell>
+                                            <TableCell className="font-bold text-[#4A5D45] whitespace-nowrap">{pedido.numero}</TableCell>
+                                            <TableCell className="text-xs hidden md:table-cell whitespace-nowrap">
+                                                {new Date(pedido.createdAt).toLocaleString("es-AR")}
+                                            </TableCell>
                                             <TableCell>
-                                                <div className="flex flex-col gap-2">
+                                                <div className="flex flex-col gap-2 min-w-[150px]">
                                                     <EstadoPedidoSelect
-                                                        key={`${pedido.id}-${pedido.estado}`} // ✅ Esto obliga a React a actualizarse si el estado cambia
+                                                        key={`${pedido.id}-${pedido.estado}`}
                                                         pedidoId={pedido.id}
                                                         estadoActual={pedido.estado}
                                                     />
                                                     <div className="flex flex-wrap gap-2">
-                                                        {/* Pasamos el ID forzando que sea el número incremental de la DB */}
                                                         <ConfirmarPedidoButton pedidoId={Number(pedido.id)} />
-
-                                                        {/* Si tenés el wrapper de despacho, hacé lo mismo */}
                                                         <DespacharAccionesWrapper pedido={pedido} />
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden lg:table-cell">
                                                 <div className="flex flex-col gap-1">
                                                     <span className="capitalize text-xs font-medium">{pedido.metodoEnvio}</span>
                                                     {pedido.carrier && (
@@ -207,14 +199,9 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                             {pedido.carrier.replace('_', ' ')}
                                                         </Badge>
                                                     )}
-                                                    {pedido.labelUrl && (
-                                                        <a href={pedido.labelUrl} target="_blank" className="flex items-center gap-1 text-[9px] font-bold text-[#4A5D45] hover:underline mt-1">
-                                                            <Printer className="w-3 h-3" /> IMPRIMIR RÓTULO
-                                                        </a>
-                                                    )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="font-bold">${pedido.total.toLocaleString("es-AR")}</TableCell>
+                                            <TableCell className="font-bold whitespace-nowrap">${pedido.total.toLocaleString("es-AR")}</TableCell>
                                             <TableCell className="text-right">
                                                 <Button variant="outline" size="sm" asChild>
                                                     <Link href={`/pedido/${pedido.publicToken}`}>Ver</Link>
@@ -223,36 +210,33 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                         </TableRow>
 
                                         <TableRow className="bg-gray-50/50">
-                                            <TableCell colSpan={6} className="py-4 px-8">
-                                                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-8">
+                                            <TableCell colSpan={6} className="py-4 px-4 md:px-8">
+                                                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                                                    {/* COLUMNA 1: DATOS PERSONALES */}
-                                                    <div className="space-y-3">
-                                                        <div className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1">Cliente</div>
-                                                        <div className="text-[11px] space-y-1.5 text-gray-700">
-                                                            <p><span className="text-gray-400 font-medium">Nombre:</span> {pedido.nombreCliente} {pedido.apellidoCliente}</p>
-                                                            {pedido.dniCliente && <p><span className="text-gray-400 font-medium">DNI:</span> {pedido.dniCliente}</p>}
-                                                            <p><span className="text-gray-400 font-medium">Email:</span> {pedido.emailCliente}</p>
-                                                            <p><span className="text-gray-400 font-medium">Tel:</span> {pedido.telefonoCliente}</p>
+                                                    {/* CLIENTE: Se usó flex-wrap y break-words para evitar que se pisen los textos */}
+                                                    <div className="space-y-3 min-w-0">
+                                                        <div className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-1">
+                                                            <User className="w-3 h-3" /> Datos del Cliente
+                                                        </div>
+                                                        <div className="text-[11px] space-y-1.5 text-gray-700 break-words">
+                                                            <p className="flex gap-1 flex-wrap"><span className="text-gray-400 font-medium">Nombre:</span> <span>{pedido.nombreCliente} {pedido.apellidoCliente}</span></p>
+                                                            {pedido.dniCliente && <p className="flex gap-1 flex-wrap"><span className="text-gray-400 font-medium">DNI:</span> {pedido.dniCliente}</p>}
+                                                            <p className="flex gap-1 flex-wrap"><span className="text-gray-400 font-medium">Email:</span> <span className="text-[#4A5D45] font-semibold">{pedido.emailCliente}</span></p>
+                                                            <p className="flex gap-1 flex-wrap"><span className="text-gray-400 font-medium">Tel:</span> {pedido.telefonoCliente}</p>
                                                         </div>
                                                     </div>
 
-                                                    {/* COLUMNA 2: DATOS DE ENVÍO Y NOTAS */}
-                                                    <div className="space-y-3">
-                                                        <div className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1">Logística y Notas</div>
-                                                        <div className="text-[11px] space-y-1.5 text-gray-700">
+                                                    <div className="space-y-3 min-w-0">
+                                                        <div className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1">Logística</div>
+                                                        <div className="text-[11px] space-y-1.5 text-gray-700 break-words">
                                                             {pedido.direccion && <p><span className="text-gray-400 font-medium">Dirección:</span> {pedido.direccion}</p>}
-                                                            <p><span className="text-gray-400 font-medium">Localidad/Provincia:</span> {pedido.localidad || pedido.ciudad}, {pedido.provincia}</p>
-                                                            {pedido.codigoPostal && <p><span className="text-gray-400 font-medium">C.P.:</span> {pedido.codigoPostal}</p>}
-
+                                                            <p><span className="text-gray-400 font-medium">Ubicación:</span> {pedido.localidad || pedido.ciudad}, {pedido.provincia} ({pedido.codigoPostal})</p>
                                                             {pedido.sucursalNombre && (
                                                                 <div className="mt-2 p-2 bg-[#F9F9F7] border border-[#E9E9E0] rounded-lg">
-                                                                    <p className="text-[#4A5D45] font-bold uppercase text-[9px]">Sucursal Elegida:</p>
-                                                                    <p className="font-semibold">{pedido.sucursalNombre}</p>
-                                                                    {pedido.sucursalCorreo && <p className="text-[9px] text-gray-400 uppercase">{pedido.sucursalCorreo}</p>}
+                                                                    <p className="text-[#4A5D45] font-bold uppercase text-[9px]">Sucursal:</p>
+                                                                    <p className="font-semibold leading-tight">{pedido.sucursalNombre}</p>
                                                                 </div>
                                                             )}
-
                                                             {pedido.notasCliente && (
                                                                 <div className="mt-2 p-2 bg-amber-50 border border-amber-100 rounded-lg flex gap-2">
                                                                     <MessageSquare className="w-3 h-3 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -262,14 +246,13 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         </div>
                                                     </div>
 
-                                                    {/* COLUMNA 3: PRODUCTOS */}
-                                                    <div className="space-y-3">
-                                                        <div className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1">Detalle de Compra</div>
+                                                    <div className="space-y-3 min-w-0">
+                                                        <div className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1">Productos</div>
                                                         <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-2">
                                                             {pedido.items.map((item) => (
-                                                                <div key={item.id} className="flex justify-between text-[11px] border-b border-gray-50 pb-1">
-                                                                    <span className="text-gray-700">{item.nombreProducto} <span className="text-[#A3B18A] font-bold">x{item.cantidad}</span></span>
-                                                                    <span className="font-semibold text-gray-900">${item.subtotal.toLocaleString("es-AR")}</span>
+                                                                <div key={item.id} className="flex justify-between text-[11px] border-b border-gray-50 pb-1 gap-2">
+                                                                    <span className="text-gray-700 truncate">{item.nombreProducto} <span className="text-[#A3B18A] font-bold">x{item.cantidad}</span></span>
+                                                                    <span className="font-semibold text-gray-900 flex-shrink-0">${item.subtotal.toLocaleString("es-AR")}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -278,7 +261,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                             <span>${pedido.total.toLocaleString("es-AR")}</span>
                                                         </div>
                                                     </div>
-
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -286,7 +268,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                 ))}
                             </TableBody>
                         </Table>
-                    )}
+                    </div>
                 </CardContent>
             </Card>
         </div>
