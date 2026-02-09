@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import BenefitsSection from "@/components/home/BenefitsSection"
-import { ArrowRight, Award, Sparkles, Phone, ChevronRight } from 'lucide-react'
+import { ArrowRight, Award, Sparkles, Phone, ChevronRight, Factory, Users } from 'lucide-react'
 import ProBanner from "@/components/home/ProBanner"
 
 // Forzamos que la página no use caché estática para que los cambios en "destacados" se vean al instante
@@ -61,7 +61,7 @@ export default async function HomePage() {
               </div>
               <h1 className="text-5xl md:text-7xl font-bold text-[#F5F5F0] leading-[1.1] tracking-tight uppercase">
                 Ciencia pura <br />
-                <span className="text-[#A3B18A] font-serif font-light italic">con alma natural</span>
+                <span className="text-[#A3B18A] font-serif font-light italic lowercase">con alma natural</span>
               </h1>
               <p className="text-xl text-[#F5F5F0]/80 leading-relaxed max-w-xl font-light italic text-left">
                 Más de 20 años desarrollando cosmética avanzada y salud capilar. Calidad farmacéutica diseñada para potenciar tu belleza natural.
@@ -93,6 +93,53 @@ export default async function HomePage() {
 
       <BenefitsSection />
 
+      {/* ✅ SECCIÓN DE MARCA PROPIA Y DISTRIBUIDORES */}
+      <section className="py-24 px-4 bg-[#F9F9F7] text-left">
+        <div className="container mx-auto max-w-6xl">
+          <div className="bg-[#3A4031] rounded-[3rem] overflow-hidden shadow-2xl relative">
+            <div className="absolute top-0 right-0 p-12 opacity-5 hidden lg:block">
+              <Factory className="w-64 h-64 text-white" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-10 md:p-16 items-center">
+              <div className="space-y-8 relative z-10">
+                <Badge className="bg-[#A3B18A] text-white border-none px-4 py-1.5 text-[10px] uppercase tracking-widest font-bold">
+                  B2B & Emprendedores
+                </Badge>
+                <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight uppercase tracking-tighter">
+                  Tu propia marca <br />
+                  <span className="text-[#A3B18A] font-serif font-light italic lowercase">con respaldo magistral</span>
+                </h2>
+                <p className="text-[#F5F5F0]/70 text-lg font-light leading-relaxed italic">
+                  ¿Sos distribuidor o querés lanzar tu línea de productos? En Di Rosa desarrollamos fórmulas exclusivas de alta gama para que puedas comercializar con tu propia identidad.
+                </p>
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <Link href="/servicios">
+                    <Button className="bg-white text-[#3A4031] hover:bg-[#F5F5F0] rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all">
+                      Servicios de Laboratorio <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </Link>
+                  <a href="https://wa.me/541137024467" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all">
+                      Consultar por Mayor
+                    </Button>
+                  </a>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 backdrop-blur-sm p-8 rounded-3xl border border-white/10 text-center space-y-3">
+                  <Sparkles className="w-8 h-8 text-[#A3B18A] mx-auto" />
+                  <p className="text-white text-[10px] font-bold uppercase tracking-widest">Fórmulas Exclusivas</p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm p-8 rounded-3xl border border-white/10 text-center space-y-3">
+                  <Users className="w-8 h-8 text-[#A3B18A] mx-auto" />
+                  <p className="text-white text-[10px] font-bold uppercase tracking-widest">Atención Mayorista</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ✅ BANNER DE CAPTACIÓN PROFESIONAL */}
       <ProBanner />
 
@@ -103,7 +150,7 @@ export default async function HomePage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
               <div>
                 <h2 className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-[0.3em] mb-3">Especialidades Magistrales</h2>
-                <h3 className="text-3xl font-bold text-[#3A4031] leading-tight">Navegá por nuestras líneas</h3>
+                <h3 className="text-3xl font-bold text-[#3A4031] leading-tight text-left">Navegá por nuestras líneas</h3>
               </div>
               <Link href="/tienda" className="text-[#4A5D45] font-bold text-sm hover:tracking-widest transition-all flex items-center gap-2 uppercase">
                 Ver todo el catálogo <ArrowRight className="w-4 h-4" />
@@ -128,8 +175,8 @@ export default async function HomePage() {
         <div className="container mx-auto max-w-6xl">
           <div className="flex justify-between items-end mb-16 px-4 text-left">
             <div className="text-left">
-              <Badge variant="outline" className="border-[#A3B18A] text-[#A3B18A] uppercase px-4 py-1 text-[9px] font-bold tracking-[0.2em]">Selección Premium</Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-[#3A4031] mt-4 uppercase tracking-tighter">Nuestras Fórmulas</h2>
+              <Badge variant="outline" className="border-[#A3B18A] text-[#A3B18A] uppercase px-4 py-1 text-[9px] font-bold tracking-[0.2em]">Selección destacada</Badge>
+              <h2 className="text-4xl md:text-5xl font-bold text-[#3A4031] mt-4 uppercase tracking-tighter text-left">Nuestras Fórmulas más elegidas</h2>
             </div>
             <Link href="/tienda" className="hidden md:flex items-center gap-2 text-[#A3B18A] font-bold text-xs uppercase tracking-widest">
               Ver tienda <ChevronRight className="w-4 h-4" />
@@ -139,7 +186,6 @@ export default async function HomePage() {
           {productosDestacados.length === 0 ? (
             <p className="text-center text-[#5B6350] italic py-10">Próximamente verás nuestras fórmulas estrella aquí 🌿</p>
           ) : (
-            /* ✅ CLASES TAILWIND AGREGADAS PARA OCULTAR SCROLLBAR SIN STYLED-JSX */
             <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto pb-10 px-4 -mx-4 snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {productosDestacados.map((producto) => {
                 const categoriaPrincipal = producto.categorias[0]?.categoria?.nombre || "Exclusivo"
@@ -165,10 +211,10 @@ export default async function HomePage() {
                     </Link>
                     <div className="px-2">
                       <p className="text-[#A3B18A] text-[10px] font-black uppercase tracking-[0.2em] mb-2">{categoriaPrincipal}</p>
-                      <h3 className="text-2xl text-[#3A4031] font-bold uppercase leading-tight mb-4 group-hover:text-[#4A5D45] transition-colors">
+                      <h3 className="text-2xl text-[#3A4031] font-bold uppercase leading-tight mb-4 group-hover:text-[#4A5D45] transition-colors text-left">
                         {producto.nombre}
                       </h3>
-                      <div className="text-3xl font-serif font-bold text-[#4A5D45] mb-6">
+                      <div className="text-3xl font-serif font-bold text-[#4A5D45] mb-6 text-left">
                         {tienePresentaciones && <span className="text-[10px] uppercase font-bold text-[#A3B18A] mr-2">Desde</span>}
                         {formatPrice(precioMostrar)}
                       </div>
@@ -190,8 +236,8 @@ export default async function HomePage() {
       <section className="bg-[#1A1C18] py-28 px-6 text-center relative overflow-hidden">
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#A3B18A] to-transparent opacity-30" />
         <div className="max-w-4xl mx-auto text-center relative z-10 text-[#F5F5F0]">
-          <h2 className="text-4xl md:text-6xl font-bold mb-8 uppercase tracking-tighter">¿Hablamos?</h2>
-          <p className="text-xl mb-12 opacity-60 font-light italic max-w-2xl mx-auto">
+          <h2 className="text-4xl md:text-6xl font-bold mb-8 uppercase tracking-tighter text-center">¿Hablamos?</h2>
+          <p className="text-xl mb-12 opacity-60 font-light italic max-w-2xl mx-auto text-center">
             Desde asesoramiento personalizado hasta la creación de tu propia marca magistral.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
