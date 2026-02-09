@@ -18,17 +18,16 @@ function formatARS(n: number) {
 function formatFechaEstimadaConsistente(fecha: string) {
     if (!fecha) return ""
     const d = new Date(fecha)
-    const d2 = new Date(fecha)
-    d2.setDate(d2.getDate() + 2) // Rango de 48hs
+    d.setDate(d.getDate() + 1) // Sumar un día para que coincida con la fecha mostrada en el checkout
 
     const opciones: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }
-    return `${d.toLocaleDateString("es-AR", opciones)} al ${d2.toLocaleDateString("es-AR", opciones)}`
+    return `${d.toLocaleDateString("es-AR", opciones)}`
 }
 
 const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, icon: any, color: string }> = {
     pending_payment_transfer: {
         title: "Esperando Transferencia",
-        desc: "Tu pedido está reservado. Por favor, realizá la transferencia y avisamos desde el botón de abajo.",
+        desc: "Tu pedido está reservado. Por favor, realizá la transferencia y avisanos desde el botón de abajo.",
         next: "Validación de tu pago.",
         icon: Landmark,
         color: "text-amber-600 bg-amber-50 border-amber-200"
@@ -196,7 +195,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             <div className="mt-2 p-4 bg-white/40 rounded-xl border border-black/5 flex items-center gap-3">
                                 <Calendar className="w-4 h-4 opacity-70" />
                                 <div className="flex flex-col text-left">
-                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Fecha estimada de despacho</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Fecha estimada de finalización</span>
                                     <span className="text-xs font-bold capitalize">{formatFechaEstimadaConsistente(pedido.fechaEstimadaEnvio)}</span>
                                 </div>
                             </div>
