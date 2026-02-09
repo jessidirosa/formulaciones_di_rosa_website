@@ -142,7 +142,7 @@ export default function ProductCard({ producto }: ProductCardProps) {
           </div>
 
           <Link href={`/tienda/${producto.slug}`}>
-            {/* ✅ NOMBRE COMPLETO (Sin line-clamp-1) */}
+            {/* ✅ NOMBRE COMPLETO */}
             <h3 className="font-bold text-[#3A4031] text-base leading-tight group-hover:text-[#4A5D45] transition-colors uppercase tracking-tight">
               {producto.nombre}
             </h3>
@@ -151,7 +151,8 @@ export default function ProductCard({ producto }: ProductCardProps) {
       </CardHeader>
 
       <CardContent className="px-5 py-2 flex-grow">
-        <p className="text-xs text-[#5B6350] line-clamp-2 leading-snug italic">
+        {/* ✅ DESCRIPCIÓN COMPLETA (Se eliminó line-clamp-2) */}
+        <p className="text-xs text-[#5B6350] leading-snug italic">
           {producto.descripcionCorta}
         </p>
       </CardContent>
@@ -183,7 +184,7 @@ export default function ProductCard({ producto }: ProductCardProps) {
           </div>
         </div>
         <div className="w-full flex gap-2">
-          <Button
+          <button
             onClick={handleAddToCart}
             disabled={isLoading || stockTotal === 0}
             className={`flex-1 rounded-xl h-10 font-bold text-[10px] uppercase tracking-widest transition-all
@@ -194,7 +195,7 @@ export default function ProductCard({ producto }: ProductCardProps) {
             ) : (
               <>{stockTotal === 0 ? 'Sin Stock' : tienePresentaciones ? 'Ver Opciones' : 'Añadir'}</>
             )}
-          </Button>
+          </button>
           <Link href={`/tienda/${producto.slug}`}>
             <Button variant="outline" className="h-10 w-10 p-0 rounded-xl border-[#D6D6C2] text-[#4A5D45] hover:bg-[#F5F5F0]">
               <Eye className="h-4 w-4" />

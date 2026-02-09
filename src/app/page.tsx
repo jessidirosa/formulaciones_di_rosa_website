@@ -109,7 +109,7 @@ export default async function HomePage() {
                   Tu propia marca <br />
                   <span className="text-[#A3B18A] font-serif font-light italic lowercase">con respaldo magistral</span>
                 </h2>
-                <p className="text-[#F5F5F0]/70 text-lg font-light leading-relaxed italic">
+                <p className="text-[#F5F5F0]/70 text-lg font-light leading-relaxed italic text-left">
                   ¿Sos distribuidor o querés lanzar tu línea de productos? En Di Rosa desarrollamos fórmulas exclusivas de alta gama para que puedas comercializar con tu propia identidad.
                 </p>
                 <div className="flex flex-wrap gap-4 pt-4">
@@ -119,7 +119,7 @@ export default async function HomePage() {
                     </Button>
                   </Link>
                   <a href="https://wa.me/541137024467" target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all">
+                    <Button variant="outline" className="border-white/40 text-white hover:bg-white hover:text-[#3A4031] rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all">
                       Consultar por Mayor
                     </Button>
                   </a>
@@ -128,11 +128,11 @@ export default async function HomePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white/5 backdrop-blur-sm p-8 rounded-3xl border border-white/10 text-center space-y-3">
                   <Sparkles className="w-8 h-8 text-[#A3B18A] mx-auto" />
-                  <p className="text-white text-[10px] font-bold uppercase tracking-widest">Fórmulas Exclusivas</p>
+                  <p className="text-white text-[10px] font-bold uppercase tracking-widest text-center">Fórmulas Exclusivas</p>
                 </div>
                 <div className="bg-white/5 backdrop-blur-sm p-8 rounded-3xl border border-white/10 text-center space-y-3">
                   <Users className="w-8 h-8 text-[#A3B18A] mx-auto" />
-                  <p className="text-white text-[10px] font-bold uppercase tracking-widest">Atención Mayorista</p>
+                  <p className="text-white text-[10px] font-bold uppercase tracking-widest text-center">Atención Mayorista</p>
                 </div>
               </div>
             </div>
@@ -158,11 +158,11 @@ export default async function HomePage() {
             </div>
             <div className="flex flex-wrap gap-4">
               <Link href="/tienda">
-                <Badge variant="outline" className="px-8 py-3 rounded-2xl border-[#D6D6C2] bg-white text-[#5B6350] hover:bg-[#4A5D45] hover:text-white hover:border-[#4A5D45] transition-all cursor-pointer shadow-sm text-xs font-bold uppercase">Todas</Badge>
+                <Badge variant="outline" className="px-8 py-3 rounded-2xl border-[#D6D6C2] bg-white text-[#5B6350] hover:bg-[#4A5D45] hover:text-white hover:border-[#4A5D45] transition-all cursor-pointer shadow-sm text-xs font-bold uppercase text-center">Todas</Badge>
               </Link>
               {categorias.map((cat) => (
                 <Link key={cat.id} href={`/tienda?categoria=${cat.slug}`}>
-                  <Badge variant="outline" className="px-8 py-3 rounded-2xl border-[#D6D6C2] bg-white text-[#5B6350] hover:bg-[#4A5D45] hover:text-white hover:border-[#4A5D45] transition-all cursor-pointer shadow-sm text-xs font-bold uppercase">{cat.nombre}</Badge>
+                  <Badge variant="outline" className="px-8 py-3 rounded-2xl border-[#D6D6C2] bg-white text-[#5B6350] hover:bg-[#4A5D45] hover:text-white hover:border-[#4A5D45] transition-all cursor-pointer shadow-sm text-xs font-bold uppercase text-center">{cat.nombre}</Badge>
                 </Link>
               ))}
             </div>
@@ -242,7 +242,7 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <a href="https://wa.me/541137024467" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="bg-[#A3B18A] text-white hover:bg-white hover:text-[#4A5D45] px-12 py-8 rounded-full font-bold uppercase text-xs tracking-widest transition-all">
+              <Button size="lg" className="bg-[#A3B18A] text-white hover:bg-white hover:text-[#4A5D45] px-12 py-8 rounded-full font-bold uppercase text-xs tracking-widest transition-all text-center flex items-center justify-center">
                 <Phone className="w-4 h-4 mr-2" /> WhatsApp Directo
               </Button>
             </a>
