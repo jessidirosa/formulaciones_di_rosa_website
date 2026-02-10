@@ -97,7 +97,7 @@ export default function CarritoPage() {
               <div className="flex flex-col items-center text-center gap-1"><Truck className="w-5 h-5 text-[#A3B18A]" /><span className="text-[10px] font-bold uppercase tracking-tighter">Envíos a todo el país</span></div>
             </div>
 
-            <EstimatedDate fechaEstimada={state.fechaEstimada} />
+            <EstimatedDate />
 
             <div className="bg-white rounded-2xl shadow-sm border border-[#E9E9E0] overflow-hidden">
               <div className="p-6">

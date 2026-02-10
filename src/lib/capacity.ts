@@ -1,39 +1,21 @@
-// src/lib/capacity.ts
-import { addWeeks, addDays, startOfWeek, nextMonday, isWeekend, format } from "date-fns"
+import { addWeeks, addDays, startOfWeek, isWeekend, nextMonday, format } from "date-fns"
 import { es } from "date-fns/locale"
 import prisma from "./prisma"
 
-// Config
+// 1. Configuración de capacidad (usa el .env o 17 por defecto)
 export const CAPACIDAD_SEMANAL = parseInt(process.env.CAPACIDAD_SEMANAL || "17", 10)
 
-// Estados que "consumen capacidad" (producción/pendientes)
-const ESTADOS_CAPACIDAD = ["pendiente", "pagado", "en_produccion", "pending_payment_transfer"]
+// 2. Estados que "consumen" el cupo de producción
+const ESTADOS_CAPACIDAD = [
+  "confirmado",
+  "en_produccion",
+  "listo_envio",
+  "pending_payment_transfer",
+  "transfer_proof_sent"
+]
 
 /**
- * Ajusta una fecha a día hábil (lun-vie).
- * Si cae sábado/domingo → mueve al lunes siguiente.
- */
-export function ajustarADiaHabil(fecha: Date): Date {
-  if (isWeekend(fecha)) return nextMonday(fecha)
-  return fecha
-}
-
-/**
- * Semana base:
- * - siempre usamos el próximo lunes
-  */
-function obtenerLunesSemanaBase(hoy = new Date()): Date {
-  const base = startOfWeek(hoy, { weekStartsOn: 1 }) // lunes de esta semana
-
-  return addDays(base, 7);
-}
-
-/**
- * Calcula fecha estimada (con cupos semanales) + colchón de 3 días.
- * Regla:
- * - Asignás el pedido a la semanaOffset (0 = semana base, 1 = siguiente, etc.)
- * - Fecha estimada = lunes de la semana asignada + 3 días (colchón)
- * - Ajuste a día hábil
+ * Lógica central: Calcula el jueves de despacho según carga de trabajo
  */
 export async function calcularFechaEstimada(): Promise<Date> {
   try {
@@ -41,35 +23,27 @@ export async function calcularFechaEstimada(): Promise<Date> {
       where: { estado: { in: ESTADOS_CAPACIDAD } },
     })
 
-    console.log(`📊 Pedidos que consumen capacidad: ${pedidosPendientes}`)
-    console.log(`📈 Capacidad semanal: ${CAPACIDAD_SEMANAL}`)
+    // 0..16 pedidos -> semana 0 (próxima), 17..33 -> semana 1, etc.
+    const semanasDeRetraso = Math.floor(pedidosPendientes / CAPACIDAD_SEMANAL)
 
-    // 0..16 → semana 0, 17..33 → semana 1, etc.
-    const semanaOffset = Math.floor(pedidosPendientes / CAPACIDAD_SEMANAL)
+    const hoy = new Date()
+    // Siempre apuntamos al lunes de la SEMANA QUE VIENE como base
+    const lunesProximaSemana = addDays(startOfWeek(hoy, { weekStartsOn: 1 }), 7)
 
-    const lunesBase = obtenerLunesSemanaBase(new Date())
-    const lunesAsignado = addWeeks(lunesBase, semanaOffset)
+    // Sumamos las semanas de retraso y vamos al jueves (+3 días)
+    const lunesAsignado = addWeeks(lunesProximaSemana, semanasDeRetraso)
+    const juevesEstimado = addDays(lunesAsignado, 3)
 
-    // colchón +3 días dentro de esa semana (lunes + 3 = jueves)
-    const conColchon = addDays(lunesAsignado, 3)
-
-    const fechaFinal = ajustarADiaHabil(conColchon)
-
-    console.log(
-      `🎯 Fecha estimada: ${format(fechaFinal, "dd/MM/yyyy", { locale: es })} (offset semanas=${semanaOffset})`
-    )
-
-    return fechaFinal
+    return juevesEstimado
   } catch (error) {
     console.error("❌ Error al calcular fecha estimada:", error)
-    // fallback: próximo lunes + 3 días
-    const fallback = addDays(obtenerLunesSemanaBase(new Date()), 3)
-    return ajustarADiaHabil(fallback)
+    // Fallback: Jueves de la semana que viene
+    return addDays(addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 7), 3)
   }
 }
 
 /**
- * Resumen de capacidad actual
+ * Exportación para el Panel de Admin
  */
 export async function obtenerResumenCapacidad() {
   try {
@@ -77,41 +51,41 @@ export async function obtenerResumenCapacidad() {
       where: { estado: { in: ESTADOS_CAPACIDAD } },
     })
 
-    const pedidosPorEstado = await prisma.pedido.groupBy({
-      by: ["estado"],
-      _count: { estado: true },
-      where: { estado: { in: ESTADOS_CAPACIDAD } },
-    })
-
-    const capacidadUsada = pedidosPendientes
-    const capacidadDisponible = Math.max(0, CAPACIDAD_SEMANAL - (capacidadUsada % CAPACIDAD_SEMANAL))
-    const semanasDeRetraso = Math.floor(capacidadUsada / CAPACIDAD_SEMANAL)
+    const capacidadUsadaEnSemanaActual = pedidosPendientes % CAPACIDAD_SEMANAL
+    const capacidadDisponible = Math.max(0, CAPACIDAD_SEMANAL - capacidadUsadaEnSemanaActual)
+    const proximaFecha = await calcularFechaEstimada()
 
     return {
       capacidadTotal: CAPACIDAD_SEMANAL,
-      capacidadUsada,
+      pedidosPendientes,
       capacidadDisponible,
-      semanasDeRetraso,
-      pedidosPorEstado,
-      proximaFechaEstimada: await calcularFechaEstimada(),
+      proximaFechaEstimada: proximaFecha,
     }
   } catch (error) {
-    console.error("❌ Error al obtener resumen de capacidad:", error)
+    console.error("❌ Error al obtener resumen:", error)
     return {
       capacidadTotal: CAPACIDAD_SEMANAL,
-      capacidadUsada: 0,
+      pedidosPendientes: 0,
       capacidadDisponible: CAPACIDAD_SEMANAL,
-      semanasDeRetraso: 0,
-      pedidosPorEstado: [],
       proximaFechaEstimada: new Date(),
     }
   }
 }
 
+/**
+ * Formateadores de fecha consistentes
+ */
 export function formatearFechaArgentina(fecha: Date): string {
   return format(fecha, "dd/MM/yyyy", { locale: es })
 }
 
-export function formatearFechaCompleta(fecha: Date): string {
-  return format(fecha, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: es })
+export function formatearRangoDeFecha(fechaCentral: Date): string {
+  const inicio = addDays(fechaCentral, -1) // Miércoles
+  const fin = addDays(fechaCentral, 1)    // Viernes
+
+  const diaInicio = format(inicio, "d")
+  const diaFin = format(fin, "d")
+  const mes = format(fin, "MMMM", { locale: es })
+
+  return `${diaInicio} al ${diaFin} de ${mes}`
 }

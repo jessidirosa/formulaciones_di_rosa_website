@@ -24,8 +24,9 @@ import ConfirmarPedidoButton from '@/components/admin/ConfirmarPedidoButton'
 import DespacharAccionesWrapper from "@/components/admin/DespacharAccionesWrapper"
 import { sendEmail } from "@/lib/email"
 import { emailPagoExpirado } from "@/lib/emailTemplates"
-import { Printer, Search, MessageSquare, User } from "lucide-react"
+import { Printer, Search, MessageSquare, User, Calendar, Factory } from "lucide-react"
 import PedidosFiltros from "@/components/admin/PedidosFiltros"
+import { obtenerResumenCapacidad, formatearFechaArgentina } from "@/lib/capacity"
 
 interface PedidosPageProps {
     searchParams: Promise<{
@@ -51,6 +52,10 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
     const hasta = params.hasta ?? ""
 
     const now = new Date()
+
+    // --- LÓGICA DE CAPACIDAD ---
+    const resumenCapacidad = await obtenerResumenCapacidad()
+
     const pedidosAExpirar = await prisma.pedido.findMany({
         where: {
             metodoPago: "TRANSFERENCIA",
@@ -122,19 +127,42 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
 
     return (
         <div className="container mx-auto px-4 py-10 space-y-8 text-left">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Panel de Pedidos</h1>
-                    <p className="text-gray-500 text-sm">Gestioná las órdenes y envíos</p>
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div className="space-y-1">
+                    <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Panel de Pedidos</h1>
+                    <p className="text-gray-500 text-sm">Gestioná las órdenes y el flujo del laboratorio</p>
                 </div>
-                <div className="flex gap-3">
-                    <Card className="px-4 py-2 border-gray-100 shadow-sm">
-                        <div className="text-[10px] uppercase font-bold text-gray-400">Total Hoy</div>
-                        <div className="text-xl font-bold text-[#4A5D45]">{totalPedidos}</div>
+
+                {/* ✅ NUEVO BLOQUE: MONITOR DE CAPACIDAD */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full md:w-auto">
+                    <Card className="px-4 py-3 border-[#D6D6C2] bg-white shadow-sm flex flex-col justify-center min-w-[160px]">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Factory className="w-3 h-3 text-[#A3B18A]" />
+                            <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider">Cupos Semanales</div>
+                        </div>
+                        <div className="text-xl font-bold text-[#4A5D45]">
+                            {resumenCapacidad.capacidadDisponible} <span className="text-gray-300 font-light text-sm">/ {resumenCapacidad.capacidadTotal}</span>
+                        </div>
                     </Card>
-                    <Card className="px-4 py-2 border-gray-100 shadow-sm">
-                        <div className="text-[10px] uppercase font-bold text-gray-400">Facturación</div>
-                        <div className="text-xl font-bold text-[#4A5D45]">${totalFacturado.toLocaleString("es-AR")}</div>
+
+                    <Card className="px-4 py-3 border-[#D6D6C2] bg-white shadow-sm flex flex-col justify-center min-w-[160px]">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="w-3 h-3 text-[#A3B18A]" />
+                            <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider">Próximo Despacho</div>
+                        </div>
+                        <div className="text-sm font-bold text-[#4A5D45] truncate">
+                            {formatearFechaArgentina(resumenCapacidad.proximaFechaEstimada)}
+                        </div>
+                    </Card>
+
+                    <Card className="px-4 py-3 border-gray-100 bg-gray-50/50 shadow-sm flex flex-col justify-center min-w-[120px]">
+                        <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider mb-1">Órdenes Hoy</div>
+                        <div className="text-xl font-bold text-gray-700">{totalPedidos}</div>
+                    </Card>
+
+                    <Card className="px-4 py-3 border-gray-100 bg-gray-50/50 shadow-sm flex flex-col justify-center min-w-[160px]">
+                        <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider mb-1">Facturación Filtro</div>
+                        <div className="text-xl font-bold text-gray-700">${totalFacturado.toLocaleString("es-AR")}</div>
                     </Card>
                 </div>
             </div>
@@ -154,15 +182,15 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
             </div>
 
             <Card className="border-gray-200 overflow-hidden">
-                <CardHeader>
+                <CardHeader className="bg-gray-50/30 border-b border-gray-100">
                     <CardTitle className="text-xl font-semibold text-gray-700">Listado de Órdenes</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 md:p-6">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead>N° Pedido</TableHead>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead className="w-[120px]">N° Pedido</TableHead>
                                     <TableHead className="hidden md:table-cell">Fecha</TableHead>
                                     <TableHead>Estado / Gestión</TableHead>
                                     <TableHead className="hidden lg:table-cell">Logística</TableHead>
@@ -173,7 +201,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                             <TableBody>
                                 {pedidos.map((pedido) => (
                                     <Fragment key={pedido.id}>
-                                        <TableRow className="border-t-2 border-gray-100">
+                                        <TableRow className="border-t-2 border-gray-100 hover:bg-white">
                                             <TableCell className="font-bold text-[#4A5D45] whitespace-nowrap">{pedido.numero}</TableCell>
                                             <TableCell className="text-xs hidden md:table-cell whitespace-nowrap">
                                                 {new Date(pedido.createdAt).toLocaleString("es-AR")}
@@ -203,7 +231,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                             </TableCell>
                                             <TableCell className="font-bold whitespace-nowrap">${pedido.total.toLocaleString("es-AR")}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" asChild>
+                                                <Button variant="outline" size="sm" asChild className="rounded-lg">
                                                     <Link href={`/pedido/${pedido.publicToken}`}>Ver</Link>
                                                 </Button>
                                             </TableCell>
@@ -212,8 +240,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                         <TableRow className="bg-gray-50/50">
                                             <TableCell colSpan={6} className="py-4 px-4 md:px-8">
                                                 <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                                                    {/* CLIENTE: Se usó flex-wrap y break-words para evitar que se pisen los textos */}
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-1">
                                                             <User className="w-3 h-3" /> Datos del Cliente
@@ -248,7 +274,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
 
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1">Productos</div>
-                                                        <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-2">
+                                                        <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                                                             {pedido.items.map((item) => (
                                                                 <div key={item.id} className="flex justify-between text-[11px] border-b border-gray-50 pb-1 gap-2">
                                                                     <span className="text-gray-700 truncate">{item.nombreProducto} <span className="text-[#A3B18A] font-bold">x{item.cantidad}</span></span>

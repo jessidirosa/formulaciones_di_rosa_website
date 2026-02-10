@@ -15,13 +15,17 @@ function formatARS(n: number) {
 }
 
 // ✅ Función corregida para mostrar el rango de fecha igual que en el checkout
-function formatFechaEstimadaConsistente(fecha: string) {
-    if (!fecha) return ""
-    const d = new Date(fecha)
-    d.setDate(d.getDate() + 1) // Sumar un día para que coincida con la fecha mostrada en el checkout
+function formatFechaEstimadaConsistente(fechaIso: string) {
+    if (!fechaIso) return ""
+    const d = new Date(fechaIso)
+    const inicio = new Date(d); inicio.setDate(d.getDate() - 1);
+    const fin = new Date(d); fin.setDate(d.getDate() + 1);
 
-    const opciones: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }
-    return `${d.toLocaleDateString("es-AR", opciones)}`
+    const diaIn = inicio.getDate();
+    const diaFin = fin.getDate();
+    const mes = fin.toLocaleDateString("es-AR", { month: 'long' });
+
+    return `${diaIn} al ${diaFin} de ${mes}`;
 }
 
 const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, icon: any, color: string }> = {
