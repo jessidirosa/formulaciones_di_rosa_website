@@ -32,7 +32,7 @@ export default function EstimatedDate() {
   return (
     <div className="flex items-center gap-2 text-[#A3B18A] text-[10px] font-bold uppercase tracking-widest bg-[#A3B18A]/5 px-3 py-1.5 rounded-full border border-[#A3B18A]/10">
       <Calendar className="w-3 h-3" />
-      <span>Despacho estimado: <span className="text-[#4A5D45]">{rango}</span></span>
+      <span>Finalización estimada: <span className="text-[#4A5D45]">{rango}</span></span>
     </div>
   )
 }

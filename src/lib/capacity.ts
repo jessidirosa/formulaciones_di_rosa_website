@@ -89,3 +89,10 @@ export function formatearRangoDeFecha(fechaCentral: Date): string {
 
   return `${diaInicio} al ${diaFin} de ${mes}`
 }
+
+/**
+ * Frase personalizada para el cliente
+ */
+export function obtenerFraseElaboracion(): string {
+  return "Cada producto es formulado y elaborado específicamente para vos, respetando los tiempos de preparación magistral."
+}

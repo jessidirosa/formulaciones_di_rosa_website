@@ -57,8 +57,8 @@ export default function ProductFilters({
     router.push('/tienda')
   }
 
+  // ✅ Solo mostramos "Limpiar" si hay búsqueda o un orden que no sea el de por defecto
   const hasActiveFilters =
-    categoriaActual ||
     busquedaActual ||
     (ordenActual && ordenActual !== 'destacados')
 
@@ -130,43 +130,7 @@ export default function ProductFilters({
         </div>
       </div>
 
-      {/* Chips de Filtros Activos */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F5F5F0]">
-          {categoriaActual && categoriaActual !== 'todos' && (
-            <Badge className="bg-[#E9E9E0] text-[#4A5D45] hover:bg-[#D6D6C2] border-none px-3 py-1.5 rounded-full flex items-center gap-2 text-[11px] font-medium">
-              Especialidad: <span className="font-bold">{categoriaActual}</span>
-              <X
-                className="h-3 w-3 cursor-pointer hover:scale-125 transition-transform"
-                onClick={() => updateSearchParams('categoria', '')}
-              />
-            </Badge>
-          )}
-
-          {busquedaActual && (
-            <Badge className="bg-[#E9E9E0] text-[#4A5D45] hover:bg-[#D6D6C2] border-none px-3 py-1.5 rounded-full flex items-center gap-2 text-[11px] font-medium">
-              Buscando: <span className="font-bold">&quot;{busquedaActual}&quot;</span>
-              <X
-                className="h-3 w-3 cursor-pointer hover:scale-125 transition-transform"
-                onClick={() => {
-                  setBusqueda('')
-                  updateSearchParams('busqueda', '')
-                }}
-              />
-            </Badge>
-          )}
-
-          {ordenActual && ordenActual !== 'destacados' && (
-            <Badge className="bg-[#E9E9E0] text-[#4A5D45] hover:bg-[#D6D6C2] border-none px-3 py-1.5 rounded-full flex items-center gap-2 text-[11px] font-medium">
-              Criterio: <span className="font-bold">{getOrderLabel(ordenActual)}</span>
-              <X
-                className="h-3 w-3 cursor-pointer hover:scale-125 transition-transform"
-                onClick={() => updateSearchParams('orden', '')}
-              />
-            </Badge>
-          )}
-        </div>
-      )}
+      {/* ✅ Se eliminó toda la sección de "Chips de Filtros Activos" que mostraba el tag de Especialidad */}
     </div>
   )
 }

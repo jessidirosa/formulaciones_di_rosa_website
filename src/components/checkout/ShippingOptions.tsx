@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,6 +34,11 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
   const [loadingSucursales, setLoadingSucursales] = useState(false)
   const [busquedaIntentada, setBusquedaIntentada] = useState(false)
   const [listaSucursales, setListaSucursales] = useState<any[]>([])
+
+  // ✅ Auto-scroll al inicio al cargar la sección
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const buscarSucursales = async () => {
     if (!data.provincia?.trim() || !data.localidad?.trim() || !data.carrier) {

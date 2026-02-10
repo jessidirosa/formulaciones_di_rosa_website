@@ -20,7 +20,6 @@ export default function CategoriesMenu({
     const checkArrows = () => {
         if (scrollRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
-            // Margen de error de 5px para detectar el final del scroll
             setShowLeftArrow(scrollLeft > 5)
             setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 5)
         }
@@ -30,7 +29,6 @@ export default function CategoriesMenu({
         const currentRef = scrollRef.current
         if (currentRef) {
             currentRef.addEventListener("scroll", checkArrows)
-            // Chequeo inicial con un pequeño delay para asegurar el renderizado
             setTimeout(checkArrows, 100)
             window.addEventListener("resize", checkArrows)
         }
@@ -51,8 +49,7 @@ export default function CategoriesMenu({
     }
 
     return (
-        <div className="w-full max-w-full text-left overflow-visible">
-            {/* Título de sección sutil */}
+        <div className="w-full max-w-full text-left">
             <div className="flex items-center gap-2 mb-2 px-1">
                 <FlaskConical className="w-3 h-3 text-[#A3B18A]" />
                 <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#A3B18A]">
@@ -61,7 +58,6 @@ export default function CategoriesMenu({
             </div>
 
             <div className="relative max-w-full px-1">
-                {/* Flecha Izquierda - Ahora visible siempre que haya scroll hacia atrás */}
                 {showLeftArrow && (
                     <button
                         onClick={() => scroll("left")}
@@ -71,7 +67,6 @@ export default function CategoriesMenu({
                     </button>
                 )}
 
-                {/* Contenedor con scroll horizontal */}
                 <div
                     ref={scrollRef}
                     className="flex items-center gap-2 overflow-x-auto pb-2 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden w-full"
@@ -106,7 +101,6 @@ export default function CategoriesMenu({
                     })}
                 </div>
 
-                {/* Flecha Derecha - Ahora visible siempre que falte scroll hacia adelante */}
                 {showRightArrow && (
                     <button
                         onClick={() => scroll("right")}
@@ -116,7 +110,6 @@ export default function CategoriesMenu({
                     </button>
                 )}
 
-                {/* Degradados laterales sutiles para desktop */}
                 <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-[#F5F5F0] to-transparent pointer-events-none z-10 hidden md:block opacity-40" />
             </div>
         </div>

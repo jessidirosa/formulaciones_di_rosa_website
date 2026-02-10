@@ -100,9 +100,9 @@ export default async function TiendaPage({
   const nombreCategoriaActual = categorias.find(c => c.slug === params.categoria)?.nombre
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden relative">
-      {/* ✅ BARRA STICKY CORREGIDA: bg-[#F5F5F0]/90 y shadow-sm para visibilidad */}
-      <div className="sticky top-0 z-[50] bg-[#F5F5F0]/90 backdrop-blur-md border-b border-[#D6D6C2] py-4 w-full shadow-sm">
+    <div className="min-h-screen bg-[#F5F5F0] relative">
+      {/* ✅ BARRA STICKY CORREGIDA: z-[100] para estar sobre todo, top-0 o top-[altura-header] si tenés header fijo */}
+      <div className="sticky top-0 z-[100] bg-[#F5F5F0] border-b border-[#D6D6C2] py-4 w-full shadow-md">
         <div className="container mx-auto px-4 max-w-7xl">
           <CategoriesMenu categorias={categorias} />
         </div>
@@ -118,7 +118,6 @@ export default async function TiendaPage({
           </p>
         </div>
 
-        {/* Sección de búsqueda y filtros con la frase descriptiva */}
         <div className="mb-10 text-left space-y-6">
           {params.categoria && params.categoria !== 'todos' && (
             <div className="flex items-center gap-2 text-[#4A5D45] bg-[#A3B18A]/10 w-fit px-4 py-2 rounded-full border border-[#A3B18A]/20 animate-in fade-in slide-in-from-top-2 duration-500">
@@ -130,7 +129,6 @@ export default async function TiendaPage({
           )}
 
           <Suspense fallback={<div className="animate-pulse h-20 bg-[#E9E9E0] rounded-xl w-full"></div>}>
-            {/* ✅ Filtros limpios sin el recuadro de "Especialidad" debajo */}
             <ProductFilters
               categorias={categorias}
               categoriaActual={params.categoria}
