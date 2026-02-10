@@ -58,15 +58,14 @@ export default function AnnouncementBanner() {
     useEffect(() => {
         const timer = setInterval(() => {
             setIndex((prev) => (prev + 1) % announcements.length)
-        }, 6000)
+        }, 10000) // ✅ Aumentado a 10 segundos para dar tiempo a leer
         return () => clearInterval(timer)
     }, [])
 
     return (
-        <div className={`${announcements[index].color} text-white transition-colors duration-500 overflow-hidden w-full relative`}>
+        <div className={`${announcements[index].color} text-white transition-colors duration-500 overflow-hidden w-full relative group/banner`}>
             <div className="container mx-auto h-9 flex items-center px-2 md:px-4">
 
-                {/* Botones Fijos con fondo sólido */}
                 <button
                     onClick={() => setIndex(index === 0 ? announcements.length - 1 : index - 1)}
                     className="relative z-20 bg-inherit pr-2 hover:scale-110 transition-transform flex-shrink-0"
@@ -78,16 +77,14 @@ export default function AnnouncementBanner() {
                     <Link
                         href={announcements[index].link}
                         key={index}
-                        className="flex items-center gap-4 whitespace-nowrap min-w-full animate-marquee-mobile md:animate-none md:justify-center"
+                        className="flex items-center gap-4 whitespace-nowrap min-w-full animate-marquee-mobile md:animate-none md:justify-center group-hover/banner:[animation-play-state:paused]"
                     >
-                        {/* Bloque de texto 1 */}
                         <div className="flex items-center gap-2 px-4 flex-shrink-0">
                             {announcements[index].icon}
                             <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em]">
                                 {announcements[index].text}
                             </span>
                         </div>
-                        {/* Bloque de texto 2 (solo visible en móvil para el loop infinito) */}
                         <div className="flex items-center gap-2 px-4 flex-shrink-0 md:hidden">
                             {announcements[index].icon}
                             <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em]">
@@ -105,7 +102,6 @@ export default function AnnouncementBanner() {
                 </button>
             </div>
 
-            {/* Inyectamos la animación vía Tailwind Arbitrary Values para evitar el error de styled-jsx */}
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @keyframes marqueeCustom {
@@ -113,7 +109,7 @@ export default function AnnouncementBanner() {
                     100% { transform: translateX(-50%); }
                 }
                 .animate-marquee-mobile {
-                    animation: marqueeCustom 15s linear infinite;
+                    animation: marqueeCustom 25s linear infinite; /* ✅ Ralentizado a 25s */
                 }
             `}} />
         </div>

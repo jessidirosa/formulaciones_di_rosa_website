@@ -207,7 +207,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
                                 <div className="flex items-start gap-2 pt-2 border-t border-black/5">
                                     <Sparkles className="w-3 h-3 text-[#4A5D45] mt-0.5 flex-shrink-0 opacity-60" />
                                     <p className="text-[9px] text-[#4A5D45] leading-relaxed italic font-medium opacity-80">
-                                        Cada producto es formulado y elaborado específicamente para vos, respetando los tiempos de maduración magistral.
+                                        Cada producto es formulado y elaborado específicamente para vos, respetando los tiempos de preparación magistral.
                                     </p>
                                 </div>
                             </div>

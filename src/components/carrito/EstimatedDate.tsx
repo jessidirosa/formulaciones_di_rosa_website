@@ -39,7 +39,7 @@ export default function EstimatedDate() {
       <div className="flex items-start gap-2 px-1">
         <Sparkles className="w-3 h-3 text-[#A3B18A] mt-0.5 flex-shrink-0" />
         <p className="text-[10px] text-[#5B6350] leading-relaxed italic font-medium">
-          Cada producto es formulado y elaborado específicamente para vos, respetando los tiempos de maduración magistral.
+          Cada producto es formulado y elaborado específicamente para vos, respetando los tiempos de preparación magistral.
         </p>
       </div>
     </div>
