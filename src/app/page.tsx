@@ -119,7 +119,8 @@ export default async function HomePage() {
                     </Button>
                   </Link>
                   <a href="https://wa.me/541137024467" target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" className="border-white/40 text-white hover:bg-white hover:text-[#3A4031] rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all">
+                    {/* ✅ Botón WhatsApp: Fondo Verde Oliva con letras blancas como pediste */}
+                    <Button className="bg-[#A3B18A] text-white hover:bg-[#8FA173] border-none rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all shadow-lg">
                       Consultar por Mayor
                     </Button>
                   </a>
