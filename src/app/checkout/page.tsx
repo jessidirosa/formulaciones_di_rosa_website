@@ -200,7 +200,7 @@ export default function CheckoutPage() {
             {steps.map((step) => (
               <div key={step.number} className="relative z-10 flex flex-col items-center">
                 <div className={`flex items-center justify-center w-12 h-12 rounded-full border-4 transition-all duration-500 shadow-sm ${currentStep === step.number ? 'bg-[#4A5D45] border-[#A3B18A] text-white scale-110' :
-                    step.completed ? 'bg-[#A3B18A] border-[#A3B18A] text-white' : 'bg-white border-[#D6D6C2] text-[#D6D6C2]'
+                  step.completed ? 'bg-[#A3B18A] border-[#A3B18A] text-white' : 'bg-white border-[#D6D6C2] text-[#D6D6C2]'
                   }`}>
                   {step.completed ? '✓' : step.number}
                 </div>
@@ -238,7 +238,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="space-y-6">
-            <EstimatedDate fechaEstimada={state.fechaEstimada} />
+            <EstimatedDate />
             <OrderSummary items={state.items} subtotal={subtotal} costoEnvio={costoEnvio} descuento={descuentoTotal} total={totalFinal} tipoEntrega={checkoutData.tipoEntrega} />
           </div>
         </div>
