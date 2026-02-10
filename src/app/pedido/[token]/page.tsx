@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import {
     Package, Truck, Calendar, Clock, ExternalLink, AlertCircle,
-    CheckCircle2, FlaskConical, Boxes, Landmark, ChevronRight, Loader2, Tag, CreditCard, ArrowRight
+    CheckCircle2, FlaskConical, Boxes, Landmark, ChevronRight, Loader2, Tag, CreditCard, ArrowRight, Sparkles
 } from "lucide-react"
 
 function formatARS(n: number) {
@@ -38,7 +38,7 @@ const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, 
     },
     pendiente_mercadopago: {
         title: "Pago en Proceso",
-        desc: "Estamos esperando la confirmación de Mercado Pago. Si tuviste un problema, podés reintentar el pago.",
+        desc: "Estamos esperando la confirmation de Mercado Pago. Si tuviste un problema, podés reintentar el pago.",
         next: "Confirmación e ingreso a laboratorio.",
         icon: CreditCard,
         color: "text-blue-600 bg-blue-50 border-blue-200"
@@ -176,7 +176,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
         <div className="min-h-screen bg-[#F5F5F0] py-12 px-4">
             <div className="container mx-auto max-w-2xl space-y-6 text-left">
                 <header className="flex justify-between items-center">
-                    <div>
+                    <div className="text-left">
                         <h1 className="text-3xl font-serif font-bold text-[#3A4031]">Estado de tu pedido</h1>
                         <p className="text-[10px] font-bold text-[#A3B18A] uppercase tracking-widest">Orden #{pedido.numero}</p>
                     </div>
@@ -188,7 +188,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
                 <Card className={`border shadow-sm rounded-2xl overflow-hidden ${info.color}`}>
                     <CardContent className="p-5 flex flex-col gap-4">
                         <div className="flex gap-4">
-                            <info.icon className="w-6 h-6 mt-1" />
+                            <info.icon className="w-6 h-6 mt-1 flex-shrink-0" />
                             <div className="space-y-2 flex-1 text-left">
                                 <h3 className="font-bold uppercase text-[10px] tracking-widest">Etapa Actual</h3>
                                 <p className="text-sm font-medium">{info.desc}</p>
@@ -196,11 +196,19 @@ export default function PedidoPublicPage({ params }: PageProps) {
                         </div>
 
                         {mostrarFechaEstimada && pedido.fechaEstimadaEnvio && (
-                            <div className="mt-2 p-4 bg-white/40 rounded-xl border border-black/5 flex items-center gap-3">
-                                <Calendar className="w-4 h-4 opacity-70" />
-                                <div className="flex flex-col text-left">
-                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Fecha estimada de finalización</span>
-                                    <span className="text-xs font-bold capitalize">{formatFechaEstimadaConsistente(pedido.fechaEstimadaEnvio)}</span>
+                            <div className="mt-2 p-4 bg-white/40 rounded-xl border border-black/5 space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <Calendar className="w-4 h-4 opacity-70 flex-shrink-0" />
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">Fecha estimada de finalización</span>
+                                        <span className="text-xs font-bold capitalize">{formatFechaEstimadaConsistente(pedido.fechaEstimadaEnvio)}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-2 pt-2 border-t border-black/5">
+                                    <Sparkles className="w-3 h-3 text-[#4A5D45] mt-0.5 flex-shrink-0 opacity-60" />
+                                    <p className="text-[9px] text-[#4A5D45] leading-relaxed italic font-medium opacity-80">
+                                        Cada producto es formulado y elaborado específicamente para vos, respetando los tiempos de maduración magistral.
+                                    </p>
                                 </div>
                             </div>
                         )}
@@ -232,7 +240,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
                         )}
 
                         <div className="pt-2 flex items-start gap-2 border-t border-black/5 text-left">
-                            <ChevronRight className="w-3 h-3 mt-1" />
+                            <ChevronRight className="w-3 h-3 mt-1 flex-shrink-0" />
                             <p className="text-[11px] font-bold uppercase italic opacity-80">Próximo paso: {info.next}</p>
                         </div>
                     </CardContent>

@@ -114,7 +114,7 @@ export default async function HomePage() {
                 </p>
                 <div className="flex flex-wrap gap-4 pt-4">
                   <Link href="/servicios">
-                    <Button className="bg-white text-[#3A4031] hover:bg-[#F5F5F0] rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all">
+                    <Button className="bg-[#A3B18A] text-white hover:bg-[#8FA173] rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all">
                       Servicios de Laboratorio <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </Link>
