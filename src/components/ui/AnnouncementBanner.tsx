@@ -15,25 +15,25 @@ import Link from 'next/link'
 
 const announcements = [
     {
-        text: "3 CUOTAS SIN INTERÉS EN TODA LA TIENDA - LLEVÁ LO QUE AMÁS AHORA",
+        text: "3 CUOTAS SIN INTERÉS EN TODA LA TIENDA",
         icon: <CreditCard className="w-3 h-3 flex-shrink-0" />,
         color: "bg-[#4A5D45]",
         link: "/tienda"
     },
     {
-        text: "10% OFF ABONANDO POR TRANSFERENCIA BANCARIA - APROVECHÁ EL BENEFICIO",
+        text: "10% OFF ABONANDO POR TRANSFERENCIA BANCARIA",
         icon: <Landmark className="w-3 h-3 flex-shrink-0" />,
         color: "bg-[#A3B18A]",
         link: "/tienda"
     },
     {
-        text: "CREÁ TU PROPIA MARCA MAGISTRAL CON NOSOTROS - ASESORAMIENTO PROFESIONAL",
+        text: "CREÁ TU PROPIA MARCA MAGISTRAL CON NOSOTROS",
         icon: <FlaskConical className="w-3 h-3 flex-shrink-0" />,
         color: "bg-[#3A4031]",
         link: "/servicios"
     },
     {
-        text: "DESCUENTO EXCLUSIVO PARA PROFESIONALES Y REVENDEDORES - SUMATE",
+        text: "DESCUENTO EXCLUSIVO PARA PROFESIONALES Y REVENDEDORES",
         icon: <Award className="w-3 h-3 flex-shrink-0" />,
         color: "bg-[#4A5D45]",
         link: "/servicios"
@@ -45,7 +45,7 @@ const announcements = [
         link: "/tienda"
     },
     {
-        text: "ENVÍOS A TODO EL PAÍS - ANDREANI Y CORREO ARGENTINO - SEGUIMIENTO ONLINE",
+        text: "ENVÍOS A TODO EL PAÍS - ANDREANI Y CORREO ARGENTINO",
         icon: <Truck className="w-3 h-3 flex-shrink-0" />,
         color: "bg-[#3A4031]",
         link: "/politicas/envios"
