@@ -38,7 +38,7 @@ const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, 
     },
     pendiente_mercadopago: {
         title: "Pago en Proceso",
-        desc: "Estamos esperando la confirmation de Mercado Pago. Si tuviste un problema, podés reintentar el pago.",
+        desc: "Estamos esperando la confirmación de Mercado Pago. Si tuviste un problema, podés reintentar el pago.",
         next: "Confirmación e ingreso a laboratorio.",
         icon: CreditCard,
         color: "text-blue-600 bg-blue-50 border-blue-200"
