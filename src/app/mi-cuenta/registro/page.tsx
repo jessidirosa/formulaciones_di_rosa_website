@@ -51,7 +51,10 @@ export default function RegistroPage() {
         return
       }
 
-      router.push("/mi-cuenta")
+      // ✅ CAMBIO CLAVE: Usamos window.location.href para forzar la lectura de la nueva sesión
+      // Esto asegura que el estado de "logueado" impacte en toda la web al instante.
+      window.location.href = "/mi-cuenta"
+
     } catch (err) {
       console.error(err)
       setError("Error de red, intentá de nuevo.")
@@ -107,11 +110,11 @@ export default function RegistroPage() {
               {error && <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-medium text-center italic">{error}</div>}
 
               <Button type="submit" className="w-full bg-[#4A5D45] hover:bg-[#3D4C39] text-[#F5F5F0] h-12 rounded-xl font-bold text-sm shadow-lg shadow-emerald-900/10 transition-all mt-4" disabled={loading}>
-                {loading ? "Generando Paciente..." : "Confirmar Registro"}
+                {loading ? "Generando usuario..." : "Confirmar Registro"}
               </Button>
 
               <div className="pt-6 border-t border-[#F5F5F0] text-center">
-                <p className="text-xs text-[#5B6350]">¿Ya tenés una cuenta? <Link href="/mi-cuenta/login" className="text-[#4A5D45] font-bold hover:underline ml-1">Inicia sesión aquí</Link></p>
+                <p className="text-xs text-[#5B6350]">¿Ya tenés una cuenta? <Link href="/mi-cuenta/login" className="text-[#4A5D45] font-bold hover:underline ml-1">Iniciá sesión</Link></p>
               </div>
             </form>
           </CardContent>
