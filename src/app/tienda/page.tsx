@@ -123,7 +123,7 @@ export default async function TiendaPage({
             <div className="flex items-center gap-2 text-[#4A5D45] bg-[#A3B18A]/10 w-fit px-4 py-2 rounded-full border border-[#A3B18A]/20 animate-in fade-in slide-in-from-top-2 duration-500">
               <Search className="w-3 h-3" />
               <span className="text-[11px] font-bold uppercase tracking-wider">
-                Estás buscando en los productos de la categoría: <span className="underline decoration-2 underline-offset-4">{nombreCategoriaActual}</span>
+                Estás en la categoría: <span className="underline decoration-2 underline-offset-4">{nombreCategoriaActual}</span>
               </span>
             </div>
           )}
