@@ -245,40 +245,42 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                             </TableCell>
                                         </TableRow>
 
-                                        {/* DETALLE EXPANDIDO DEL PEDIDO */}
                                         <TableRow className="bg-gray-50/50">
                                             <TableCell colSpan={5} className="py-3 px-4 md:px-8">
                                                 <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                                                    {/* COLUMNA 1: DATOS DEL CLIENTE */}
+                                                    {/* COLUMNA 1: CLIENTE */}
                                                     <div className="space-y-3 min-w-0">
-                                                        <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-2">
+                                                        <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-1">
                                                             <User className="w-3.5 h-3.5" /> Información del Cliente
                                                         </div>
                                                         <div className="text-[11px] space-y-1.5 text-gray-700">
                                                             <p><span className="text-gray-400 font-medium">Nombre:</span> <span className="font-semibold">{pedido.nombreCliente} {pedido.apellidoCliente}</span></p>
-                                                            <p><span className="text-gray-400 font-medium">DNI/CUIL:</span> {pedido.dniCliente || 'No especificado'}</p>
+                                                            <p><span className="text-gray-400 font-medium">DNI/CUIL:</span> {pedido.dniCliente || 's/d'}</p>
                                                             <p><span className="text-gray-400 font-medium">Email:</span> <span className="text-[#4A5D45] font-semibold">{pedido.emailCliente}</span></p>
-                                                            <p><span className="text-gray-400 font-medium">Teléfono:</span> {pedido.telefonoCliente}</p>
+                                                            <p><span className="text-gray-400 font-medium">Tel:</span> {pedido.telefonoCliente}</p>
                                                             <div className="pt-2">
-                                                                <p className="text-[9px] text-gray-400 uppercase font-bold">Método de Pago</p>
-                                                                <div className="flex items-center gap-1.5 text-[#4A5D45] font-bold">
+                                                                <p className="text-[9px] text-gray-400 uppercase font-bold">Pago</p>
+                                                                <div className="flex items-center gap-1.5 text-[#4A5D45] font-bold uppercase">
                                                                     <CreditCard className="w-3 h-3" /> {pedido.metodoPago?.replace('_', ' ') || 'MERCADOPAGO'}
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    {/* COLUMNA 2: LOGÍSTICA Y ENTREGA */}
+                                                    {/* COLUMNA 2: ENTREGA Y SUCURSAL */}
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-2">
                                                             <MapPin className="w-3.5 h-3.5" /> Entrega y Logística
                                                         </div>
                                                         <div className="text-[11px] space-y-1.5 text-gray-700">
                                                             <p><span className="text-gray-400 font-medium">Tipo:</span> <span className="font-bold text-[#4A5D45] uppercase">{pedido.tipoEntrega || pedido.metodoEnvio}</span></p>
-                                                            <p><span className="text-gray-400 font-medium">Dirección:</span> {pedido.direccion || 'Retiro en sucursal'}</p>
-                                                            <p><span className="text-gray-400 font-medium">Ubicación:</span> {pedido.localidad || pedido.ciudad}, {pedido.provincia} ({pedido.codigoPostal})</p>
-                                                            {pedido.sucursalCorreo && <p className="font-bold text-[#4A5D45]">Sucursal Correo: {pedido.sucursalCorreo}</p>}
+                                                            <p><span className="text-gray-400 font-medium">Dirección:</span> {pedido.direccion || 'No especificada'}</p>
+                                                            <p><span className="text-gray-400 font-medium">Ubicación:</span> {pedido.localidad || pedido.ciudad}, {pedido.provincia} ({pedido.codigoPostal || 'CP s/d'})</p>
+
+                                                            {/* ✅ DATOS DE SUCURSAL RESTAURADOS */}
+                                                            {pedido.sucursalNombre && <p className="font-bold text-[#4A5D45]">Sucursal: {pedido.sucursalNombre}</p>}
+                                                            {pedido.sucursalCorreo && <p className="font-medium text-gray-600">Ref. Correo: {pedido.sucursalCorreo}</p>}
 
                                                             <div className="pt-2 space-y-1">
                                                                 <p className="text-[9px] text-gray-400 uppercase font-bold">Planificación</p>
@@ -294,7 +296,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         </div>
                                                     </div>
 
-                                                    {/* COLUMNA 3: PRODUCTOS Y TOTALES */}
+                                                    {/* COLUMNA 3: PRODUCTOS Y FINANZAS */}
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1">Resumen de Orden</div>
                                                         <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
@@ -312,7 +314,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                                 <span>${pedido.subtotal?.toLocaleString("es-AR") || '0'}</span>
                                                             </div>
                                                             <div className="flex justify-between text-[10px] text-gray-500">
-                                                                <span>Costo Envío</span>
+                                                                <span>Envío</span>
                                                                 <span>${pedido.costoEnvio?.toLocaleString("es-AR") || '0'}</span>
                                                             </div>
                                                             {pedido.descuento > 0 && (
@@ -322,7 +324,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                                 </div>
                                                             )}
                                                             <div className="pt-1 flex justify-between text-[12px] font-black text-[#4A5D45] border-t border-gray-200">
-                                                                <span>TOTAL FINAL</span>
+                                                                <span>TOTAL</span>
                                                                 <span>${pedido.total.toLocaleString("es-AR")}</span>
                                                             </div>
                                                         </div>
