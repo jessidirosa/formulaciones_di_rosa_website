@@ -138,7 +138,7 @@ export default function PaymentSection({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className={`relative cursor-pointer p-6 rounded-3xl border-2 transition-all ${metodoPago === 'MERCADOPAGO' ? 'border-[#4A5D45] bg-white shadow-lg' : 'border-transparent bg-white/50 opacity-70'}`} onClick={() => handleMethodChange('MERCADOPAGO')}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${metodoPago === 'MERCADOPAGO' ? 'bg-[#4A5D45] text-white' : 'bg-gray-100 text-gray-400'}`}><CreditCard className="w-5 h-5" /></div>
-            <h4 className="font-bold text-[#3A4031] text-sm uppercase">Mercado Pago</h4>
+            <h4 className="font-bold text-[#3A4031] text-sm uppercase">Tarjeta - Mercado Pago</h4>
           </div>
 
           <div className={`relative cursor-pointer p-6 rounded-3xl border-2 transition-all ${metodoPago === 'TRANSFERENCIA' ? 'border-[#A3B18A] bg-white shadow-lg' : 'border-transparent bg-white/50 opacity-70'}`} onClick={() => handleMethodChange('TRANSFERENCIA')}>
