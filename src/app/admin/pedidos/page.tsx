@@ -24,7 +24,7 @@ import ConfirmarPedidoButton from '@/components/admin/ConfirmarPedidoButton'
 import DespacharAccionesWrapper from "@/components/admin/DespacharAccionesWrapper"
 import { sendEmail } from "@/lib/email"
 import { emailPagoExpirado } from "@/lib/emailTemplates"
-import { Printer, Search, MessageSquare, User, Calendar, Factory } from "lucide-react"
+import { Printer, Search, MessageSquare, User, Calendar, Factory, MapPin, CreditCard } from "lucide-react"
 import PedidosFiltros from "@/components/admin/PedidosFiltros"
 import { obtenerResumenCapacidad, formatearFechaArgentina } from "@/lib/capacity"
 
@@ -213,7 +213,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         pedidoId={pedido.id}
                                                         estadoActual={pedido.estado}
                                                     />
-                                                    {/* ✅ Tipo de entrega visible en celular justo debajo del select */}
                                                     <div className="sm:hidden flex flex-col gap-1 px-1">
                                                         <span className="capitalize text-[10px] font-bold text-gray-500">{pedido.metodoEnvio}</span>
                                                         {pedido.carrier && (
@@ -246,48 +245,86 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                             </TableCell>
                                         </TableRow>
 
+                                        {/* DETALLE EXPANDIDO DEL PEDIDO */}
                                         <TableRow className="bg-gray-50/50">
                                             <TableCell colSpan={5} className="py-3 px-4 md:px-8">
-                                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                                                    <div className="space-y-2 min-w-0">
-                                                        <div className="text-[9px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-1">
-                                                            <User className="w-3 h-3" /> Cliente
+                                                    {/* COLUMNA 1: DATOS DEL CLIENTE */}
+                                                    <div className="space-y-3 min-w-0">
+                                                        <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-2">
+                                                            <User className="w-3.5 h-3.5" /> Información del Cliente
                                                         </div>
-                                                        <div className="text-[11px] space-y-1 text-gray-700 break-words">
-                                                            <p><span className="text-gray-400 font-medium">Nombre:</span> {pedido.nombreCliente} {pedido.apellidoCliente}</p>
+                                                        <div className="text-[11px] space-y-1.5 text-gray-700">
+                                                            <p><span className="text-gray-400 font-medium">Nombre:</span> <span className="font-semibold">{pedido.nombreCliente} {pedido.apellidoCliente}</span></p>
+                                                            <p><span className="text-gray-400 font-medium">DNI/CUIL:</span> {pedido.dniCliente || 'No especificado'}</p>
                                                             <p><span className="text-gray-400 font-medium">Email:</span> <span className="text-[#4A5D45] font-semibold">{pedido.emailCliente}</span></p>
-                                                            <p><span className="text-gray-400 font-medium">Tel:</span> {pedido.telefonoCliente}</p>
+                                                            <p><span className="text-gray-400 font-medium">Teléfono:</span> {pedido.telefonoCliente}</p>
+                                                            <div className="pt-2">
+                                                                <p className="text-[9px] text-gray-400 uppercase font-bold">Método de Pago</p>
+                                                                <div className="flex items-center gap-1.5 text-[#4A5D45] font-bold">
+                                                                    <CreditCard className="w-3 h-3" /> {pedido.metodoPago?.replace('_', ' ') || 'MERCADOPAGO'}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="space-y-2 min-w-0">
-                                                        <div className="text-[9px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1">Envío / Notas</div>
-                                                        <div className="text-[11px] space-y-1 text-gray-700 break-words">
-                                                            <p><span className="text-gray-400 font-medium">Ubicación:</span> {pedido.localidad || pedido.ciudad}, {pedido.provincia}</p>
-                                                            {pedido.sucursalNombre && <p className="font-bold text-[#4A5D45]">Suc: {pedido.sucursalNombre}</p>}
+                                                    {/* COLUMNA 2: LOGÍSTICA Y ENTREGA */}
+                                                    <div className="space-y-3 min-w-0">
+                                                        <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-2">
+                                                            <MapPin className="w-3.5 h-3.5" /> Entrega y Logística
+                                                        </div>
+                                                        <div className="text-[11px] space-y-1.5 text-gray-700">
+                                                            <p><span className="text-gray-400 font-medium">Tipo:</span> <span className="font-bold text-[#4A5D45] uppercase">{pedido.tipoEntrega || pedido.metodoEnvio}</span></p>
+                                                            <p><span className="text-gray-400 font-medium">Dirección:</span> {pedido.direccion || 'Retiro en sucursal'}</p>
+                                                            <p><span className="text-gray-400 font-medium">Ubicación:</span> {pedido.localidad || pedido.ciudad}, {pedido.provincia} ({pedido.codigoPostal})</p>
+                                                            {pedido.sucursalCorreo && <p className="font-bold text-[#4A5D45]">Sucursal Correo: {pedido.sucursalCorreo}</p>}
+
+                                                            <div className="pt-2 space-y-1">
+                                                                <p className="text-[9px] text-gray-400 uppercase font-bold">Planificación</p>
+                                                                <p className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Est. Envío: {pedido.fechaEstimadaEnvio ? new Date(pedido.fechaEstimadaEnvio).toLocaleDateString("es-AR") : 'Pendiente'}</p>
+                                                            </div>
+
                                                             {pedido.notasCliente && (
-                                                                <div className="mt-1 p-2 bg-amber-50 border border-amber-100 rounded-lg flex gap-2">
-                                                                    <MessageSquare className="w-3 h-3 text-amber-600 flex-shrink-0 mt-0.5" />
-                                                                    <p className="text-amber-800 italic leading-snug font-medium">"{pedido.notasCliente}"</p>
+                                                                <div className="mt-2 p-2 bg-amber-50 border border-amber-100 rounded-lg flex gap-2">
+                                                                    <MessageSquare className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                                                    <p className="text-amber-800 italic leading-snug font-medium text-[10px]">"{pedido.notasCliente}"</p>
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
 
-                                                    <div className="space-y-2 min-w-0">
-                                                        <div className="text-[9px] font-bold text-[#4A5D45] uppercase tracking-widest border-b pb-1">Productos</div>
-                                                        <div className="space-y-1 max-h-[100px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
+                                                    {/* COLUMNA 3: PRODUCTOS Y TOTALES */}
+                                                    <div className="space-y-3 min-w-0">
+                                                        <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1">Resumen de Orden</div>
+                                                        <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                                                             {pedido.items.map((item) => (
-                                                                <div key={item.id} className="flex justify-between text-[10px] border-b border-gray-50 pb-0.5 gap-2">
+                                                                <div key={item.id} className="flex justify-between text-[10px] border-b border-gray-50 pb-1 gap-2">
                                                                     <span className="text-gray-700 truncate">{item.nombreProducto} <span className="text-[#A3B18A] font-bold">x{item.cantidad}</span></span>
                                                                     <span className="font-semibold text-gray-900">${item.subtotal.toLocaleString("es-AR")}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                        <div className="pt-1 flex justify-between text-[10px] font-bold text-[#4A5D45]">
-                                                            <span>TOTAL</span>
-                                                            <span>${pedido.total.toLocaleString("es-AR")}</span>
+
+                                                        <div className="pt-2 space-y-1 border-t border-dashed border-gray-200">
+                                                            <div className="flex justify-between text-[10px] text-gray-500">
+                                                                <span>Subtotal</span>
+                                                                <span>${pedido.subtotal?.toLocaleString("es-AR") || '0'}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-[10px] text-gray-500">
+                                                                <span>Costo Envío</span>
+                                                                <span>${pedido.costoEnvio?.toLocaleString("es-AR") || '0'}</span>
+                                                            </div>
+                                                            {pedido.descuento > 0 && (
+                                                                <div className="flex justify-between text-[10px] text-red-500 font-medium">
+                                                                    <span>Descuento</span>
+                                                                    <span>-${pedido.descuento.toLocaleString("es-AR")}</span>
+                                                                </div>
+                                                            )}
+                                                            <div className="pt-1 flex justify-between text-[12px] font-black text-[#4A5D45] border-t border-gray-200">
+                                                                <span>TOTAL FINAL</span>
+                                                                <span>${pedido.total.toLocaleString("es-AR")}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
