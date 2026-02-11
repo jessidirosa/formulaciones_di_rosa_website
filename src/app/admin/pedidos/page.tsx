@@ -213,6 +213,15 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         pedidoId={pedido.id}
                                                         estadoActual={pedido.estado}
                                                     />
+                                                    {/* ✅ Tipo de entrega visible en celular justo debajo del select */}
+                                                    <div className="sm:hidden flex flex-col gap-1 px-1">
+                                                        <span className="capitalize text-[10px] font-bold text-gray-500">{pedido.metodoEnvio}</span>
+                                                        {pedido.carrier && (
+                                                            <span className="text-[9px] font-medium text-[#A3B18A]">
+                                                                {pedido.carrier.replace('_', ' ')}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="flex flex-wrap gap-1">
                                                         <ConfirmarPedidoButton pedidoId={Number(pedido.id)} />
                                                         <DespacharAccionesWrapper pedido={pedido} />
@@ -257,7 +266,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         <div className="text-[11px] space-y-1 text-gray-700 break-words">
                                                             <p><span className="text-gray-400 font-medium">Ubicación:</span> {pedido.localidad || pedido.ciudad}, {pedido.provincia}</p>
                                                             {pedido.sucursalNombre && <p className="font-bold text-[#4A5D45]">Suc: {pedido.sucursalNombre}</p>}
-                                                            {/* ✅ RESTAURADAS: Notas del cliente con visibilidad mejorada */}
                                                             {pedido.notasCliente && (
                                                                 <div className="mt-1 p-2 bg-amber-50 border border-amber-100 rounded-lg flex gap-2">
                                                                     <MessageSquare className="w-3 h-3 text-amber-600 flex-shrink-0 mt-0.5" />

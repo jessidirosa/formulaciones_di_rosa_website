@@ -47,9 +47,19 @@ export default function ProductFilters({
     router.push(`/tienda?${params.toString()}`)
   }
 
+  // ✅ Modificado: Al buscar, eliminamos la categoría para buscar en todo el sitio
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    updateSearchParams('busqueda', busqueda)
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (busqueda) {
+      params.set('busqueda', busqueda)
+      params.delete('categoria') // Esto asegura que busque en todos los productos
+    } else {
+      params.delete('busqueda')
+    }
+
+    router.push(`/tienda?${params.toString()}`)
   }
 
   const clearFilters = () => {
@@ -57,7 +67,6 @@ export default function ProductFilters({
     router.push('/tienda')
   }
 
-  // ✅ Solo mostramos "Limpiar" si hay búsqueda o un orden que no sea el de por defecto
   const hasActiveFilters =
     busquedaActual ||
     (ordenActual && ordenActual !== 'destacados')
@@ -79,7 +88,10 @@ export default function ProductFilters({
           {busqueda && (
             <button
               type="button"
-              onClick={() => setBusqueda('')}
+              onClick={() => {
+                setBusqueda('')
+                updateSearchParams('busqueda', '')
+              }}
               className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"
             >
               <X className="h-4 w-4" />
@@ -129,18 +141,6 @@ export default function ProductFilters({
           )}
         </div>
       </div>
-
-      {/* ✅ Se eliminó toda la sección de "Chips de Filtros Activos" que mostraba el tag de Especialidad */}
     </div>
   )
-}
-
-function getOrderLabel(orden: string): string {
-  switch (orden) {
-    case 'nombre': return 'Nombre A-Z'
-    case 'precio-asc': return 'Precio ↑'
-    case 'precio-desc': return 'Precio ↓'
-    case 'nuevo': return 'Más recientes'
-    default: return 'Recomendados'
-  }
 }
