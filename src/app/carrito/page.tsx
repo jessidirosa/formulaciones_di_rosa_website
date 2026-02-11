@@ -110,7 +110,7 @@ export default function CarritoPage() {
                         <div className="w-8 h-8 bg-[#A3B18A] rounded-full flex items-center justify-center text-white text-xs font-bold">{user?.nombre?.charAt(0)}</div>
                         <p className="text-xs text-[#5B6350] text-left">Comprando como <span className="font-bold text-[#3A4031]">{user?.nombre} {user?.apellido}</span></p>
                       </div>
-                      <Link href="/checkout" className="block"><Button className="w-full bg-[#4A5D45] hover:bg-[#3D4C39] text-[#F5F5F0] h-14 rounded-xl font-bold text-lg shadow-lg">Finalizar Compra <ArrowRight className="h-5 w-5 ml-2" /></Button></Link>
+                      <Link href="/checkout" className="block"><Button className="w-full bg-[#4A5D45] hover:bg-[#3D4C39] text-[#F5F5F0] h-14 rounded-xl font-bold text-lg shadow-lg">Continuar con la Compra <ArrowRight className="h-5 w-5 ml-2" /></Button></Link>
                     </div>
                   ) : (
                     <div className="space-y-4">
