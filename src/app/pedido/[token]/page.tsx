@@ -18,8 +18,8 @@ function formatARS(n: number) {
 function formatFechaEstimadaConsistente(fechaIso: string) {
     if (!fechaIso) return ""
     const d = new Date(fechaIso)
-    const inicio = new Date(d); inicio.setDate(d.getDate() - 1);
-    const fin = new Date(d); fin.setDate(d.getDate() + 7);
+    const inicio = new Date(d); inicio.setDate(d.getDate() - 3);
+    const fin = new Date(d); fin.setDate(d.getDate() + 1);
 
     const diaIn = inicio.getDate();
     const diaFin = fin.getDate();

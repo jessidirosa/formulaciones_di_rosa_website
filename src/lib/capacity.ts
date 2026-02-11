@@ -80,8 +80,8 @@ export function formatearFechaArgentina(fecha: Date): string {
 }
 
 export function formatearRangoDeFecha(fechaCentral: Date): string {
-  const inicio = addDays(fechaCentral, -1) // Miércoles
-  const fin = addDays(fechaCentral, 6)    // Viernes
+  const inicio = addDays(fechaCentral, -3) // Miércoles
+  const fin = addDays(fechaCentral, 1)    // Viernes
 
   const diaInicio = format(inicio, "d")
   const diaFin = format(fin, "d")
