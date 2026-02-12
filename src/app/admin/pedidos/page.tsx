@@ -24,9 +24,10 @@ import ConfirmarPedidoButton from '@/components/admin/ConfirmarPedidoButton'
 import DespacharAccionesWrapper from "@/components/admin/DespacharAccionesWrapper"
 import { sendEmail } from "@/lib/email"
 import { emailPagoExpirado } from "@/lib/emailTemplates"
-import { Printer, Search, MessageSquare, User, Calendar, Factory, MapPin, CreditCard } from "lucide-react"
+import { Printer, Search, MessageSquare, User, Calendar, Factory, MapPin, CreditCard, RotateCcw, FastForward } from "lucide-react"
 import PedidosFiltros from "@/components/admin/PedidosFiltros"
 import { obtenerResumenCapacidad, formatearFechaArgentina } from "@/lib/capacity"
+import BotonSaltoSemana from "@/components/admin/BotonSaltoSemana"
 
 interface PedidosPageProps {
     searchParams: Promise<{
@@ -135,13 +136,22 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full md:w-auto">
                     <Card className="px-4 py-3 border-[#D6D6C2] bg-white shadow-sm flex flex-col justify-center min-w-[160px]">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Factory className="w-3 h-3 text-[#A3B18A]" />
-                            <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider">Cupos Semanales</div>
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                                <Factory className="w-3 h-3 text-[#A3B18A]" />
+                                <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider">Cupos Semanales</div>
+                            </div>
+                            {resumenCapacidad.semanasSaltadas > 0 && (
+                                <Badge variant="secondary" className="text-[8px] bg-amber-100 text-amber-700 border-none">
+                                    +{resumenCapacidad.semanasSaltadas} sem
+                                </Badge>
+                            )}
                         </div>
                         <div className="text-xl font-bold text-[#4A5D45]">
                             {resumenCapacidad.capacidadDisponible} <span className="text-gray-300 font-light text-sm">/ {resumenCapacidad.capacidadTotal}</span>
                         </div>
+                        {/* Botones de Salto de Semana */}
+                        <BotonSaltoSemana semanasSaltadas={resumenCapacidad.semanasSaltadas} />
                     </Card>
 
                     <Card className="px-4 py-3 border-[#D6D6C2] bg-white shadow-sm flex flex-col justify-center min-w-[160px]">
@@ -249,7 +259,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                             <TableCell colSpan={5} className="py-3 px-4 md:px-8">
                                                 <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                                                    {/* COLUMNA 1: CLIENTE */}
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-1">
                                                             <User className="w-3.5 h-3.5" /> Información del Cliente
@@ -268,7 +277,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         </div>
                                                     </div>
 
-                                                    {/* COLUMNA 2: ENTREGA Y SUCURSAL */}
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-2">
                                                             <MapPin className="w-3.5 h-3.5" /> Entrega y Logística
@@ -278,7 +286,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                             <p><span className="text-gray-400 font-medium">Dirección:</span> {pedido.direccion || 'No especificada'}</p>
                                                             <p><span className="text-gray-400 font-medium">Ubicación:</span> {pedido.localidad || pedido.ciudad}, {pedido.provincia} ({pedido.codigoPostal || 'CP s/d'})</p>
 
-                                                            {/* ✅ DATOS DE SUCURSAL RESTAURADOS */}
                                                             {pedido.sucursalNombre && <p className="font-bold text-[#4A5D45]">Sucursal: {pedido.sucursalNombre}</p>}
                                                             {pedido.sucursalCorreo && <p className="font-medium text-gray-600">Ref. Correo: {pedido.sucursalCorreo}</p>}
 
@@ -296,7 +303,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         </div>
                                                     </div>
 
-                                                    {/* COLUMNA 3: PRODUCTOS Y FINANZAS */}
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1">Resumen de Orden</div>
                                                         <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">

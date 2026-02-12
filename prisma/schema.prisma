@@ -185,3 +185,8 @@ model PasswordResetToken {
 
   @@unique([email, token])
 }
+
+model Config {
+  id                Int @id @default(1)
+  semanasDesplazadas Int @default(0)
+}
