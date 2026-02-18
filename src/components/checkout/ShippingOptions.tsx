@@ -223,8 +223,9 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
               <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                 <div className="text-[10px] text-amber-800 leading-relaxed">
-                  <p className="font-bold uppercase mb-1">Carga Manual de Sucursal</p>
-                  No encontramos resultados automáticos para esa zona. Podés ingresar el nombre de la sucursal manualmente debajo.
+                  <p className="font-bold uppercase mb-1 text-amber-900">Carga Manual de Sucursal</p>
+                  <p className="mb-2">No encontramos resultados automáticos para esa zona.</p>
+
                   {/* LA NOTA NUEVA */}
                   <div className="bg-white/50 p-2 rounded-lg border border-amber-200/50 space-y-1">
                     <p className="font-semibold italic">📍 Indicaciones importantes:</p>
@@ -239,13 +240,14 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
                   </div>
                 </div>
               </div>
+
               <div className="space-y-2">
-                <Label className="text-[10px] text-[#5B6350] uppercase font-bold">Nombre / Dirección de la Sucursal</Label>
+                <Label className="text-[10px] text-[#5B6350] uppercase font-bold">Nombre y Dirección de la Sucursal</Label>
                 <Input
                   value={data.sucursalCorreo || ''}
                   onChange={e => onChange({ sucursalCorreo: e.target.value, sucursalId: '', sucursalNombre: e.target.value })}
-                  placeholder="Ej: Correo Argentino - Av. Rivadavia 1234"
-                  className="bg-white border-[#A3B18A] rounded-xl h-12"
+                  placeholder="Ej: Correo Argentino Sucursal Caseros - Av. San Martín 1500"
+                  className="bg-white border-[#A3B18A] rounded-xl h-12 text-xs"
                 />
               </div>
             </div>
