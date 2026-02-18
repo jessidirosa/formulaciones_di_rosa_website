@@ -20,7 +20,11 @@ export default function EditarPedidoModal({ pedido }: { pedido: any }) {
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [items, setItems] = useState(pedido.items.map((item: any) => ({ ...item })))
+    const [items, setItems] = useState(pedido.items.map((item: any) => ({
+        ...item,
+        // Calculamos el unitario para que el admin pueda editarlo con sentido
+        precioUnitario: item.precioUnitario || (item.subtotal / item.cantidad)
+    })))
 
     // Cálculos dinámicos
     const subtotal = items.reduce((acc: number, item: any) => acc + (Number(item.precioUnitario) * Number(item.cantidad)), 0)

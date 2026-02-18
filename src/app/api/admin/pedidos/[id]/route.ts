@@ -5,14 +5,13 @@ import { authOptions } from "@/lib/auth";
 
 export async function PATCH(
     req: Request,
-    { params }: { params: Promise<{ id: string }> } // Cambio: ahora es una Promise
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "ADMIN") {
         return new NextResponse("No autorizado", { status: 401 });
     }
 
-    // Esperamos a que los params se resuelvan
     const resolvedParams = await params;
     const pedidoId = Number(resolvedParams.id);
 
@@ -24,21 +23,24 @@ export async function PATCH(
             prisma.pedidoItem.deleteMany({
                 where: { pedidoId: pedidoId }
             }),
-            // 2. Creamos los nuevos (incluyendo los personalizados)
+            // 2. Creamos los nuevos (SOLO con los campos que existen en tu DB)
             prisma.pedidoItem.createMany({
                 data: items.map((item: any) => ({
                     pedidoId: pedidoId,
                     productoId: item.productoId || null,
                     nombreProducto: item.nombreProducto,
                     cantidad: item.cantidad,
-                    precioUnitario: item.precioUnitario,
+                    // Quitamos precioUnitario porque Prisma dice que no existe en tu modelo
                     subtotal: item.subtotal,
                 })),
             }),
-            // 3. Actualizamos el total del pedido
+            // 3. Actualizamos el total y subtotal del pedido
             prisma.pedido.update({
                 where: { id: pedidoId },
-                data: { total, subtotal }
+                data: {
+                    total: total,
+                    subtotal: subtotal
+                }
             })
         ]);
 
