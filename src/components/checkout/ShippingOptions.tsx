@@ -175,7 +175,7 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase">Ubicación para Retiro</Label>
             {currentCarrierLink && (
-              <a href={currentCarrierLink} target="_blank" className="text-[9px] text-[#A3B18A] flex items-center gap-1 hover:underline font-bold uppercase leading-tight">
+              <a href={currentCarrierLink} target="_blank" className="text-[12px] text-[#A3B18A] flex items-center gap-1 hover:underline font-bold uppercase leading-tight">
                 <ExternalLink className="w-3 h-3" /> Ver mapa oficial de sucursales
               </a>
             )}
@@ -225,6 +225,18 @@ export default function ShippingOptions({ data, onChange, onNext, onBack }: Ship
                 <div className="text-[10px] text-amber-800 leading-relaxed">
                   <p className="font-bold uppercase mb-1">Carga Manual de Sucursal</p>
                   No encontramos resultados automáticos para esa zona. Podés ingresar el nombre de la sucursal manualmente debajo.
+                  {/* LA NOTA NUEVA */}
+                  <div className="bg-white/50 p-2 rounded-lg border border-amber-200/50 space-y-1">
+                    <p className="font-semibold italic">📍 Indicaciones importantes:</p>
+                    <ul className="list-disc ml-3 space-y-1">
+                      <li>Ingresá al <b>"Mapa oficial"</b> que te dejamos arriba.</li>
+                      <li>Copiá el <b>nombre exacto</b> que le da el correo (Ej: Sucursal "Morón").</li>
+                      <li>Agregá la <b>dirección completa</b>.</li>
+                    </ul>
+                    <p className="mt-2 text-[9px] font-bold text-amber-700 uppercase">
+                      ⚠️ Ser específicos evita demoras e inconvenientes en el envío.
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">
