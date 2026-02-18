@@ -64,10 +64,11 @@ const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, 
         icon: FlaskConical,
         color: "text-[#4A5D45] bg-[#E9E9E0] border-[#A3B18A]"
     },
+    // ESTADO DINÁMICO: Cambia según si es Envío o Retiro
     listo_envio: {
-        title: "Listo para Despacho",
-        desc: "Productos formulados. Esperando retiro del transporte.",
-        next: "Envío y código de seguimiento.",
+        title: "Pedido Finalizado",
+        desc: "Tus productos ya están listos.", // Se sobreescribe abajo
+        next: "Entrega final.",
         icon: Boxes,
         color: "text-[#4A5D45] bg-[#F9F9F7] border-[#E9E9E0]"
     },
@@ -167,11 +168,30 @@ export default function PedidoPublicPage({ params }: PageProps) {
     )
 
     const estadoLwr = pedido.estado.toLowerCase()
-    const info = INFO_ESTADOS[estadoLwr] || { title: pedido.estado, desc: "Procesando...", next: "Pronto habrá novedades.", icon: Package, color: "bg-gray-50 text-gray-700" }
-
+    let info = INFO_ESTADOS[estadoLwr] || { title: pedido.estado, desc: "Procesando...", next: "Pronto habrá novedades.", icon: Package, color: "bg-gray-50 text-gray-700" }
+    // ✅ LÓGICA PARA RETIRO EN LABORATORIO
+    const esRetiro = pedido.tipoEntrega === "RETIRO_LABORATORIO" || pedido.metodoEnvio === "RETIRO_LABORATORIO"
     const subtotalItems = pedido.items.reduce((acc: number, item: any) => acc + (item.subtotal || 0), 0)
     const mostrarFechaEstimada = !["enviado", "entregado", "cancelled_expired", "cancelado"].includes(estadoLwr)
 
+    if (estadoLwr === "listo_envio") {
+        if (esRetiro) {
+            info = {
+                ...info,
+                title: "Listo para Retirar",
+                desc: "¡Tu fórmula está lista! Ya podés pasar por el laboratorio a retirar tu pedido.",
+                next: "Retiro presencial en el laboratorio.",
+                icon: Package
+            }
+        } else {
+            info = {
+                ...info,
+                title: "Listo para Despacho",
+                desc: "Productos formulados y empaquetados. Esperando retiro del transporte.",
+                next: "Envío y código de seguimiento."
+            }
+        }
+    }
     return (
         <div className="min-h-screen bg-[#F5F5F0] py-12 px-4">
             <div className="container mx-auto max-w-2xl space-y-6 text-left">
@@ -200,8 +220,12 @@ export default function PedidoPublicPage({ params }: PageProps) {
                                 <div className="flex items-center gap-3">
                                     <Calendar className="w-4 h-4 opacity-70 flex-shrink-0" />
                                     <div className="flex flex-col text-left">
-                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">Fecha estimada de finalización</span>
-                                        <span className="text-xs font-bold capitalize">{formatFechaEstimadaConsistente(pedido.fechaEstimadaEnvio)}</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">
+                                            {esRetiro ? "Disponible para retirar" : "Fecha estimada de despacho"}
+                                        </span>
+                                        <span className="text-xs font-bold capitalize">
+                                            {formatFechaEstimadaConsistente(pedido.fechaEstimadaEnvio)}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-2 pt-2 border-t border-black/5">
