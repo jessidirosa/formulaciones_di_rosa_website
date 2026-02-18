@@ -28,6 +28,7 @@ import { Printer, Search, MessageSquare, User, Calendar, Factory, MapPin, Credit
 import PedidosFiltros from "@/components/admin/PedidosFiltros"
 import { obtenerResumenCapacidad, formatearFechaArgentina } from "@/lib/capacity"
 import BotonSaltoSemana from "@/components/admin/BotonSaltoSemana"
+import EditarPedidoModal from "@/components/admin/EditarPedidoModal"
 
 interface PedidosPageProps {
     searchParams: Promise<{
@@ -247,8 +248,9 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="font-bold text-sm whitespace-nowrap">${pedido.total.toLocaleString("es-AR")}</TableCell>
-                                            <TableCell className="text-right">
+
+                                            <TableCell className="text-right flex gap-2 justify-end">
+                                                <EditarPedidoModal pedido={pedido} /> {/* Este es el nuevo componente */}
                                                 <Button variant="outline" size="sm" asChild className="h-8 px-2">
                                                     <Link href={`/pedido/${pedido.publicToken}`}>Ver</Link>
                                                 </Button>
