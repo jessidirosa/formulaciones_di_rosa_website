@@ -18,53 +18,70 @@ const ESTADOS_CAPACIDAD = [
  * Lógica central: Calcula el jueves de despacho según carga de trabajo y saltos manuales
  */
 export async function calcularFechaEstimada(): Promise<Date> {
-  try {
-    const pedidosPendientes = await prisma.pedido.count({
-      where: { estado: { in: ESTADOS_CAPACIDAD } },
-    })
+  const config = await prisma.config.findUnique({ where: { id: 1 } });
+  let semanasAAgregar = config?.semanasDesplazadas || 0;
 
-    // Buscamos si hay saltos de semana manuales desde el admin
-    const config = await prisma.config.findUnique({ where: { id: 1 } });
-    const semanasAdicionales = config?.semanasDesplazadas || 0;
+  let fechaEncontrada = false;
+  let fechaFinal = new Date();
 
-    // 0..16 pedidos -> semana 0 (próxima), 17..33 -> semana 1, etc.
-    const semanasDeRetraso = Math.floor(pedidosPendientes / CAPACIDAD_SEMANAL) + semanasAdicionales
+  while (!fechaEncontrada) {
+    // 1. Apuntamos al jueves de la semana base + semanas de salto
+    const hoy = new Date();
+    const lunesBase = addDays(startOfWeek(hoy, { weekStartsOn: 1 }), 7);
+    const juevesIntento = addDays(addWeeks(lunesBase, semanasAAgregar), 3);
 
-    const hoy = new Date()
-    // Siempre apuntamos al lunes de la SEMANA QUE VIENE como base
-    const lunesProximaSemana = addDays(startOfWeek(hoy, { weekStartsOn: 1 }), 7)
+    // 2. Contamos cuántos hay para ese jueves específico
+    const ocupados = await prisma.pedido.count({
+      where: {
+        estado: { in: ESTADOS_CAPACIDAD },
+        fechaEstimadaEnvio: {
+          gte: new Date(juevesIntento.setHours(0, 0, 0, 0)),
+          lte: new Date(juevesIntento.setHours(23, 59, 59, 999))
+        }
+      }
+    });
 
-    // Sumamos las semanas de retraso y vamos al jueves (+3 días)
-    const lunesAsignado = addWeeks(lunesProximaSemana, semanasDeRetraso)
-    const juevesEstimado = addDays(lunesAsignado, 3)
-
-    return juevesEstimado
-  } catch (error) {
-    console.error("❌ Error al calcular fecha estimada:", error)
-    return addDays(addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 7), 3)
+    // 3. Si hay lugar, esa es la fecha. Si está lleno, probamos la semana siguiente.
+    if (ocupados < CAPACIDAD_SEMANAL) {
+      fechaFinal = juevesIntento;
+      fechaEncontrada = true;
+    } else {
+      semanasAAgregar++;
+    }
   }
-}
 
+  return fechaFinal;
+}
 /**
  * Exportación para el Panel de Admin
  */
 export async function obtenerResumenCapacidad() {
   try {
-    const pedidosPendientes = await prisma.pedido.count({
-      where: { estado: { in: ESTADOS_CAPACIDAD } },
-    })
-
-    // Obtenemos la configuración de saltos para el admin
+    // 1. Obtenemos la configuración de saltos (el botón que agregamos antes)
     const config = await prisma.config.findUnique({ where: { id: 1 } });
     const semanasSaltadas = config?.semanasDesplazadas || 0;
 
-    const capacidadUsadaEnSemanaActual = pedidosPendientes % CAPACIDAD_SEMANAL
-    const capacidadDisponible = Math.max(0, CAPACIDAD_SEMANAL - capacidadUsadaEnSemanaActual)
-    const proximaFecha = await calcularFechaEstimada()
+    // 2. Calculamos cuál es la fecha del PRÓXIMO despacho disponible
+    // Esta función ya considera la carga de trabajo y los saltos manuales
+    const proximaFecha = await calcularFechaEstimada();
+
+    // 3. NUEVA LÓGICA: Contamos cuántos pedidos ya tienen asignada ESA fecha exacta
+    const pedidosEnEsaFecha = await prisma.pedido.count({
+      where: {
+        estado: { in: ESTADOS_CAPACIDAD },
+        fechaEstimadaEnvio: {
+          // Buscamos pedidos que coincidan con el día (sin importar la hora)
+          gte: new Date(proximaFecha.setHours(0, 0, 0, 0)),
+          lte: new Date(proximaFecha.setHours(23, 59, 59, 999))
+        }
+      },
+    })
+
+    const capacidadDisponible = Math.max(0, CAPACIDAD_SEMANAL - pedidosEnEsaFecha)
 
     return {
       capacidadTotal: CAPACIDAD_SEMANAL,
-      pedidosPendientes,
+      pedidosPendientes: pedidosEnEsaFecha, // Ahora representa los de ESTA fecha
       capacidadDisponible,
       proximaFechaEstimada: proximaFecha,
       semanasSaltadas
