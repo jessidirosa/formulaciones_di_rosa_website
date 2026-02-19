@@ -6,8 +6,9 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useCart } from '@/contexts/CartContext'
-import { ShoppingCart, Eye, Sparkles, Loader2 } from 'lucide-react'
+import { ShoppingCart, Eye, Sparkles, Loader2, CreditCard, ShoppingBag } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+
 
 interface Presentacion {
   id: number
@@ -158,40 +159,53 @@ export default function ProductCard({ producto }: ProductCardProps) {
       </CardContent>
 
       <CardFooter className="px-5 pb-6 pt-2 flex flex-col gap-4">
-        <div className="w-full flex flex-col gap-1">
-          <div className="flex justify-between items-baseline px-1">
-            <span className="text-[8px] uppercase tracking-widest text-[#A3B18A] font-bold">
-              {tienePresentaciones ? 'Desde' : 'Precio de lista'}
-            </span>
-            <span className="text-xs font-medium text-[#5B6350] line-through decoration-[#D6D6C2]">
-              {formatPrice(precioBase)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center bg-[#F9F9F7] p-2.5 rounded-xl border border-[#E9E9E0]/50">
-            <div className="flex flex-col">
-              <span className="text-[9px] uppercase tracking-tight text-[#4A5D45] font-bold flex items-center gap-1">
-                <Sparkles className="h-3 w-3" /> Transferencia
+        <div className="w-full flex flex-col gap-2">
+
+          {/* PRECIO DE LISTA: Ahora es el principal */}
+          <div className="flex justify-between items-center px-1">
+            <div className="flex flex-col text-left">
+              <span className="text-[9px] uppercase tracking-widest text-[#A3B18A] font-black leading-none mb-1">
+                {tienePresentaciones ? 'Desde' : 'Precio de lista'}
               </span>
-              <span className="text-xl font-serif font-bold text-[#4A5D45]">
+              <div className="flex items-center gap-1.5">
+                <CreditCard className="h-3 w-3 text-[#5B6350]" />
+                <span className="text-2xl font-serif font-bold text-[#3A4031]">
+                  {formatPrice(precioBase)}
+                </span>
+              </div>
+            </div>
+            <Badge className="bg-[#F9F9F7] text-[#5B6350] border-[#E9E9E0] shadow-none text-[8px] font-bold px-1.5 h-5">
+              6 CUOTAS
+            </Badge>
+          </div>
+
+          {/* PRECIO TRANSFERENCIA: Ahora es el secundario, más pequeño y contenido */}
+          <div className="flex justify-between items-center bg-[#F9F9F7] p-2.5 rounded-xl border border-[#E9E9E0]/50 transition-all hover:bg-[#F5F5F0]">
+            <div className="flex flex-col text-left">
+              <span className="text-[8px] uppercase tracking-tight text-[#4A5D45] font-bold opacity-70">
+                Pagando con Transferencia
+              </span>
+              <span className="text-base font-bold text-[#4A5D45]">
                 {formatPrice(precioTransferencia)}
               </span>
             </div>
             <div className="text-right">
-              <Badge className="bg-[#A3B18A]/20 text-[#4A5D45] shadow-none border-none text-[9px] font-bold px-1.5">
+              <Badge className="bg-[#4A5D45] text-white shadow-none border-none text-[8px] font-black px-2">
                 10% OFF
               </Badge>
             </div>
           </div>
         </div>
+
         <div className="w-full flex gap-2">
           <button
             onClick={handleAddToCart}
             disabled={isLoading || stockTotal === 0}
             className={`flex-1 rounded-xl h-10 font-bold text-[10px] uppercase tracking-widest transition-all
-                ${stockTotal === 0 ? 'bg-gray-100 text-gray-400' : 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'}`}
+          ${stockTotal === 0 ? 'bg-gray-100 text-gray-400' : 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'}`}
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin mx-auto" />
             ) : (
               <>{stockTotal === 0 ? 'Sin Stock' : tienePresentaciones ? 'Ver Opciones' : 'Añadir'}</>
             )}
