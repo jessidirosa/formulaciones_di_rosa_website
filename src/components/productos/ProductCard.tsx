@@ -175,7 +175,7 @@ export default function ProductCard({ producto }: ProductCardProps) {
               </div>
             </div>
             <Badge className="bg-[#F9F9F7] text-[#5B6350] border-[#E9E9E0] shadow-none text-[8px] font-bold px-1.5 h-5">
-              6 CUOTAS
+              Hasta 3 CUOTAS sin interés
             </Badge>
           </div>
 
