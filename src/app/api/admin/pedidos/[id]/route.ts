@@ -7,16 +7,22 @@ export async function PATCH(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    // ... (mantené la validación de sesión y el resolvedParams igual)
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "ADMIN") {
+        return new NextResponse("No autorizado", { status: 401 });
+    }
+
     const resolvedParams = await params;
     const pedidoId = Number(resolvedParams.id);
 
-    // ✅ Extraemos todas las variables nuevas del body
     const { items, total, subtotal, descuento, notasCliente, datosContacto } = await req.json();
 
     try {
         await prisma.$transaction([
+            // 1. Borramos los items actuales
             prisma.pedidoItem.deleteMany({ where: { pedidoId } }),
+
+            // 2. Creamos los nuevos items (incluyendo personalizados)
             prisma.pedidoItem.createMany({
                 data: items.map((item: any) => ({
                     pedidoId: pedidoId,
@@ -26,7 +32,8 @@ export async function PATCH(
                     subtotal: item.subtotal,
                 })),
             }),
-            // ✅ Actualizamos el pedido con los nuevos campos
+
+            // 3. Actualizamos el pedido con TODA la información nueva
             prisma.pedido.update({
                 where: { id: pedidoId },
                 data: {
@@ -34,13 +41,14 @@ export async function PATCH(
                     subtotal: subtotal,
                     descuento: Number(descuento),
                     notasCliente: notasCliente,
-                    // Esparcimos los datos de contacto
                     nombreCliente: datosContacto.nombreCliente,
                     apellidoCliente: datosContacto.apellidoCliente,
                     emailCliente: datosContacto.emailCliente,
                     telefonoCliente: datosContacto.telefonoCliente,
                     direccion: datosContacto.direccion,
                     localidad: datosContacto.localidad,
+                    // ✅ IMPORTANTE: Agregamos la sucursal aquí
+                    sucursalCorreo: datosContacto.sucursalCorreo
                 }
             })
         ]);

@@ -6,8 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea" // Asegurate de tener este componente de shadcn
-import { Plus, Trash2, User, MapPin, FileText, CreditCard } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Plus, Trash2, User, MapPin, FileText, CreditCard, Home } from "lucide-react"
 
 export default function EditarPedidoModal({ pedido }: { pedido: any }) {
     const router = useRouter()
@@ -17,7 +17,7 @@ export default function EditarPedidoModal({ pedido }: { pedido: any }) {
     // Estados para edición
     const [items, setItems] = useState(pedido.items.map((item: any) => ({
         ...item,
-        precioUnitario: item.subtotal / item.cantidad
+        precioUnitario: item.precioUnitario || (item.subtotal / item.cantidad)
     })))
     const [descuento, setDescuento] = useState(pedido.descuento || 0)
     const [notasCliente, setNotasCliente] = useState(pedido.notasCliente || "")
@@ -28,6 +28,7 @@ export default function EditarPedidoModal({ pedido }: { pedido: any }) {
         telefonoCliente: pedido.telefonoCliente || "",
         direccion: pedido.direccion || "",
         localidad: pedido.localidad || "",
+        sucursalCorreo: pedido.sucursalCorreo || "", // Campo para sucursal
     })
 
     const subtotal = items.reduce((acc: number, item: any) => acc + (Number(item.precioUnitario) * Number(item.cantidad)), 0)
@@ -93,10 +94,19 @@ export default function EditarPedidoModal({ pedido }: { pedido: any }) {
                             <Label className="text-[10px] uppercase font-black text-[#A3B18A]">Productos de la Orden</Label>
                             <div className="border rounded-xl overflow-hidden text-[11px]">
                                 <table className="w-full">
+                                    <thead className="bg-gray-50 border-b">
+                                        <tr>
+                                            <th className="p-2 text-left">Nombre</th>
+                                            <th className="p-2 text-center w-16">Cant.</th>
+                                            <th className="p-2 text-right w-24">Precio U.</th>
+                                            <th className="p-2 text-right w-24">Subtotal</th>
+                                            <th className="p-2 w-8"></th>
+                                        </tr>
+                                    </thead>
                                     <tbody className="divide-y">
                                         {items.map((item: any) => (
                                             <tr key={item.id} className="bg-white">
-                                                <td className="p-2 w-full">
+                                                <td className="p-2">
                                                     <Input
                                                         value={item.nombreProducto}
                                                         onChange={(e) => actualizarItem(item.id, "nombreProducto", e.target.value)}
@@ -109,7 +119,15 @@ export default function EditarPedidoModal({ pedido }: { pedido: any }) {
                                                         type="number"
                                                         value={item.cantidad}
                                                         onChange={(e) => actualizarItem(item.id, "cantidad", Number(e.target.value))}
-                                                        className="h-7 w-12 text-center"
+                                                        className="h-7 w-12 text-center text-[10px]"
+                                                    />
+                                                </td>
+                                                <td className="p-2">
+                                                    <Input
+                                                        type="number"
+                                                        value={item.precioUnitario}
+                                                        onChange={(e) => actualizarItem(item.id, "precioUnitario", Number(e.target.value))}
+                                                        className="h-7 w-20 text-right text-[10px]"
                                                     />
                                                 </td>
                                                 <td className="p-2 text-right font-bold">
@@ -149,9 +167,25 @@ export default function EditarPedidoModal({ pedido }: { pedido: any }) {
                                 <Input value={contacto.emailCliente} onChange={e => setContacto({ ...contacto, emailCliente: e.target.value })} placeholder="Email" className="h-8 text-xs bg-white col-span-2" />
                                 <Input value={contacto.telefonoCliente} onChange={e => setContacto({ ...contacto, telefonoCliente: e.target.value })} placeholder="Teléfono" className="h-8 text-xs bg-white col-span-2" />
                             </div>
-                            <Label className="text-[10px] uppercase font-black text-[#4A5D45] flex items-center gap-1 pt-2"><MapPin className="w-3 h-3" /> Dirección</Label>
-                            <Input value={contacto.direccion} onChange={e => setContacto({ ...contacto, direccion: e.target.value })} placeholder="Calle y Nro" className="h-8 text-xs bg-white" />
-                            <Input value={contacto.localidad} onChange={e => setContacto({ ...contacto, localidad: e.target.value })} placeholder="Localidad" className="h-8 text-xs bg-white" />
+                            <Label className="text-[10px] uppercase font-black text-[#4A5D45] flex items-center gap-1 pt-2"><MapPin className="w-3 h-3" /> Dirección / Envío</Label>
+                            <div className="space-y-2">
+                                <Input value={contacto.direccion} onChange={e => setContacto({ ...contacto, direccion: e.target.value })} placeholder="Calle y Nro" className="h-8 text-xs bg-white" />
+                                <Input value={contacto.localidad} onChange={e => setContacto({ ...contacto, localidad: e.target.value })} placeholder="Localidad" className="h-8 text-xs bg-white" />
+
+                                {pedido.tipoEntrega === 'SUCURSAL_CORREO' && (
+                                    <div className="pt-2 border-t mt-2">
+                                        <Label className="text-[9px] uppercase font-bold text-amber-700 flex items-center gap-1 mb-1">
+                                            <Home className="w-3 h-3" /> Sucursal de Retiro
+                                        </Label>
+                                        <Input
+                                            value={contacto.sucursalCorreo}
+                                            onChange={e => setContacto({ ...contacto, sucursalCorreo: e.target.value })}
+                                            placeholder="Nombre de la sucursal de correo"
+                                            className="h-8 text-xs bg-white border-amber-200"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </section>
 
                         <section className="space-y-3 border-t pt-4">
