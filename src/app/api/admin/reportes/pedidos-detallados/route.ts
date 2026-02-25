@@ -10,16 +10,17 @@ async function requireAdmin() {
     return { session, user }
 }
 
-// CSV helpers corregido para compatibilidad con Excel (Caracteres y Teléfonos/DNI)
+// ✅ Función de escape mejorada para Excel
 function csvEscape(v: any) {
-    const s = String(v ?? "")
-    const escaped = s.replace(/"/g, '""')
+    let s = String(v ?? "").trim()
 
-    // ✅ Si es un número largo (Teléfono, DNI, CP), lo forzamos como texto para Excel
+    // Si es un número largo (Teléfono, DNI, CP), le agregamos una tabulación al inicio.
+    // Esto obliga a Excel a tratarlo como texto sin mostrar caracteres extraños.
     if (/^\d{7,}$/.test(s)) {
-        return `="${escaped}"`
+        return `"\t${s}"`
     }
 
+    const escaped = s.replace(/"/g, '""')
     return /[",\n;]/.test(escaped) ? `"${escaped}"` : escaped
 }
 
@@ -46,9 +47,9 @@ export async function GET(req: NextRequest) {
     })
 
     const filename = `reporte_detallado_di_rosa_${year}_${month}.csv`
-    const sep = ";"
+    const sep = ";" // Punto y coma es el estándar para Excel en español
 
-    // 1. HEADERS COMPLETOS (Agregadas nuevas columnas al final de los datos numéricos)
+    // 1. HEADERS COMPLETOS
     const headers = [
         "Fecha", "Pedido #", "Estado", "Cliente", "Email", "Telefono", "DNI",
         "Tipo Entrega", "Carrier", "Direccion", "Localidad", "Provincia", "CP", "Sucursal",
@@ -57,7 +58,6 @@ export async function GET(req: NextRequest) {
         "Total Cobrado", "Comision MP", "Neto Real", "Costo 40%", "Ganancia Neta Final", "Notas"
     ].join(sep)
 
-    // Acumuladores para el resumen final (solo pedidos NO cancelados)
     let totalEnviosAcum = 0
     let totalVentasRealAcum = 0
     let totalNetoAcum = 0
@@ -69,21 +69,17 @@ export async function GET(req: NextRequest) {
         const total = Number(p.total || 0)
         const descCupon = Number(p.cuponDescuento || 0)
 
-        // Lógica de descuentos separada
         const baseConCupon = subtotal + envio - descCupon
         const descTransfer = p.metodoPago === "TRANSFERENCIA" ? Math.max(0, baseConCupon - total) : 0
 
-        // Lógica de Neto y Comisiones
         let comision = p.mpFee ? Number(p.mpFee) : 0
         let neto = p.netoReal ? Number(p.netoReal) : total
 
-        // Si es un pedido viejo de MP sin datos nuevos, estimamos para no dejar en 0
         if (!p.mpFee && p.metodoPago === "MERCADOPAGO") {
             comision = total * 0.08
             neto = total - comision
         }
 
-        // NUEVA LÓGICA DE COSTO Y GANANCIA
         const costo40 = subtotal * 0.40
         const gananciaFinal = neto - costo40
 
@@ -125,8 +121,7 @@ export async function GET(req: NextRequest) {
         ].join(sep)
     })
 
-    // 2. FILA DE RESUMEN FINAL (Acumulados del mes)
-    const filaVacia = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""].join(sep)
+    const filaVacia = Array(27).fill("").join(sep)
     const filaTotales = [
         "TOTALES MES (SIN CANCELADOS)", "", "", "", "", "", "", "", "", "", "", "", "", "",
         "Suma Envios:", csvEscape(totalEnviosAcum.toFixed(2)),
@@ -135,10 +130,10 @@ export async function GET(req: NextRequest) {
         "Ganancia Final:", csvEscape(totalGananciaFinalAcum.toFixed(2)), ""
     ].join(sep)
 
-    // Agregamos el BOM (\ufeff) al inicio para que Excel reconozca caracteres especiales
-    const csv = "\ufeff" + ["sep=;", headers, ...csvRows, filaVacia, filaTotales].join("\n")
+    // ✅ La clave es el BOM (\ufeff) pegado al contenido
+    const csvContent = "\ufeff" + [headers, ...csvRows, filaVacia, filaTotales].join("\n")
 
-    return new NextResponse(csv, {
+    return new NextResponse(csvContent, {
         status: 200,
         headers: {
             "Content-Type": "text/csv; charset=utf-8",

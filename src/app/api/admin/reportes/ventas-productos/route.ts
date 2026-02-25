@@ -10,16 +10,16 @@ async function requireAdmin() {
     return { session, user }
 }
 
-// CSV helpers corregido para compatibilidad con Excel (Caracteres y Teléfonos/IDs)
+// ✅ Función de escape mejorada con tabulación invisible para IDs y números largos
 function csvEscape(v: any) {
-    const s = String(v ?? "")
-    const escaped = s.replace(/"/g, '""')
+    let s = String(v ?? "").trim()
 
-    // Si es un número largo (como un teléfono o ID largo), lo forzamos como texto para Excel
+    // Si es un número largo (productoId, cantidades grandes, etc), aplicamos tabulación invisible
     if (/^\d{7,}$/.test(s)) {
-        return `="${escaped}"`
+        return `"\t${s}"`
     }
 
+    const escaped = s.replace(/"/g, '""')
     return /[",\n;]/.test(escaped) ? `"${escaped}"` : escaped
 }
 
@@ -181,10 +181,10 @@ export async function GET(req: NextRequest) {
         ].join(sep)
     )
 
-    // Agregamos el BOM (\ufeff) al inicio para que Excel reconozca caracteres especiales (eñes, tildes)
-    const csv = "\ufeff" + ["sep=;", header, ...csvRows].join("\n")
+    // ✅ BOM (\ufeff) pegado al contenido y sin sep=; al inicio para máxima compatibilidad
+    const csvContent = "\ufeff" + [header, ...csvRows].join("\n")
 
-    return new NextResponse(csv, {
+    return new NextResponse(csvContent, {
         status: 200,
         headers: {
             "Content-Type": "text/csv; charset=utf-8",
