@@ -96,27 +96,30 @@ export default function MiCuentaPage() {
 
   const handleRehacerPedido = async (pedido: any) => {
     setIsRedoing(pedido.id);
-    console.log("Rehaciendo pedido #" + pedido.numero);
+    console.log("🚀 Iniciando proceso para:", pedido.numero);
 
     try {
-      // 1. Buscamos el detalle completo del pedido a la API (ahora que tiene el método GET)
+      // 1. Llamada a la API
       const res = await fetch(`/api/pedidos/${pedido.id}`);
 
       if (!res.ok) {
-        throw new Error("No se pudo obtener el detalle del pedido");
-      }
-
-      const pedidoCompleto = await res.json();
-
-      // 2. Extraemos los items (usando el nombre 'items' de tu schema.prisma)
-      const itemsACargar = pedidoCompleto.items;
-
-      if (!itemsACargar || itemsACargar.length === 0) {
-        toast.error("Este pedido no tiene productos registrados.");
+        const errorText = await res.text();
+        console.error("❌ Error API:", res.status, errorText);
+        toast.error("No se pudo obtener la información del pedido.");
         return;
       }
 
-      // 3. Mapeo y carga al carrito
+      const data = await res.json();
+      console.log("📦 Datos recibidos de API:", data);
+
+      const itemsACargar = data.items;
+
+      if (!itemsACargar || itemsACargar.length === 0) {
+        toast.error("El pedido no tiene productos cargados.");
+        return;
+      }
+
+      // 2. Carga al carrito
       itemsACargar.forEach((item: any) => {
         addItem({
           id: String(item.presentacionId || item.productoId || item.id),
@@ -128,15 +131,16 @@ export default function MiCuentaPage() {
         } as any, item.cantidad);
       });
 
-      toast.success("¡Productos añadidos! Redirigiendo...");
+      toast.success("¡Productos cargados al carrito!");
 
+      // 3. Redirección
       setTimeout(() => {
         router.push('/carrito');
-      }, 400);
+      }, 500);
 
     } catch (error) {
-      console.error("Error al rehacer pedido:", error);
-      toast.error("No pudimos repetir el pedido en este momento.");
+      console.error("❌ Error crítico:", error);
+      toast.error("Error de conexión al intentar repetir pedido.");
     } finally {
       setIsRedoing(null);
     }

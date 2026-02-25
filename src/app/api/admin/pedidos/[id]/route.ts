@@ -6,23 +6,25 @@ import { authOptions } from "@/lib/auth";
 // ✅ NUEVO: Método GET para que el usuario pueda ver sus productos y rehacer el pedido
 export async function GET(
     req: Request,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: any } // Usamos any para evitar conflictos de tipos con Promise
 ) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-        return new NextResponse("No autorizado", { status: 401 });
-    }
-
-    const resolvedParams = await params;
-    const pedidoId = Number(resolvedParams.id);
+    if (!session) return new NextResponse("No autorizado", { status: 401 });
 
     try {
+        // Resolvemos el ID de los parámetros
+        const resolvedParams = await params;
+        const idStr = resolvedParams.id;
+        const pedidoId = parseInt(idStr);
+
+        if (isNaN(pedidoId)) {
+            return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+        }
+
         const pedido = await prisma.pedido.findUnique({
             where: { id: pedidoId },
             include: {
-                // Incluimos los items para que el botón de rehacer tenga qué cargar
-                items: true,
-                // Si tu relación en Prisma se llama PedidoItem, usá: PedidoItem: true
+                items: true, // Según tu schema.prisma
             }
         });
 
@@ -30,15 +32,15 @@ export async function GET(
             return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
         }
 
-        // Verificación de seguridad: solo el dueño o un ADMIN pueden verlo
-        const isAdmin = (session.user as any).role === "ADMIN";
-        if (pedido.userId !== (session.user as any).id && !isAdmin) {
+        // Seguridad básica
+        const user = session.user as any;
+        if (pedido.userId !== user.id && user.role !== "ADMIN") {
             return new NextResponse("No autorizado", { status: 401 });
         }
 
         return NextResponse.json(pedido);
     } catch (error) {
-        console.error("Error al obtener detalle del pedido:", error);
+        console.error("Error en GET pedido:", error);
         return NextResponse.json({ error: "Error interno" }, { status: 500 });
     }
 }
