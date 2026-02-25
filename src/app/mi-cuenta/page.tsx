@@ -95,34 +95,50 @@ export default function MiCuentaPage() {
   }
 
   const handleRehacerPedido = async (pedido: Pedido) => {
-    setIsRedoing(pedido.id)
+    setIsRedoing(pedido.id);
     try {
-      let itemsACargar = pedido.items
+      let itemsACargar = pedido.items;
+
       if (!itemsACargar) {
-        const res = await fetch(`/api/pedidos/${pedido.id}`)
-        const data = await res.json()
-        itemsACargar = data.pedido?.items || data.items
+        const res = await fetch(`/api/pedidos/${pedido.id}`);
+        const data = await res.json();
+        itemsACargar = data.items || data.pedido?.items;
       }
+
       if (!itemsACargar || itemsACargar.length === 0) {
-        toast.error("No se encontraron los productos.")
-        return
+        toast.error("No se encontraron los productos.");
+        return;
       }
+
       itemsACargar.forEach((item: any) => {
-        addItem({
-          id: item.productoId,
+        // ✅ Lógica para respetar ediciones del ADMIN:
+        const productoValidado = {
+          // Si no tiene ID (producto manual), usamos el nombre como clave única temporal
+          id: item.presentacionId || item.productoId || `manual-${item.nombreProducto}`,
           nombre: item.nombreProducto,
-          precio: item.subtotal / item.cantidad,
-          imagen: item.producto?.imagen || null,
-        } as any, item.cantidad)
-      })
-      toast.success("Productos añadidos al carrito")
-      router.push('/carrito')
+          slug: item.producto?.slug || "personalizado",
+          // 💰 Respetamos el precio que el Admin puso manualmente:
+          precio: item.precioUnitario || (item.subtotal / item.cantidad),
+          imagen: item.producto?.imagen || "/images/placeholder-magistral.jpg",
+          categoria: item.producto?.categoria || "Personalizado"
+        };
+
+        addItem(productoValidado as any, item.cantidad);
+      });
+
+      toast.success("¡Pedido cargado exactamente como la última vez!");
+
+      setTimeout(() => {
+        router.push('/carrito');
+      }, 400);
+
     } catch (e) {
-      toast.error("Error al intentar rehacer el pedido")
+      console.error("Error:", e);
+      toast.error("Error al procesar el pedido.");
     } finally {
-      setIsRedoing(null)
+      setIsRedoing(null);
     }
-  }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
