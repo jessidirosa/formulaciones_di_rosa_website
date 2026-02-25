@@ -94,47 +94,59 @@ export default function MiCuentaPage() {
     }
   }
 
-  const handleRehacerPedido = async (pedido: Pedido) => {
+  const handleRehacerPedido = async (pedido: any) => {
     setIsRedoing(pedido.id);
-    try {
-      let itemsACargar = pedido.items;
+    console.log("Datos del pedido al clickear:", pedido);
 
-      if (!itemsACargar) {
+    try {
+      // 1. Intentamos obtener los items de donde sea que Prisma los haya metido
+      // Prisma a veces usa el nombre de la tabla en la relación (PedidoItem)
+      let itemsACargar = pedido.items || pedido.PedidoItem;
+
+      // 2. Si no están (porque la lista de 'mis-pedidos' es liviana), los buscamos por ID
+      if (!itemsACargar || itemsACargar.length === 0) {
+        console.log("Items no encontrados en el objeto, buscando en API...");
         const res = await fetch(`/api/pedidos/${pedido.id}`);
         const data = await res.json();
-        itemsACargar = data.items || data.pedido?.items;
+
+        // Buscamos en todas las variantes posibles de respuesta de la API
+        itemsACargar = data.items || data.pedido?.items || data.pedido?.PedidoItem;
       }
 
       if (!itemsACargar || itemsACargar.length === 0) {
-        toast.error("No se encontraron los productos.");
+        toast.error("No se pudieron encontrar los productos de este pedido.");
         return;
       }
 
+      console.log("Items listos para cargar:", itemsACargar);
+
+      // 3. Limpiamos el carrito si querés que solo esté el pedido viejo, 
+      // o simplemente agregamos (addItem ya maneja si existen).
       itemsACargar.forEach((item: any) => {
-        // ✅ Lógica para respetar ediciones del ADMIN:
-        const productoValidado = {
-          // Si no tiene ID (producto manual), usamos el nombre como clave única temporal
-          id: item.presentacionId || item.productoId || `manual-${item.nombreProducto}`,
-          nombre: item.nombreProducto,
-          slug: item.producto?.slug || "personalizado",
-          // 💰 Respetamos el precio que el Admin puso manualmente:
-          precio: item.precioUnitario || (item.subtotal / item.cantidad),
-          imagen: item.producto?.imagen || "/images/placeholder-magistral.jpg",
-          categoria: item.producto?.categoria || "Personalizado"
+        const p = {
+          // Usamos el ID de la presentación si existe (vital para precios y stock)
+          id: String(item.presentacionId || item.productoId || item.id),
+          nombre: item.nombreProducto || item.producto?.nombre,
+          slug: item.producto?.slug || "producto",
+          precio: Number(item.precioUnitario) || (item.subtotal / item.cantidad),
+          imagen: item.producto?.imagen || "/images/placeholder-producto.jpg",
+          categoria: item.producto?.categoria || "General"
         };
 
-        addItem(productoValidado as any, item.cantidad);
+        console.log("Enviando al carrito:", p);
+        addItem(p as any, item.cantidad);
       });
 
-      toast.success("¡Pedido cargado exactamente como la última vez!");
+      toast.success("Carrito actualizado con los productos del pedido #" + pedido.numero);
 
+      // Damos tiempo al localStorage
       setTimeout(() => {
         router.push('/carrito');
-      }, 400);
+      }, 500);
 
-    } catch (e) {
-      console.error("Error:", e);
-      toast.error("Error al procesar el pedido.");
+    } catch (error) {
+      console.error("Error en handleRehacerPedido:", error);
+      toast.error("Hubo un error al intentar repetir el pedido.");
     } finally {
       setIsRedoing(null);
     }
