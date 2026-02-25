@@ -94,57 +94,52 @@ export default function MiCuentaPage() {
     }
   }
 
-  // ✅ FUNCIÓN REHACER PEDIDO: Ajustada según tu consola F12
   const handleRehacerPedido = async (pedido: any) => {
     setIsRedoing(pedido.id);
     console.log("🚀 Iniciando proceso para pedido:", pedido.numero);
 
     try {
       const res = await fetch(`/api/pedidos/${pedido.id}`);
-
-      if (!res.ok) {
-        console.error("❌ Error API:", res.status);
-        toast.error("No se pudo obtener la información del pedido.");
-        return;
-      }
+      if (!res.ok) throw new Error("Error en API");
 
       const data = await res.json();
       console.log("📦 Datos crudos de la API:", data);
 
-      // ✅ CORRECCIÓN SEGÚN F12: Buscamos en 'PedidoItem' dentro de 'pedido'
-      const itemsACargar = data.pedido?.PedidoItem || data.pedido?.items || data.items;
+      // Buscamos los items en cualquier lugar posible del objeto devuelto
+      const itemsACargar = data.pedido?.items || data.pedido?.PedidoItem || data.items || data.PedidoItem;
 
       if (!itemsACargar || !Array.isArray(itemsACargar) || itemsACargar.length === 0) {
-        console.warn("⚠️ No se encontraron productos en ninguna ruta:", data);
-        toast.error("El pedido no tiene productos registrados para repetir.");
+        console.warn("⚠️ No se encontraron productos en el JSON:", data);
+        toast.error("No se pudieron recuperar los productos.");
         return;
       }
 
-      console.log("✅ Items encontrados:", itemsACargar.length);
+      console.log("✅ Items a procesar:", itemsACargar);
 
       itemsACargar.forEach((item: any) => {
-        const itemParaCarrito = {
+        // Mapeo forzado para cumplir con la interfaz Producto de CartContext
+        const p = {
           id: String(item.presentacionId || item.productoId || item.id),
-          nombre: item.nombreProducto || item.producto?.nombre || "Producto",
+          nombre: item.nombreProducto || "Producto",
           slug: item.producto?.slug || "producto",
-          // Respetamos el precio exacto que pagó el cliente (ediciones manuales)
           precio: Number(item.subtotal) / Number(item.cantidad),
-          imagen: item.producto?.imagen || "/images/placeholder-producto.jpg",
+          imagen: item.producto?.imagen || "",
           categoria: item.producto?.categoria || "General"
         };
 
-        console.log("🛒 Agregando al carrito:", itemParaCarrito.nombre);
-        addItem(itemParaCarrito as any, Number(item.cantidad));
+        console.log("🛒 Agregando:", p.nombre);
+        addItem(p as any, Number(item.cantidad));
       });
 
-      toast.success("¡Productos añadidos con éxito!");
+      toast.success("¡Pedido cargado!");
 
+      // Esperamos un poco para que el CartContext guarde en localStorage antes de irnos
       setTimeout(() => {
         router.push('/carrito');
-      }, 600);
+      }, 800);
 
     } catch (error) {
-      console.error("❌ Error crítico en Rehacer:", error);
+      console.error("❌ Error:", error);
       toast.error("Error al intentar repetir el pedido.");
     } finally {
       setIsRedoing(null);
@@ -164,7 +159,7 @@ export default function MiCuentaPage() {
       if (response.ok) {
         toast.success("Perfil actualizado correctamente")
         if (editForm.email !== user?.email) {
-          toast.info("Email actualizado. Iniciá sesión nuevamente.")
+          toast.info("Iniciá sesión nuevamente.")
           setTimeout(() => handleLogout(), 2000)
           return
         }
@@ -233,7 +228,7 @@ export default function MiCuentaPage() {
               <CardHeader className="bg-white border-b border-[#F5F5F0]">
                 <CardTitle className="flex items-center gap-2 text-[#4A5D45] text-lg"><div className="p-2 bg-[#F5F5F0] rounded-lg"><User className="h-5 w-5" /></div>Perfil de Usuario</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5 pt-6 text-left">
+              <CardContent className="space-y-5 pt-6">
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Nombre</p><p className="font-semibold text-[#3A4031]">{user.nombre} {user.apellido}</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Email</p><p className="font-semibold text-[#3A4031]">{user.email}</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Teléfono</p><p className="font-semibold text-[#3A4031]">{user.telefono || "No registrado"}</p></div>
@@ -244,6 +239,14 @@ export default function MiCuentaPage() {
                 </div>
               </CardContent>
             </Card>
+            <div className="bg-[#4A5D45] p-6 rounded-2xl text-[#F5F5F0] shadow-xl relative overflow-hidden">
+              <FlaskConical className="absolute -right-4 -bottom-4 h-24 w-24 opacity-10 rotate-12" />
+              <h3 className="font-bold mb-2 text-sm uppercase tracking-widest">Asesoramiento Directo</h3>
+              <p className="text-[11px] opacity-80 mb-6">¿Tenés dudas sobre cómo aplicar tu fórmula o sobre el estado de un envío?</p>
+              <a href="https://wa.me/541137024467" target="_blank" className="inline-flex items-center justify-center w-full bg-[#F5F5F0] text-[#4A5D45] py-3 rounded-xl font-bold text-xs uppercase tracking-widest">
+                <Phone className="h-4 w-4 mr-2" />WhatsApp Laboratorio
+              </a>
+            </div>
           </div>
 
           <div className="lg:col-span-2 space-y-6">
@@ -255,16 +258,25 @@ export default function MiCuentaPage() {
                 {pedidosLoading ? (
                   <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-[#F5F5F0] animate-pulse rounded-xl" />)}</div>
                 ) : pedidos.length === 0 ? (
-                  <div className="text-center py-12"><h3 className="font-bold text-[#3A4031]">No tenés pedidos aún</h3><Link href="/tienda"><Button className="mt-4 bg-[#4A5D45] text-white">Ir a la Tienda</Button></Link></div>
+                  <div className="text-center py-12 text-[#3A4031]">No tenés pedidos aún.</div>
                 ) : (
                   <div className="space-y-4">
                     {pedidos.map((pedido) => (
                       <div key={pedido.id} className="p-5 border border-[#E9E9E0] rounded-2xl hover:border-[#A3B18A] transition-all">
-                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                          <div className="space-y-1 text-left"><div className="flex items-center gap-2"><span className="font-bold text-[#3A4031]">#{pedido.numero}</span>{getEstadoBadge(pedido.estado)}</div><p className="text-xs text-[#5B6350]">{formatDate(pedido.fechaCreacion)}</p></div>
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 text-left">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2"><span className="font-bold text-[#3A4031]">#{pedido.numero}</span>{getEstadoBadge(pedido.estado)}</div>
+                            <p className="text-xs text-[#5B6350]">{formatDate(pedido.fechaCreacion)}</p>
+                          </div>
                           <div className="flex items-center gap-3">
-                            <div className="text-right mr-4 text-left"><p className="text-[10px] text-[#A3B18A] font-bold uppercase">Total</p><p className="font-bold text-[#4A5D45]">{formatPrice(pedido.total)}</p></div>
-                            <Button variant="outline" size="sm" onClick={() => handleRehacerPedido(pedido)} disabled={isRedoing === pedido.id} className="border-[#A3B18A] text-[#4A5D45] rounded-full text-[10px] font-bold uppercase">
+                            <div className="text-right mr-4"><p className="text-[10px] text-[#A3B18A] font-bold uppercase">Total</p><p className="font-bold text-[#4A5D45]">{formatPrice(pedido.total)}</p></div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRehacerPedido(pedido)}
+                              disabled={isRedoing === pedido.id}
+                              className="border-[#A3B18A] text-[#4A5D45] rounded-full text-[10px] font-bold uppercase"
+                            >
                               {isRedoing === pedido.id ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />} Rehacer
                             </Button>
                             <Link href={pedido.publicToken ? `/pedido/${pedido.publicToken}` : `/mi-cuenta`}><Button variant="outline" size="sm" className="border-[#D6D6C2] text-[#4A5D45] rounded-full text-[10px] font-bold uppercase"><Eye className="h-3 w-3 mr-2" />Detalles</Button></Link>
@@ -279,32 +291,31 @@ export default function MiCuentaPage() {
           </div>
         </div>
 
-        {/* MODAL DE EDICIÓN */}
         {isEditModalOpen && (
           <div className="fixed inset-0 bg-[#3A4031]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md rounded-3xl shadow-2xl border-none bg-white overflow-hidden text-left">
+            <Card className="w-full max-w-md rounded-3xl shadow-2xl bg-white overflow-hidden text-left">
               <div className="p-6 border-b border-[#F5F5F0] flex justify-between items-center">
                 <h3 className="font-bold text-[#3A4031] uppercase tracking-widest text-sm">Editar mis datos</h3>
                 <button onClick={() => setIsEditModalOpen(false)}><X className="h-5 w-5 text-[#A3B18A]" /></button>
               </div>
               <form onSubmit={handleUpdateProfile}>
-                <CardContent className="p-8 space-y-4 overflow-y-auto max-h-[70vh]">
+                <CardContent className="p-8 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A]">Nombre</label><Input value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} className="rounded-xl bg-[#F9F9F7]" required /></div>
-                    <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A]">Apellido</label><Input value={editForm.apellido} onChange={e => setEditForm({ ...editForm, apellido: e.target.value })} className="rounded-xl bg-[#F9F9F7]" required /></div>
+                    <Input value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} placeholder="Nombre" required />
+                    <Input value={editForm.apellido} onChange={e => setEditForm({ ...editForm, apellido: e.target.value })} placeholder="Apellido" required />
                   </div>
-                  <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A] flex items-center gap-1"><Mail className="w-3 h-3" /> Email de acceso</label><Input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="rounded-xl bg-[#F9F9F7]" required /></div>
-                  <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A]">Teléfono</label><Input value={editForm.telefono} onChange={e => setEditForm({ ...editForm, telefono: e.target.value })} className="rounded-xl bg-[#F9F9F7]" /></div>
-                  <Separator className="my-2 opacity-50" />
-                  <div className="p-4 bg-[#F9F9F7] rounded-2xl space-y-4 border border-[#E9E9E0]">
-                    <p className="text-[10px] font-bold uppercase text-[#4A5D45] flex items-center gap-2"><Lock className="w-3 h-3" /> Cambio de Contraseña (Opcional)</p>
-                    <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A]">Contraseña Actual</label><Input type="password" value={editForm.currentPassword} onChange={e => setEditForm({ ...editForm, currentPassword: e.target.value })} className="rounded-xl bg-white" placeholder="••••••••" /></div>
-                    <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A]">Nueva Contraseña</label><Input type="password" value={editForm.newPassword} onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })} className="rounded-xl bg-white" placeholder="Mínimo 6 caracteres" /></div>
+                  <Input value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} placeholder="Email" required />
+                  <Input value={editForm.telefono} onChange={e => setEditForm({ ...editForm, telefono: e.target.value })} placeholder="Teléfono" />
+                  <Separator />
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-bold uppercase text-[#4A5D45]">Cambiar Contraseña</p>
+                    <Input type="password" value={editForm.currentPassword} onChange={e => setEditForm({ ...editForm, currentPassword: e.target.value })} placeholder="Contraseña Actual" />
+                    <Input type="password" value={editForm.newPassword} onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })} placeholder="Nueva Contraseña" />
                   </div>
                 </CardContent>
                 <div className="p-8 pt-0 flex gap-3">
-                  <Button type="button" variant="ghost" className="flex-1 rounded-xl text-xs uppercase font-bold" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
-                  <Button type="submit" className="flex-1 bg-[#4A5D45] text-white rounded-xl h-12 text-xs uppercase font-bold" disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}</Button>
+                  <Button type="button" variant="ghost" className="flex-1" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
+                  <Button type="submit" className="flex-1 bg-[#4A5D45] text-white" disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}</Button>
                 </div>
               </form>
             </Card>
