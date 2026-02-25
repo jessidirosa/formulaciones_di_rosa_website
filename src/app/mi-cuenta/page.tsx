@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
+import { useCart } from "@/contexts/CartContext"
+import { RefreshCw } from "lucide-react"
 import {
   User,
   Package,
@@ -36,10 +38,12 @@ interface Pedido {
   cantidadItems: number
   fechaEstimadaEnvio: string
   publicToken?: string | null
+  items?: any[] // ✅ Agregado para poder rehacer el pedido
 }
 
 export default function MiCuentaPage() {
   const { user, isAuthenticated, isLoading, logout, refreshUser } = useUser()
+  const { addItem } = useCart() // ✅ Hook del carrito
   const router = useRouter()
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [pedidosLoading, setPedidosLoading] = useState(true)
@@ -90,6 +94,29 @@ export default function MiCuentaPage() {
     }
   }
 
+  // ✅ Función para Volver a Comprar
+  const handleRehacerPedido = (pedido: any) => {
+    if (!pedido.items || pedido.items.length === 0) {
+      toast.error("No se encontraron productos en este pedido")
+      return
+    }
+
+    try {
+      pedido.items.forEach((item: any) => {
+        addItem({
+          id: item.productoId,
+          nombre: item.nombreProducto,
+          precio: item.subtotal / item.cantidad,
+          imagen: item.producto?.imagen || null,
+        } as any, item.cantidad)
+      })
+      toast.success("Productos añadidos al carrito")
+      router.push('/carrito')
+    } catch (e) {
+      toast.error("Hubo un problema al cargar los productos")
+    }
+  }
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
@@ -105,8 +132,6 @@ export default function MiCuentaPage() {
       if (response.ok) {
         toast.success("Perfil actualizado correctamente")
 
-        // Si el email cambió, NextAuth necesita re-autenticar. 
-        // Lo más seguro es desloguear para evitar errores de sesión.
         if (editForm.email !== user?.email) {
           toast.info("Email actualizado. Por seguridad, iniciá sesión nuevamente.")
           setTimeout(() => handleLogout(), 2000)
@@ -286,13 +311,25 @@ export default function MiCuentaPage() {
                               {formatDate(pedido.fechaCreacion)} • {pedido.cantidadItems} {pedido.cantidadItems === 1 ? 'producto' : 'productos'}
                             </p>
                           </div>
-                          <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-none pt-3 md:pt-0">
-                            <div className="text-left md:text-right">
+                          <div className="flex items-center justify-between md:justify-end gap-3 border-t md:border-none pt-3 md:pt-0">
+                            <div className="text-left md:text-right mr-4">
                               <p className="text-[10px] text-[#A3B18A] font-bold uppercase tracking-tighter">Total</p>
                               <p className="font-bold text-[#4A5D45]">{formatPrice(pedido.total)}</p>
                             </div>
+
+                            {/* ✅ BOTÓN REHACER PEDIDO */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRehacerPedido(pedido)}
+                              className="border-[#A3B18A] text-[#4A5D45] rounded-full px-4 text-[10px] font-bold uppercase tracking-wider hover:bg-[#F5F5F0]"
+                            >
+                              <RefreshCw className="h-3 w-3 mr-2" />
+                              Rehacer
+                            </Button>
+
                             <Link href={pedido.publicToken ? `/pedido/${pedido.publicToken}` : `/mi-cuenta`}>
-                              <Button variant="outline" size="sm" className="border-[#D6D6C2] text-[#4A5D45] rounded-full px-5 text-[11px] font-bold uppercase tracking-wider">
+                              <Button variant="outline" size="sm" className="border-[#D6D6C2] text-[#4A5D45] rounded-full px-5 text-[10px] font-bold uppercase tracking-wider">
                                 <Eye className="h-3 w-3 mr-2" />
                                 Detalles
                               </Button>
@@ -330,7 +367,6 @@ export default function MiCuentaPage() {
               </div>
               <form onSubmit={handleUpdateProfile}>
                 <CardContent className="p-8 space-y-4 overflow-y-auto max-h-[70vh]">
-                  {/* Datos Personales */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Nombre</label>
@@ -377,7 +413,6 @@ export default function MiCuentaPage() {
 
                   <Separator className="my-2 opacity-50" />
 
-                  {/* Cambio de Contraseña */}
                   <div className="p-4 bg-[#F9F9F7] rounded-2xl space-y-4 border border-[#E9E9E0]">
                     <p className="text-[10px] font-bold uppercase text-[#4A5D45] flex items-center gap-2">
                       <Lock className="w-3 h-3" /> Cambio de Contraseña (Opcional)
