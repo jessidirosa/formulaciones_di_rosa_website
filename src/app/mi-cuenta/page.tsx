@@ -99,12 +99,10 @@ export default function MiCuentaPage() {
     console.log("🚀 Iniciando proceso para:", pedido.numero);
 
     try {
-      // 1. Llamada a la API
       const res = await fetch(`/api/pedidos/${pedido.id}`);
 
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error("❌ Error API:", res.status, errorText);
+        console.error("❌ Error API:", res.status);
         toast.error("No se pudo obtener la información del pedido.");
         return;
       }
@@ -112,35 +110,39 @@ export default function MiCuentaPage() {
       const data = await res.json();
       console.log("📦 Datos recibidos de API:", data);
 
-      const itemsACargar = data.items;
+      // ✅ CORRECCIÓN: Según tu consola, los items están dentro de data.pedido
+      const itemsACargar = data.pedido?.items;
 
       if (!itemsACargar || itemsACargar.length === 0) {
-        toast.error("El pedido no tiene productos cargados.");
+        console.warn("⚠️ No se encontraron items dentro de data.pedido.items");
+        toast.error("El pedido no tiene productos registrados.");
         return;
       }
 
-      // 2. Carga al carrito
+      console.log("✅ Items encontrados, cargando al carrito...", itemsACargar);
+
       itemsACargar.forEach((item: any) => {
-        addItem({
+        const itemParaCarrito = {
           id: String(item.presentacionId || item.productoId || item.id),
-          nombre: item.nombreProducto,
+          nombre: item.nombreProducto || item.producto?.nombre || "Producto",
           slug: item.producto?.slug || "producto",
           precio: Number(item.subtotal) / Number(item.cantidad),
           imagen: item.producto?.imagen || "/images/placeholder-producto.jpg",
           categoria: item.producto?.categoria || "General"
-        } as any, item.cantidad);
+        };
+
+        addItem(itemParaCarrito as any, Number(item.cantidad));
       });
 
-      toast.success("¡Productos cargados al carrito!");
+      toast.success("¡Pedido cargado! Redirigiendo al carrito...");
 
-      // 3. Redirección
       setTimeout(() => {
         router.push('/carrito');
       }, 500);
 
     } catch (error) {
       console.error("❌ Error crítico:", error);
-      toast.error("Error de conexión al intentar repetir pedido.");
+      toast.error("Error al intentar repetir el pedido.");
     } finally {
       setIsRedoing(null);
     }
