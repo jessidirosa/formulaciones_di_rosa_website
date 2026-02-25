@@ -96,57 +96,47 @@ export default function MiCuentaPage() {
 
   const handleRehacerPedido = async (pedido: any) => {
     setIsRedoing(pedido.id);
-    console.log("Datos del pedido al clickear:", pedido);
+    console.log("Rehaciendo pedido #" + pedido.numero);
 
     try {
-      // 1. Intentamos obtener los items de donde sea que Prisma los haya metido
-      // Prisma a veces usa el nombre de la tabla en la relación (PedidoItem)
-      let itemsACargar = pedido.items || pedido.PedidoItem;
+      // 1. Buscamos el detalle completo del pedido a la API (ahora que tiene el método GET)
+      const res = await fetch(`/api/pedidos/${pedido.id}`);
 
-      // 2. Si no están (porque la lista de 'mis-pedidos' es liviana), los buscamos por ID
-      if (!itemsACargar || itemsACargar.length === 0) {
-        console.log("Items no encontrados en el objeto, buscando en API...");
-        const res = await fetch(`/api/pedidos/${pedido.id}`);
-        const data = await res.json();
-
-        // Buscamos en todas las variantes posibles de respuesta de la API
-        itemsACargar = data.items || data.pedido?.items || data.pedido?.PedidoItem;
+      if (!res.ok) {
+        throw new Error("No se pudo obtener el detalle del pedido");
       }
 
+      const pedidoCompleto = await res.json();
+
+      // 2. Extraemos los items (usando el nombre 'items' de tu schema.prisma)
+      const itemsACargar = pedidoCompleto.items;
+
       if (!itemsACargar || itemsACargar.length === 0) {
-        toast.error("No se pudieron encontrar los productos de este pedido.");
+        toast.error("Este pedido no tiene productos registrados.");
         return;
       }
 
-      console.log("Items listos para cargar:", itemsACargar);
-
-      // 3. Limpiamos el carrito si querés que solo esté el pedido viejo, 
-      // o simplemente agregamos (addItem ya maneja si existen).
+      // 3. Mapeo y carga al carrito
       itemsACargar.forEach((item: any) => {
-        const p = {
-          // Usamos el ID de la presentación si existe (vital para precios y stock)
+        addItem({
           id: String(item.presentacionId || item.productoId || item.id),
-          nombre: item.nombreProducto || item.producto?.nombre,
+          nombre: item.nombreProducto,
           slug: item.producto?.slug || "producto",
-          precio: Number(item.precioUnitario) || (item.subtotal / item.cantidad),
+          precio: Number(item.subtotal) / Number(item.cantidad),
           imagen: item.producto?.imagen || "/images/placeholder-producto.jpg",
           categoria: item.producto?.categoria || "General"
-        };
-
-        console.log("Enviando al carrito:", p);
-        addItem(p as any, item.cantidad);
+        } as any, item.cantidad);
       });
 
-      toast.success("Carrito actualizado con los productos del pedido #" + pedido.numero);
+      toast.success("¡Productos añadidos! Redirigiendo...");
 
-      // Damos tiempo al localStorage
       setTimeout(() => {
         router.push('/carrito');
-      }, 500);
+      }, 400);
 
     } catch (error) {
-      console.error("Error en handleRehacerPedido:", error);
-      toast.error("Hubo un error al intentar repetir el pedido.");
+      console.error("Error al rehacer pedido:", error);
+      toast.error("No pudimos repetir el pedido en este momento.");
     } finally {
       setIsRedoing(null);
     }
