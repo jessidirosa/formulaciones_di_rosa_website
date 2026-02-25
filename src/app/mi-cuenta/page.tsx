@@ -94,7 +94,7 @@ export default function MiCuentaPage() {
     }
   }
 
-  // ✅ FUNCIÓN REHACER PEDIDO BLINDADA
+  // ✅ FUNCIÓN REHACER PEDIDO: Ajustada según tu consola F12
   const handleRehacerPedido = async (pedido: any) => {
     setIsRedoing(pedido.id);
     console.log("🚀 Iniciando proceso para pedido:", pedido.numero);
@@ -111,11 +111,11 @@ export default function MiCuentaPage() {
       const data = await res.json();
       console.log("📦 Datos crudos de la API:", data);
 
-      // Buscamos los items probando todas las estructuras posibles (data.items, data.pedido.items, etc)
-      const itemsACargar = data.items || data.pedido?.items || data.pedido?.PedidoItem || data.PedidoItem;
+      // ✅ CORRECCIÓN SEGÚN F12: Buscamos en 'PedidoItem' dentro de 'pedido'
+      const itemsACargar = data.pedido?.PedidoItem || data.pedido?.items || data.items;
 
       if (!itemsACargar || !Array.isArray(itemsACargar) || itemsACargar.length === 0) {
-        console.warn("⚠️ No se encontraron items en la respuesta:", data);
+        console.warn("⚠️ No se encontraron productos en ninguna ruta:", data);
         toast.error("El pedido no tiene productos registrados para repetir.");
         return;
       }
@@ -123,12 +123,11 @@ export default function MiCuentaPage() {
       console.log("✅ Items encontrados:", itemsACargar.length);
 
       itemsACargar.forEach((item: any) => {
-        // Mapeo exacto para respetar ediciones manuales del Admin
         const itemParaCarrito = {
           id: String(item.presentacionId || item.productoId || item.id),
           nombre: item.nombreProducto || item.producto?.nombre || "Producto",
           slug: item.producto?.slug || "producto",
-          // Priorizamos el precio del item guardado (subtotal / cantidad)
+          // Respetamos el precio exacto que pagó el cliente (ediciones manuales)
           precio: Number(item.subtotal) / Number(item.cantidad),
           imagen: item.producto?.imagen || "/images/placeholder-producto.jpg",
           categoria: item.producto?.categoria || "General"
@@ -245,14 +244,6 @@ export default function MiCuentaPage() {
                 </div>
               </CardContent>
             </Card>
-            <div className="bg-[#4A5D45] p-6 rounded-2xl text-[#F5F5F0] shadow-xl relative overflow-hidden">
-              <FlaskConical className="absolute -right-4 -bottom-4 h-24 w-24 opacity-10 rotate-12" />
-              <h3 className="font-bold mb-2 text-sm uppercase tracking-widest">Asesoramiento Directo</h3>
-              <p className="text-[11px] opacity-80 mb-6">¿Tenés dudas sobre cómo aplicar tu fórmula o sobre el estado de un envío?</p>
-              <a href="https://wa.me/541137024467" target="_blank" className="inline-flex items-center justify-center w-full bg-[#F5F5F0] text-[#4A5D45] py-3 rounded-xl font-bold text-xs uppercase tracking-widest">
-                <Phone className="h-4 w-4 mr-2" />WhatsApp Laboratorio
-              </a>
-            </div>
           </div>
 
           <div className="lg:col-span-2 space-y-6">
