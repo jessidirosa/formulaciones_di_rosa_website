@@ -94,9 +94,10 @@ export default function MiCuentaPage() {
     }
   }
 
+  // ✅ FUNCIÓN REHACER PEDIDO BLINDADA
   const handleRehacerPedido = async (pedido: any) => {
     setIsRedoing(pedido.id);
-    console.log("🚀 Iniciando proceso para:", pedido.numero);
+    console.log("🚀 Iniciando proceso para pedido:", pedido.numero);
 
     try {
       const res = await fetch(`/api/pedidos/${pedido.id}`);
@@ -108,40 +109,43 @@ export default function MiCuentaPage() {
       }
 
       const data = await res.json();
-      console.log("📦 Datos recibidos de API:", data);
+      console.log("📦 Datos crudos de la API:", data);
 
-      // ✅ CORRECCIÓN: Según tu consola, los items están dentro de data.pedido
-      const itemsACargar = data.pedido?.items;
+      // Buscamos los items probando todas las estructuras posibles (data.items, data.pedido.items, etc)
+      const itemsACargar = data.items || data.pedido?.items || data.pedido?.PedidoItem || data.PedidoItem;
 
-      if (!itemsACargar || itemsACargar.length === 0) {
-        console.warn("⚠️ No se encontraron items dentro de data.pedido.items");
-        toast.error("El pedido no tiene productos registrados.");
+      if (!itemsACargar || !Array.isArray(itemsACargar) || itemsACargar.length === 0) {
+        console.warn("⚠️ No se encontraron items en la respuesta:", data);
+        toast.error("El pedido no tiene productos registrados para repetir.");
         return;
       }
 
-      console.log("✅ Items encontrados, cargando al carrito...", itemsACargar);
+      console.log("✅ Items encontrados:", itemsACargar.length);
 
       itemsACargar.forEach((item: any) => {
+        // Mapeo exacto para respetar ediciones manuales del Admin
         const itemParaCarrito = {
           id: String(item.presentacionId || item.productoId || item.id),
           nombre: item.nombreProducto || item.producto?.nombre || "Producto",
           slug: item.producto?.slug || "producto",
+          // Priorizamos el precio del item guardado (subtotal / cantidad)
           precio: Number(item.subtotal) / Number(item.cantidad),
           imagen: item.producto?.imagen || "/images/placeholder-producto.jpg",
           categoria: item.producto?.categoria || "General"
         };
 
+        console.log("🛒 Agregando al carrito:", itemParaCarrito.nombre);
         addItem(itemParaCarrito as any, Number(item.cantidad));
       });
 
-      toast.success("¡Pedido cargado! Redirigiendo al carrito...");
+      toast.success("¡Productos añadidos con éxito!");
 
       setTimeout(() => {
         router.push('/carrito');
-      }, 500);
+      }, 600);
 
     } catch (error) {
-      console.error("❌ Error crítico:", error);
+      console.error("❌ Error crítico en Rehacer:", error);
       toast.error("Error al intentar repetir el pedido.");
     } finally {
       setIsRedoing(null);
@@ -212,9 +216,9 @@ export default function MiCuentaPage() {
   if (!isAuthenticated || !user) return null
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] py-12">
+    <div className="min-h-screen bg-[#F5F5F0] py-12 text-left">
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 border-l-4 border-[#4A5D45] pl-6 gap-4 text-left">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 border-l-4 border-[#4A5D45] pl-6 gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-[#3A4031]">Tu cuenta</h1>
             <p className="text-[#5B6350] font-medium italic mt-1">Bienvenid@, {user.nombre}. Gestioná tus fórmulas y pedidos.</p>
@@ -224,13 +228,13 @@ export default function MiCuentaPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="space-y-6">
             <Card className="border-none shadow-md rounded-2xl overflow-hidden">
               <CardHeader className="bg-white border-b border-[#F5F5F0]">
                 <CardTitle className="flex items-center gap-2 text-[#4A5D45] text-lg"><div className="p-2 bg-[#F5F5F0] rounded-lg"><User className="h-5 w-5" /></div>Perfil de Usuario</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5 pt-6">
+              <CardContent className="space-y-5 pt-6 text-left">
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Nombre</p><p className="font-semibold text-[#3A4031]">{user.nombre} {user.apellido}</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Email</p><p className="font-semibold text-[#3A4031]">{user.email}</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Teléfono</p><p className="font-semibold text-[#3A4031]">{user.telefono || "No registrado"}</p></div>
@@ -268,7 +272,7 @@ export default function MiCuentaPage() {
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                           <div className="space-y-1 text-left"><div className="flex items-center gap-2"><span className="font-bold text-[#3A4031]">#{pedido.numero}</span>{getEstadoBadge(pedido.estado)}</div><p className="text-xs text-[#5B6350]">{formatDate(pedido.fechaCreacion)}</p></div>
                           <div className="flex items-center gap-3">
-                            <div className="text-right mr-4"><p className="text-[10px] text-[#A3B18A] font-bold uppercase">Total</p><p className="font-bold text-[#4A5D45]">{formatPrice(pedido.total)}</p></div>
+                            <div className="text-right mr-4 text-left"><p className="text-[10px] text-[#A3B18A] font-bold uppercase">Total</p><p className="font-bold text-[#4A5D45]">{formatPrice(pedido.total)}</p></div>
                             <Button variant="outline" size="sm" onClick={() => handleRehacerPedido(pedido)} disabled={isRedoing === pedido.id} className="border-[#A3B18A] text-[#4A5D45] rounded-full text-[10px] font-bold uppercase">
                               {isRedoing === pedido.id ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />} Rehacer
                             </Button>
@@ -284,7 +288,7 @@ export default function MiCuentaPage() {
           </div>
         </div>
 
-        {/* MODAL DE EDICIÓN RESTAURADO COMPLETO */}
+        {/* MODAL DE EDICIÓN */}
         {isEditModalOpen && (
           <div className="fixed inset-0 bg-[#3A4031]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md rounded-3xl shadow-2xl border-none bg-white overflow-hidden text-left">
@@ -300,9 +304,7 @@ export default function MiCuentaPage() {
                   </div>
                   <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A] flex items-center gap-1"><Mail className="w-3 h-3" /> Email de acceso</label><Input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="rounded-xl bg-[#F9F9F7]" required /></div>
                   <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A]">Teléfono</label><Input value={editForm.telefono} onChange={e => setEditForm({ ...editForm, telefono: e.target.value })} className="rounded-xl bg-[#F9F9F7]" /></div>
-
                   <Separator className="my-2 opacity-50" />
-
                   <div className="p-4 bg-[#F9F9F7] rounded-2xl space-y-4 border border-[#E9E9E0]">
                     <p className="text-[10px] font-bold uppercase text-[#4A5D45] flex items-center gap-2"><Lock className="w-3 h-3" /> Cambio de Contraseña (Opcional)</p>
                     <div className="space-y-1.5"><label className="text-[10px] font-bold uppercase text-[#A3B18A]">Contraseña Actual</label><Input type="password" value={editForm.currentPassword} onChange={e => setEditForm({ ...editForm, currentPassword: e.target.value })} className="rounded-xl bg-white" placeholder="••••••••" /></div>
@@ -324,8 +326,8 @@ export default function MiCuentaPage() {
 
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#F5F5F0] py-16">
-      <div className="container mx-auto px-4 max-w-6xl space-y-8 animate-pulse text-left">
+    <div className="min-h-screen bg-[#F5F5F0] py-16 text-left">
+      <div className="container mx-auto px-4 max-w-6xl space-y-8 animate-pulse">
         <div className="h-10 bg-[#E9E9E0] rounded w-1/3" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="h-64 bg-white rounded-2xl" />
