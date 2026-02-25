@@ -145,7 +145,7 @@ export default function MiCuentaPage() {
     if (e === "transfer_proof_sent") return <Badge className={`${baseClass} bg-blue-100 text-blue-700 border-none`}>Comprobante enviado</Badge>
     if (e === "confirmado") return <Badge className={`${baseClass} bg-[#4A5D45] text-white border-none`}>Confirmado</Badge>
     if (e === "en_produccion") return <Badge className={`${baseClass} bg-[#4A5D45]/80 text-white border-none animate-pulse`}>En Preparación</Badge>
-    if (e === "listo_envio") return <Badge className={`${baseClass} bg-[#A3B18A] text-white border-none`}>Listo para envío</Badge>
+    if (e === "listo_envio") return <Badge className={`${baseClass} bg-[#A3B18A] text-white border-none`}>Listo</Badge>
     if (e === "enviado") return <Badge className={`${baseClass} bg-[#3A4031] text-white border-none`}>En camino</Badge>
     if (e === "entregado") return <Badge className={`${baseClass} bg-[#3A4031] text-white border-none opacity-50`}>Entregado</Badge>
     if (e.includes("cancelado") || e.includes("expired")) return <Badge variant="destructive" className={baseClass}>Cancelado</Badge>
