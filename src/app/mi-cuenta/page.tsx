@@ -181,10 +181,17 @@ export default function MiCuentaPage() {
   const getEstadoBadge = (estado: string) => {
     const e = (estado || "").toLowerCase()
     const baseClass = "font-bold uppercase text-[10px] tracking-wider px-3"
+
+    if (e === "pending_payment_transfer") return <Badge variant="outline" className={`${baseClass} border-amber-200 text-amber-600`}>Esperando Transferencia</Badge>
+    if (e === "pendiente_mercadopago") return <Badge variant="outline" className={`${baseClass} border-blue-200 text-blue-600 bg-blue-50`}>Pago en Proceso</Badge>
+    if (e === "transfer_proof_sent") return <Badge className={`${baseClass} bg-blue-100 text-blue-700 border-none`}>Comprobante enviado</Badge>
     if (e === "confirmado") return <Badge className={`${baseClass} bg-[#4A5D45] text-white border-none`}>Confirmado</Badge>
+    if (e === "en_produccion") return <Badge className={`${baseClass} bg-[#4A5D45]/80 text-white border-none animate-pulse`}>En Preparación</Badge>
+    if (e === "listo_envio") return <Badge className={`${baseClass} bg-[#A3B18A] text-white border-none`}>Listo para envío</Badge>
     if (e === "enviado") return <Badge className={`${baseClass} bg-[#3A4031] text-white border-none`}>En camino</Badge>
     if (e === "entregado") return <Badge className={`${baseClass} bg-[#3A4031] text-white border-none opacity-50`}>Entregado</Badge>
-    if (e.includes("cancelado")) return <Badge variant="destructive" className={baseClass}>Cancelado</Badge>
+    if (e.includes("cancelado") || e.includes("expired")) return <Badge variant="destructive" className={baseClass}>Cancelado</Badge>
+
     return <Badge variant="secondary" className={baseClass}>Pendiente</Badge>
   }
 
