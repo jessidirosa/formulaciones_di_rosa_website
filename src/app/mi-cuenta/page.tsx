@@ -273,13 +273,11 @@ export default function MiCuentaPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleRehacerPedido(pedido)}
-                              disabled={isRedoing === pedido.id}
-                              className="border-[#A3B18A] text-[#4A5D45] rounded-full text-[10px] font-bold uppercase"
+                              disabled
+                              className="border-[#D6D6C2] text-[#A3B18A] rounded-full text-[10px] font-bold uppercase opacity-60 cursor-not-allowed"
                             >
-                              {isRedoing === pedido.id ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />} Rehacer
+                              <RefreshCw className="h-3 w-3 mr-2" /> Rehacer (Próximamente)
                             </Button>
-                            <Link href={pedido.publicToken ? `/pedido/${pedido.publicToken}` : `/mi-cuenta`}><Button variant="outline" size="sm" className="border-[#D6D6C2] text-[#4A5D45] rounded-full text-[10px] font-bold uppercase"><Eye className="h-3 w-3 mr-2" />Detalles</Button></Link>
                           </div>
                         </div>
                       </div>
