@@ -170,7 +170,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
     const estadoLwr = pedido.estado.toLowerCase()
     let info = INFO_ESTADOS[estadoLwr] || { title: pedido.estado, desc: "Procesando...", next: "Pronto habrá novedades.", icon: Package, color: "bg-gray-50 text-gray-700" }
     // ✅ LÓGICA PARA RETIRO EN LABORATORIO
-    const esRetiro = pedido.tipoEntrega === "RETIRO_LABORATORIO" || pedido.metodoEnvio === "RETIRO_LABORATORIO"
+    const esRetiro = pedido.tipoEntrega === "RETIRO_LOCAL" || pedido.metodoEnvio === "RETIRO_LOCAL"
     const subtotalItems = pedido.items.reduce((acc: number, item: any) => acc + (item.subtotal || 0), 0)
     const mostrarFechaEstimada = !["enviado", "entregado", "cancelled_expired", "cancelado"].includes(estadoLwr)
 
@@ -179,8 +179,8 @@ export default function PedidoPublicPage({ params }: PageProps) {
             info = {
                 ...info,
                 title: "Listo para Retirar",
-                desc: "¡Tu fórmula está lista! Ya podés pasar por el laboratorio a retirar tu pedido.",
-                next: "Retiro presencial en el laboratorio.",
+                desc: "¡Tu fórmula está lista! Te vamos a estar hablando por WhatsApp para coordinar la entrega.",
+                next: "Retiro presencial en punto de retira.",
                 icon: Package
             }
         } else {
@@ -213,6 +213,7 @@ export default function PedidoPublicPage({ params }: PageProps) {
                                 <h3 className="font-bold uppercase text-[10px] tracking-widest">Etapa Actual</h3>
                                 <p className="text-sm font-medium">{info.desc}</p>
                             </div>
+
                         </div>
 
                         {mostrarFechaEstimada && pedido.fechaEstimadaEnvio && (
