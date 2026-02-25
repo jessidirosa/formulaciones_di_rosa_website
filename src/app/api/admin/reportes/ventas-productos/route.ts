@@ -10,31 +10,24 @@ async function requireAdmin() {
     return { session, user }
 }
 
-// CSV helpers
+// CSV helpers corregido para compatibilidad con Excel (Caracteres y Teléfonos/IDs)
 function csvEscape(v: any) {
     const s = String(v ?? "")
     const escaped = s.replace(/"/g, '""')
+
+    // Si es un número largo (como un teléfono o ID largo), lo forzamos como texto para Excel
+    if (/^\d{7,}$/.test(s)) {
+        return `="${escaped}"`
+    }
+
     return /[",\n;]/.test(escaped) ? `"${escaped}"` : escaped
 }
 
 function parseEstadoFilter(raw: string | null) {
-    // modos soportados
-    // - all: no filtra
-    // - exclude_cancelled: excluye cancelado
-    // - only: solo un estado específico (estado=pagado)
     const mode = (raw || "exclude_cancelled").toLowerCase()
     return mode
 }
 
-/**
- * GET /api/admin/reportes/ventas-productos
- * Query:
- * - year=2025
- * - month=12
- * - format=csv (default csv)
- * - estadoMode=exclude_cancelled | all | only
- * - estado=pagado (solo si estadoMode=only)
- */
 export async function GET(req: NextRequest) {
     const admin = await requireAdmin()
     if (!admin) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
@@ -43,13 +36,12 @@ export async function GET(req: NextRequest) {
 
     const now = new Date()
     const year = Number(sp.get("year")) || now.getFullYear()
-    const month = Number(sp.get("month")) || now.getMonth() + 1 // 1-12
+    const month = Number(sp.get("month")) || now.getMonth() + 1
     const format = (sp.get("format") || "csv").toLowerCase()
 
     const estadoMode = parseEstadoFilter(sp.get("estadoMode"))
-    const estadoOnly = sp.get("estado") || "" // usado si estadoMode=only
+    const estadoOnly = sp.get("estado") || ""
 
-    // rango mensual [desde, hasta)
     const desde = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0))
     const hasta = new Date(Date.UTC(year, month, 1, 0, 0, 0))
 
@@ -71,7 +63,6 @@ export async function GET(req: NextRequest) {
         pedidoWhere.estado = estadoOnly
     }
 
-    // Traemos items del mes + el estado del pedido
     const items = await prisma.pedidoItem.findMany({
         where: {
             pedido: pedidoWhere,
@@ -98,7 +89,6 @@ export async function GET(req: NextRequest) {
         },
     })
 
-    // Resumen por producto (1 fila por producto)
     type Row = {
         productoId: number | null
         producto: string
@@ -129,13 +119,9 @@ export async function GET(req: NextRequest) {
 
         prev.cantidadTotal += it.cantidad
         prev.ventasTotales += it.subtotal
-
-        // contamos pedidos únicos por producto
-        // (sin set global por performance: lo hacemos con un Set por producto en una pasada extra)
         map.set(key, prev)
     }
 
-    // pedidos únicos: pasamos 2da vuelta usando sets
     const sets = new Map<string, Set<number>>()
     for (const it of items) {
         const productoId = it.productoId ?? null
@@ -151,7 +137,6 @@ export async function GET(req: NextRequest) {
 
     const filas = Array.from(map.values()).sort((a, b) => b.cantidadTotal - a.cantidadTotal)
 
-    // JSON (debug)
     if (format === "json") {
         return NextResponse.json({
             year,
@@ -165,10 +150,8 @@ export async function GET(req: NextRequest) {
         })
     }
 
-    // CSV (default)
     const filename = `ventas_productos_${year}-${String(month).padStart(2, "0")}_${estadoMode}${estadoMode === "only" ? `_${estadoOnly}` : ""}.csv`
     const sep = ";"
-
 
     const header = [
         "year",
@@ -198,6 +181,7 @@ export async function GET(req: NextRequest) {
         ].join(sep)
     )
 
+    // Agregamos el BOM (\ufeff) al inicio para que Excel reconozca caracteres especiales (eñes, tildes)
     const csv = "\ufeff" + ["sep=;", header, ...csvRows].join("\n")
 
     return new NextResponse(csv, {
@@ -206,6 +190,5 @@ export async function GET(req: NextRequest) {
             "Content-Type": "text/csv; charset=utf-8",
             "Content-Disposition": `attachment; filename="${filename}"`,
         },
-
     })
 }

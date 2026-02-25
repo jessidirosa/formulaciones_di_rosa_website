@@ -32,14 +32,14 @@ export default function VentasProductosClient() {
         const url = `/api/admin/reportes/${reportType}?${params.toString()}`;
 
         // 2. En lugar de fetch, usamos un link invisible para forzar la descarga
-        // Esto evita problemas de CORS y de falta de credenciales en la mayoría de los casos
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', ''); // El nombre lo define el servidor con Content-Disposition
+        link.setAttribute('download', ''); // El nombre lo define el servidor
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
+
     return (
         <div className="space-y-8 text-left">
             {/* Filtros Globales */}
@@ -111,7 +111,6 @@ export default function VentasProductosClient() {
 
             {/* Opciones de Exportación */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Botón Reporte Productos */}
                 <Card className="border-[#E9E9E0] hover:border-[#A3B18A] transition-all rounded-2xl group">
                     <CardContent className="p-8 flex flex-col items-center text-center space-y-4">
                         <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center">
@@ -130,7 +129,6 @@ export default function VentasProductosClient() {
                     </CardContent>
                 </Card>
 
-                {/* Botón Reporte Pedidos */}
                 <Card className="border-[#E9E9E0] hover:border-[#A3B18A] transition-all rounded-2xl group">
                     <CardContent className="p-8 flex flex-col items-center text-center space-y-4">
                         <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">

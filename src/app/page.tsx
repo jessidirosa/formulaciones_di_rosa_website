@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Metadata } from 'next' // ✅ Agregado para tipado de SEO
 import prisma from '@/lib/prisma'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +16,29 @@ import ProBanner from "@/components/home/ProBanner"
 
 // Forzamos que la página no use caché estática para que los cambios en "destacados" se vean al instante
 export const revalidate = 0;
+
+// ✅ CONFIGURACIÓN DE METADATOS (SEO)
+export const metadata: Metadata = {
+  title: 'Formulaciones Di Rosa | Laboratorio de Cosmética Magistral',
+  description: 'Especialistas en formulaciones personalizadas y cosmética magistral. Más de 20 años desarrollando salud capilar y cuidado de la piel en Buenos Aires.',
+  keywords: 'laboratorio magistral, cosmética personalizada, formulaciones di rosa, cuidado de la piel, salud capilar, marca propia cosmética',
+  openGraph: {
+    title: 'Formulaciones Di Rosa | Ciencia Pura con Alma Natural',
+    description: 'Laboratorio especializado en cosmética avanzada y fórmulas magistrales personalizadas.',
+    url: 'https://www.formulacionesdirosa.com', // Reemplazar por tu dominio real
+    siteName: 'Formulaciones Di Rosa',
+    images: [
+      {
+        url: 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506909/Dise%C3%B1o_sin_t%C3%ADtulo_bookba.png',
+        width: 1200,
+        height: 630,
+        alt: 'Laboratorio Di Rosa',
+      },
+    ],
+    locale: 'es_AR',
+    type: 'website',
+  },
+}
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -47,8 +71,40 @@ export default async function HomePage() {
     },
   })
 
+  // ✅ ESQUEMA DE NEGOCIO LOCAL PARA GOOGLE
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'Formulaciones Di Rosa',
+    image: 'https://res.cloudinary.com/dj71ufqjc/image/upload/v1770506909/Dise%C3%B1o_sin_t%C3%ADtulo_bookba.png',
+    '@id': 'https://www.formulacionesdirosa.com',
+    url: 'https://www.formulacionesdirosa.com',
+    telephone: '+541137024467',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Tu Dirección 123', // ✅ Completar con dirección real
+      addressLocality: 'Caseros',
+      addressRegion: 'Buenos Aires',
+      postalCode: '1678',
+      addressCountry: 'AR',
+    },
+    description: 'Laboratorio de formulación magistral y cosmética avanzada con más de 20 años de trayectoria.',
+    openingHoursSpecification: {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      opens: '09:00',
+      closes: '18:00'
+    }
+  }
+
   return (
     <main className="bg-[#F5F5F0] min-h-screen">
+      {/* ✅ Inyección de Datos Estructurados */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-[#4A5D45] py-28 px-4 text-left">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-[#A3B18A] opacity-10 rounded-l-full blur-3xl pointer-events-none" />
@@ -119,7 +175,6 @@ export default async function HomePage() {
                     </Button>
                   </Link>
                   <a href="https://wa.me/541137024467" target="_blank" rel="noopener noreferrer">
-                    {/* ✅ Botón WhatsApp: Fondo Verde Oliva con letras blancas como pediste */}
                     <Button className="bg-[#A3B18A] text-white hover:bg-[#8FA173] border-none rounded-full px-8 h-14 font-bold uppercase text-[10px] tracking-widest transition-all shadow-lg">
                       Consultar por WhatsApp
                     </Button>
@@ -141,7 +196,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ✅ BANNER DE CAPTACIÓN PROFESIONAL */}
       <ProBanner />
 
       {/* Navegá por categorías */}

@@ -10,9 +10,16 @@ async function requireAdmin() {
     return { session, user }
 }
 
+// CSV helpers corregido para compatibilidad con Excel (Caracteres y Teléfonos/DNI)
 function csvEscape(v: any) {
     const s = String(v ?? "")
     const escaped = s.replace(/"/g, '""')
+
+    // ✅ Si es un número largo (Teléfono, DNI, CP), lo forzamos como texto para Excel
+    if (/^\d{7,}$/.test(s)) {
+        return `="${escaped}"`
+    }
+
     return /[",\n;]/.test(escaped) ? `"${escaped}"` : escaped
 }
 
@@ -41,19 +48,20 @@ export async function GET(req: NextRequest) {
     const filename = `reporte_detallado_di_rosa_${year}_${month}.csv`
     const sep = ";"
 
-    // 1. HEADERS COMPLETOS (Sin eliminar nada)
+    // 1. HEADERS COMPLETOS (Agregadas nuevas columnas al final de los datos numéricos)
     const headers = [
         "Fecha", "Pedido #", "Estado", "Cliente", "Email", "Telefono", "DNI",
         "Tipo Entrega", "Carrier", "Direccion", "Localidad", "Provincia", "CP", "Sucursal",
         "Metodo Pago", "Tarjeta/Medio", "Cuotas", "Subtotal", "Envio",
         "Cupon Usado", "Descuentos Aplicados",
-        "Total Cobrado", "Comision MP", "Neto Real", "Notas"
+        "Total Cobrado", "Comision MP", "Neto Real", "Costo 40%", "Ganancia Neta Final", "Notas"
     ].join(sep)
 
     // Acumuladores para el resumen final (solo pedidos NO cancelados)
     let totalEnviosAcum = 0
     let totalVentasRealAcum = 0
     let totalNetoAcum = 0
+    let totalGananciaFinalAcum = 0
 
     const csvRows = pedidos.map((p: any) => {
         const subtotal = Number(p.subtotal || 0)
@@ -75,10 +83,15 @@ export async function GET(req: NextRequest) {
             neto = total - comision
         }
 
+        // NUEVA LÓGICA DE COSTO Y GANANCIA
+        const costo40 = subtotal * 0.40
+        const gananciaFinal = neto - costo40
+
         if (p.estado !== "cancelado") {
             totalEnviosAcum += envio
             totalVentasRealAcum += total
             totalNetoAcum += neto
+            totalGananciaFinalAcum += gananciaFinal
         }
 
         return [
@@ -106,6 +119,8 @@ export async function GET(req: NextRequest) {
             csvEscape(total),
             csvEscape(comision.toFixed(2)),
             csvEscape(neto.toFixed(2)),
+            csvEscape(costo40.toFixed(2)),
+            csvEscape(gananciaFinal.toFixed(2)),
             csvEscape(p.notasCliente || "")
         ].join(sep)
     })
@@ -116,9 +131,11 @@ export async function GET(req: NextRequest) {
         "TOTALES MES (SIN CANCELADOS)", "", "", "", "", "", "", "", "", "", "", "", "", "",
         "Suma Envios:", csvEscape(totalEnviosAcum.toFixed(2)),
         "", "Ventas Brutas:", csvEscape(totalVentasRealAcum.toFixed(2)),
-        "Neto Total:", csvEscape(totalNetoAcum.toFixed(2)), ""
+        "Neto Total:", csvEscape(totalNetoAcum.toFixed(2)),
+        "Ganancia Final:", csvEscape(totalGananciaFinalAcum.toFixed(2)), ""
     ].join(sep)
 
+    // Agregamos el BOM (\ufeff) al inicio para que Excel reconozca caracteres especiales
     const csv = "\ufeff" + ["sep=;", headers, ...csvRows, filaVacia, filaTotales].join("\n")
 
     return new NextResponse(csv, {

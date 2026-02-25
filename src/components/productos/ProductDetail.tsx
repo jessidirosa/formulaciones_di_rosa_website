@@ -147,20 +147,57 @@ export default function ProductDetail({ producto, productosRelacionados }: Produ
             </div>
           )}
 
-          <div className="bg-white p-8 rounded-[2.5rem] border border-[#E9E9E0] shadow-sm space-y-6">
-            <div className="flex justify-between items-center">
-              <div className="space-y-1">
-                <p className="text-[10px] uppercase font-bold text-[#A3B18A] flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" /> Pago por Transferencia
-                </p>
-                <p className="text-5xl font-serif font-bold text-[#4A5D45]">{formatPrice(precioTransferencia)}</p>
+          {/* BLOQUE DE PRECIOS UNIFICADO */}
+          <div className="bg-white p-8 rounded-[2.5rem] border border-[#E9E9E0] shadow-sm space-y-8">
+            <div className="flex flex-col gap-6">
+
+              {/* 1. PRECIO DE LISTA (Principal) */}
+              <div className="flex justify-between items-start border-b border-[#F5F5F0] pb-6">
+                <div className="space-y-1 text-left">
+                  <p className="text-[10px] uppercase font-black text-[#A3B18A] tracking-[0.2em]">
+                    Precio de Lista
+                  </p>
+                  <div className="flex items-center gap-2.5">
+                    <CreditCard className="h-5 w-5 text-[#5B6350]" />
+                    <p className="text-5xl font-serif font-bold text-[#3A4031]">
+                      {formatPrice(precioActual)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <Badge className="bg-[#F9F9F7] text-[#5B6350] border-[#E9E9E0] shadow-none font-bold text-[10px] px-3 py-1">
+                    En CUOTAS
+                  </Badge>
+                  <p className="text-[9px] text-gray-400 font-medium uppercase tracking-tighter">
+                    Mercado Pago / Tarjetas
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <Badge className="bg-[#A3B18A]/10 text-[#4A5D45] border-none mb-2 font-bold">10% OFF</Badge>
-                <p className="text-sm text-gray-400 line-through font-medium">{formatPrice(precioActual)}</p>
+
+              {/* 2. PRECIO TRANSFERENCIA (Beneficio) */}
+              <div className="flex justify-between items-center bg-[#F9F9F7] p-5 rounded-2xl border border-[#E9E9E0]/50 transition-all hover:bg-[#F5F5F0]">
+                <div className="flex flex-col text-left">
+                  <span className="text-[9px] uppercase tracking-tight text-[#4A5D45] font-bold opacity-70 mb-1">
+                    Abonando con Transferencia
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-[#4A5D45]">
+                      {formatPrice(precioTransferencia)}
+                    </span>
+                    <span className="text-[10px] font-black text-[#A3B18A] uppercase italic">
+                      ahorrás {formatPrice(precioActual * 0.10)}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Badge className="bg-[#4A5D45] text-white shadow-none border-none text-[10px] font-black px-3 py-1.5 rounded-lg">
+                    10% OFF
+                  </Badge>
+                </div>
               </div>
             </div>
 
+            {/* BOTÓN DE ACCIÓN */}
             <Button
               onClick={handleAdd}
               disabled={!hayStock}

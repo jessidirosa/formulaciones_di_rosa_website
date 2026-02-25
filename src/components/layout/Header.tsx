@@ -78,7 +78,7 @@ export default function Header() {
                 </Button>
               </div>
             ) : (
-              <Link href="/mi-cuenta/login">
+              <Link href="/mi-cuenta/registro">
                 <Button variant="ghost" size="icon" className="text-[#4A5D45]">
                   <User className="h-5 w-5" />
                 </Button>
