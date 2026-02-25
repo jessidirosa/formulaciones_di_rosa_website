@@ -11,13 +11,11 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
 import { useCart } from "@/contexts/CartContext"
-import { RefreshCw } from "lucide-react"
 import {
   User,
   Package,
   Settings,
   LogOut,
-  Calendar,
   Eye,
   Phone,
   FlaskConical,
@@ -25,7 +23,8 @@ import {
   Loader2,
   X,
   Lock,
-  Mail
+  Mail,
+  RefreshCw
 } from 'lucide-react'
 
 interface Pedido {
@@ -47,7 +46,6 @@ export default function MiCuentaPage() {
   const router = useRouter()
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [pedidosLoading, setPedidosLoading] = useState(true)
-  const [isRedoing, setIsRedoing] = useState<string | null>(null)
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -93,58 +91,6 @@ export default function MiCuentaPage() {
       setPedidosLoading(false)
     }
   }
-
-  const handleRehacerPedido = async (pedido: any) => {
-    setIsRedoing(pedido.id);
-    console.log("🚀 Iniciando proceso para pedido:", pedido.numero);
-
-    try {
-      const res = await fetch(`/api/pedidos/${pedido.id}`);
-      if (!res.ok) throw new Error("Error en API");
-
-      const data = await res.json();
-      console.log("📦 Datos crudos de la API:", data);
-
-      // Buscamos los items en cualquier lugar posible del objeto devuelto
-      const itemsACargar = data.pedido?.items || data.pedido?.PedidoItem || data.items || data.PedidoItem;
-
-      if (!itemsACargar || !Array.isArray(itemsACargar) || itemsACargar.length === 0) {
-        console.warn("⚠️ No se encontraron productos en el JSON:", data);
-        toast.error("No se pudieron recuperar los productos.");
-        return;
-      }
-
-      console.log("✅ Items a procesar:", itemsACargar);
-
-      itemsACargar.forEach((item: any) => {
-        // Mapeo forzado para cumplir con la interfaz Producto de CartContext
-        const p = {
-          id: String(item.presentacionId || item.productoId || item.id),
-          nombre: item.nombreProducto || "Producto",
-          slug: item.producto?.slug || "producto",
-          precio: Number(item.subtotal) / Number(item.cantidad),
-          imagen: item.producto?.imagen || "",
-          categoria: item.producto?.categoria || "General"
-        };
-
-        console.log("🛒 Agregando:", p.nombre);
-        addItem(p as any, Number(item.cantidad));
-      });
-
-      toast.success("¡Pedido cargado!");
-
-      // Esperamos un poco para que el CartContext guarde en localStorage antes de irnos
-      setTimeout(() => {
-        router.push('/carrito');
-      }, 800);
-
-    } catch (error) {
-      console.error("❌ Error:", error);
-      toast.error("Error al intentar repetir el pedido.");
-    } finally {
-      setIsRedoing(null);
-    }
-  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -265,11 +211,19 @@ export default function MiCuentaPage() {
                       <div key={pedido.id} className="p-5 border border-[#E9E9E0] rounded-2xl hover:border-[#A3B18A] transition-all">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 text-left">
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2"><span className="font-bold text-[#3A4031]">#{pedido.numero}</span>{getEstadoBadge(pedido.estado)}</div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-[#3A4031]">#{pedido.numero}</span>
+                              {getEstadoBadge(pedido.estado)}
+                            </div>
                             <p className="text-xs text-[#5B6350]">{formatDate(pedido.fechaCreacion)}</p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <div className="text-right mr-4"><p className="text-[10px] text-[#A3B18A] font-bold uppercase">Total</p><p className="font-bold text-[#4A5D45]">{formatPrice(pedido.total)}</p></div>
+                            <div className="text-right mr-4">
+                              <p className="text-[10px] text-[#A3B18A] font-bold uppercase">Total</p>
+                              <p className="font-bold text-[#4A5D45]">{formatPrice(pedido.total)}</p>
+                            </div>
+
+                            {/* BOTÓN DESHABILITADO CON "PROXIMAMENTE" */}
                             <Button
                               variant="outline"
                               size="sm"
@@ -278,6 +232,12 @@ export default function MiCuentaPage() {
                             >
                               <RefreshCw className="h-3 w-3 mr-2" /> Rehacer (Próximamente)
                             </Button>
+
+                            <Link href={pedido.publicToken ? `/pedido/${pedido.publicToken}` : `/mi-cuenta`}>
+                              <Button variant="outline" size="sm" className="border-[#D6D6C2] text-[#4A5D45] rounded-full text-[10px] font-bold uppercase">
+                                <Eye className="h-3 w-3 mr-2" />Detalles
+                              </Button>
+                            </Link>
                           </div>
                         </div>
                       </div>
@@ -299,21 +259,35 @@ export default function MiCuentaPage() {
               <form onSubmit={handleUpdateProfile}>
                 <CardContent className="p-8 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <Input value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} placeholder="Nombre" required />
-                    <Input value={editForm.apellido} onChange={e => setEditForm({ ...editForm, apellido: e.target.value })} placeholder="Apellido" required />
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Nombre</label>
+                      <Input value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} className="rounded-xl bg-[#F9F9F7]" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Apellido</label>
+                      <Input value={editForm.apellido} onChange={e => setEditForm({ ...editForm, apellido: e.target.value })} className="rounded-xl bg-[#F9F9F7]" required />
+                    </div>
                   </div>
-                  <Input value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} placeholder="Email" required />
-                  <Input value={editForm.telefono} onChange={e => setEditForm({ ...editForm, telefono: e.target.value })} placeholder="Teléfono" />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Email</label>
+                    <Input value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="rounded-xl bg-[#F9F9F7]" required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Teléfono</label>
+                    <Input value={editForm.telefono} onChange={e => setEditForm({ ...editForm, telefono: e.target.value })} className="rounded-xl bg-[#F9F9F7]" />
+                  </div>
                   <Separator />
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase text-[#4A5D45]">Cambiar Contraseña</p>
-                    <Input type="password" value={editForm.currentPassword} onChange={e => setEditForm({ ...editForm, currentPassword: e.target.value })} placeholder="Contraseña Actual" />
-                    <Input type="password" value={editForm.newPassword} onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })} placeholder="Nueva Contraseña" />
+                  <div className="p-4 bg-[#F9F9F7] rounded-2xl space-y-4 border border-[#E9E9E0]">
+                    <p className="text-[10px] font-bold uppercase text-[#4A5D45] flex items-center gap-2"><Lock className="w-3 h-3" /> Cambio de Contraseña</p>
+                    <Input type="password" value={editForm.currentPassword} onChange={e => setEditForm({ ...editForm, currentPassword: e.target.value })} placeholder="Contraseña Actual" className="rounded-xl bg-white" />
+                    <Input type="password" value={editForm.newPassword} onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })} placeholder="Nueva Contraseña" className="rounded-xl bg-white" />
                   </div>
                 </CardContent>
                 <div className="p-8 pt-0 flex gap-3">
-                  <Button type="button" variant="ghost" className="flex-1" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
-                  <Button type="submit" className="flex-1 bg-[#4A5D45] text-white" disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}</Button>
+                  <Button type="button" variant="ghost" className="flex-1 rounded-xl text-xs uppercase font-bold" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
+                  <Button type="submit" className="flex-1 bg-[#4A5D45] text-white rounded-xl h-12 text-xs uppercase font-bold" disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                  </Button>
                 </div>
               </form>
             </Card>
