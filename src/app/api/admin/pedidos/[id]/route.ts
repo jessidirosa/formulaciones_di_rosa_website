@@ -60,6 +60,12 @@ export async function PATCH(
     const { items, total, subtotal, descuento, notasCliente, datosContacto } = await req.json();
 
     try {
+        // 0. Buscamos si existe un usuario con el email que pusiste en el formulario
+        const usuarioVinculado = await prisma.user.findUnique({
+            where: { email: datosContacto.emailCliente },
+            select: { id: true }
+        });
+
         await prisma.$transaction([
             // 1. Borramos los items actuales
             prisma.pedidoItem.deleteMany({ where: { pedidoId } }),
@@ -90,7 +96,11 @@ export async function PATCH(
                     direccion: datosContacto.direccion,
                     localidad: datosContacto.localidad,
                     // ✅ IMPORTANTE: Agregamos la sucursal aquí
-                    sucursalCorreo: datosContacto.sucursalCorreo
+                    sucursalCorreo: datosContacto.sucursalCorreo,
+                    // Si encontramos al usuario, asociamos el pedido a su cuenta.
+                    // Si no existe el usuario, el pedido queda como invitado (null).
+                    userId: usuarioVinculado ? usuarioVinculado.id : null
+
                 }
             })
         ]);

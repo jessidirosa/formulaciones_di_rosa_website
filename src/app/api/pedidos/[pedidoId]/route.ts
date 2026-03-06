@@ -29,37 +29,29 @@ export async function GET(
             data: { estado: "cancelled_expired" },
         })
 
-        // 2. Buscamos el pedido
+        // 2. Buscamos el pedido con sus ÍTEMS (importante para rehacer pedido)
         const pedidoData = await prisma.pedido.findUnique({
             where: { id },
-            select: {
-                id: true,
-                numero: true,
-                total: true,
-                descuento: true,
-                estado: true,
-                expiresAt: true,
-                userId: true, // Lo necesitamos para validar propiedad
-            },
+            include: {
+                items: true, // Traemos los productos del pedido
+            }
         })
 
         if (!pedidoData) {
             return NextResponse.json({ ok: false, error: "Pedido no encontrado" }, { status: 404 })
         }
 
-        // 3. VALIDACIÓN DE SEGURIDAD
-        // Si el pedido pertenece a un usuario registrado, solo ese usuario puede verlo
+        // 3. VALIDACIÓN DE SEGURIDAD REFORZADA
+        // Si el pedido tiene un userId, verificamos que el que consulta sea el dueño o un ADMIN
         if (pedidoData.userId !== null) {
-            if (!session?.user?.email) {
-                return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 })
+            if (!session?.user) {
+                return NextResponse.json({ ok: false, error: "Deberás iniciar sesión para ver este pedido" }, { status: 401 })
             }
 
-            const user = await prisma.user.findUnique({
-                where: { email: session.user.email },
-                select: { id: true },
-            })
+            const userSession = session.user as any;
 
-            if (!user || pedidoData.userId !== user.id) {
+            // Si no es el dueño Y tampoco es ADMIN, bloqueamos
+            if (pedidoData.userId !== userSession.id && userSession.role !== "ADMIN") {
                 return NextResponse.json({ ok: false, error: "No tienes permiso para ver este pedido" }, { status: 403 })
             }
         }

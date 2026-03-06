@@ -46,6 +46,7 @@ export default function MiCuentaPage() {
   const router = useRouter()
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [pedidosLoading, setPedidosLoading] = useState(true)
+  const [isRedoing, setIsRedoing] = useState<string | null>(null) // Estado para el spinner del botón
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -91,6 +92,54 @@ export default function MiCuentaPage() {
       setPedidosLoading(false)
     }
   }
+
+  // ✅ FUNCIÓN REHACER PEDIDO ACTIVADA
+  const handleRehacerPedido = async (pedido: any) => {
+    setIsRedoing(pedido.id);
+    console.log("🚀 Rehaciendo pedido:", pedido.numero);
+
+    try {
+      // Usamos el endpoint que configuramos para traer el pedido con ITEMS
+      const res = await fetch(`/api/pedidos/${pedido.id}`);
+      if (!res.ok) throw new Error("No se pudo obtener el detalle del pedido");
+
+      const data = await res.json();
+      const pedidoFull = data.pedido;
+
+      if (!pedidoFull.items || pedidoFull.items.length === 0) {
+        toast.error("Este pedido no tiene productos registrados.");
+        return;
+      }
+
+      // Cargamos cada ítem al carrito
+      pedidoFull.items.forEach((item: any) => {
+        const itemParaCarrito = {
+          id: String(item.presentacionId || item.productoId || item.id),
+          nombre: item.nombreProducto || "Producto",
+          slug: item.producto?.slug || "producto",
+          // Usamos el precio unitario calculado del pedido original
+          precio: Number(item.subtotal) / Number(item.cantidad),
+          imagen: item.producto?.imagen || "/images/placeholder-producto.jpg",
+          categoria: item.producto?.categoria || "General"
+        };
+
+        addItem(itemParaCarrito as any, Number(item.cantidad));
+      });
+
+      toast.success("¡Productos cargados al carrito!");
+
+      // Redirigimos al carrito después de un momento
+      setTimeout(() => {
+        router.push('/carrito');
+      }, 800);
+
+    } catch (error) {
+      console.error("❌ Error rehaciendo pedido:", error);
+      toast.error("Hubo un problema al repetir el pedido.");
+    } finally {
+      setIsRedoing(null);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -174,7 +223,7 @@ export default function MiCuentaPage() {
               <CardHeader className="bg-white border-b border-[#F5F5F0]">
                 <CardTitle className="flex items-center gap-2 text-[#4A5D45] text-lg"><div className="p-2 bg-[#F5F5F0] rounded-lg"><User className="h-5 w-5" /></div>Perfil de Usuario</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5 pt-6">
+              <CardContent className="space-y-5 pt-6 text-left">
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Nombre</p><p className="font-semibold text-[#3A4031]">{user.nombre} {user.apellido}</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Email</p><p className="font-semibold text-[#3A4031]">{user.email}</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Teléfono</p><p className="font-semibold text-[#3A4031]">{user.telefono || "No registrado"}</p></div>
@@ -218,19 +267,25 @@ export default function MiCuentaPage() {
                             <p className="text-xs text-[#5B6350]">{formatDate(pedido.fechaCreacion)}</p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <div className="text-right mr-4">
+                            <div className="text-right mr-4 text-left">
                               <p className="text-[10px] text-[#A3B18A] font-bold uppercase">Total</p>
                               <p className="font-bold text-[#4A5D45]">{formatPrice(pedido.total)}</p>
                             </div>
 
-                            {/* BOTÓN DESHABILITADO CON "PROXIMAMENTE" */}
+                            {/* ✅ BOTÓN DE REHACER ACTIVADO */}
                             <Button
                               variant="outline"
                               size="sm"
-                              disabled
-                              className="border-[#D6D6C2] text-[#A3B18A] rounded-full text-[10px] font-bold uppercase opacity-60 cursor-not-allowed"
+                              onClick={() => handleRehacerPedido(pedido)}
+                              disabled={isRedoing === pedido.id}
+                              className="border-[#A3B18A] text-[#4A5D45] rounded-full text-[10px] font-bold uppercase"
                             >
-                              <RefreshCw className="h-3 w-3 mr-2" /> Rehacer (Próximamente)
+                              {isRedoing === pedido.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                              ) : (
+                                <RefreshCw className="h-3 w-3 mr-2" />
+                              )}
+                              Rehacer
                             </Button>
 
                             <Link href={pedido.publicToken ? `/pedido/${pedido.publicToken}` : `/mi-cuenta`}>
@@ -257,7 +312,7 @@ export default function MiCuentaPage() {
                 <button onClick={() => setIsEditModalOpen(false)}><X className="h-5 w-5 text-[#A3B18A]" /></button>
               </div>
               <form onSubmit={handleUpdateProfile}>
-                <CardContent className="p-8 space-y-4">
+                <CardContent className="p-8 space-y-4 overflow-y-auto max-h-[70vh]">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase text-[#A3B18A]">Nombre</label>
