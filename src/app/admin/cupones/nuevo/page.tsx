@@ -36,6 +36,7 @@ export default function NuevoCuponPage() {
         valor: '',
         montoMinimo: '',
         limiteUsos: '',
+        usosPorCliente: '0',
         fechaVencimiento: ''
     })
 
@@ -58,6 +59,7 @@ export default function NuevoCuponPage() {
                     valor: Number(formData.valor),
                     montoMinimo: formData.montoMinimo ? Number(formData.montoMinimo) : null,
                     limiteUsos: formData.limiteUsos ? Number(formData.limiteUsos) : null,
+                    usosPorCliente: Number(formData.usosPorCliente), // ✅ Se envía como número
                     fechaVencimiento: formData.fechaVencimiento || null
                 })
             })
@@ -202,6 +204,24 @@ export default function NuevoCuponPage() {
                                         onChange={(e) => setFormData({ ...formData, limiteUsos: e.target.value })}
                                         className="rounded-xl border-[#E9E9E0]"
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold text-[#4A5D45]">Uso por Cliente</Label>
+                                    <Select
+                                        value={formData.usosPorCliente}
+                                        onValueChange={(val) => setFormData({ ...formData, usosPorCliente: val })}
+                                    >
+                                        <SelectTrigger className="rounded-xl border-[#E9E9E0]">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="0">Uso ilimitado</SelectItem>
+                                            <SelectItem value="1">Solo 1 vez por cliente</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-[10px] text-gray-400 italic pl-1">
+                                        Define si un cliente puede reutilizar el cupón en distintos pedidos.
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold text-[#4A5D45]">Fecha de Vencimiento</Label>

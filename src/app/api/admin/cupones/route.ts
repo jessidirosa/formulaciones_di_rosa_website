@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
                 valor: data.valor,
                 montoMinimo: data.montoMinimo,
                 limiteUsos: data.limiteUsos,
+                usosPorCliente: data.usosPorCliente || 0,
                 fechaVencimiento: data.fechaVencimiento ? new Date(data.fechaVencimiento) : null,
             }
         })

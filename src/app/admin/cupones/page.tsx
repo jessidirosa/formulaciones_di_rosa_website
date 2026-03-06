@@ -61,6 +61,15 @@ export default async function AdminCuponesPage() {
                                         <TableCell className="text-xs text-gray-500">
                                             <span className="font-bold text-gray-700">{cupon.usos}</span> / {cupon.limiteUsos || '∞'}
                                         </TableCell>
+                                        <TableCell className="text-xs">
+                                            <div className="flex flex-col">
+                                                <span className="text-gray-500">Total: <span className="font-bold">{cupon.usos}</span> / {cupon.limiteUsos || '∞'}</span>
+                                                {/* ✅ Indicador de usos por cliente */}
+                                                <span className="text-[10px] font-medium text-[#A3B18A] italic">
+                                                    {cupon.usosPorCliente === 1 ? "👤 1 uso por cliente" : "♾️ Usos ilimitados p/cliente"}
+                                                </span>
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="text-xs text-gray-500">
                                             {cupon.fechaVencimiento ? (
                                                 <span className={isExpired ? "text-red-500 font-bold" : ""}>
