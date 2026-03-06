@@ -10,35 +10,19 @@ interface ValidateCouponRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: ValidateCouponRequest = await request.json()
+    const emailCliente = body.email;
+    const codigoUpper = body.codigo?.toUpperCase();
 
-    const emailCliente = body.email; // Asegurate de enviar el email desde el frontend al validar
-
-    // 2. Si es un cupón de bienvenida o limitado por persona
-    if (emailCliente) {
-      const yaLoUso = await prisma.pedido.findFirst({
-        where: {
-          emailCliente: emailCliente,
-          cuponCodigo: body.codigo.toUpperCase(),
-          estado: { not: 'cancelled' } // Ignoramos si el pedido fue cancelado
-        }
-      })
-
-      if (yaLoUso) {
-        return NextResponse.json({
-          valid: false,
-          error: 'Ya has utilizado este cupón en una compra anterior'
-        })
-      }
-    }
-    if (!body.codigo || !body.subtotal) {
+    if (!codigoUpper || !body.subtotal) {
       return NextResponse.json(
         { valid: false, error: 'Datos incompletos' },
         { status: 400 }
       )
     }
 
+    // 1. Buscamos el cupón primero para conocer sus reglas
     const cupon = await prisma.cupon.findUnique({
-      where: { codigo: body.codigo.toUpperCase() }
+      where: { codigo: codigoUpper }
     })
 
     if (!cupon) {
@@ -49,18 +33,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ valid: false, error: 'Este cupón ya no está disponible' })
     }
 
-    // Validar fecha de vencimiento
+    // 2. Validar fecha de vencimiento
     if (cupon.fechaVencimiento && new Date() > new Date(cupon.fechaVencimiento)) {
       return NextResponse.json({ valid: false, error: 'Este cupón ha expirado' })
     }
 
-    // Validar límite de usos
-    if (cupon.fechaVencimiento && new Date() > new Date(cupon.fechaVencimiento)) {
-      // Solo entra aquí si la fecha EXISTE. Si es null, el cupón sigue siendo válido.
-      return NextResponse.json({ valid: false, error: 'Este cupón ha alcanzado su límite de usos' })
+    // 3. Validar límite de usos TOTALES
+    if (cupon.limiteUsos && cupon.usos >= cupon.limiteUsos) {
+      return NextResponse.json({ valid: false, error: 'Este cupón ha alcanzado su límite de usos totales' })
     }
 
-    // Validar monto mínimo
+    // 4. ✅ NUEVA LÓGICA: Validar usos POR CLIENTE
+    // Solo validamos si emailCliente existe Y el cupón tiene usosPorCliente = 1
+    if (emailCliente && cupon.usosPorCliente === 1) {
+      const yaLoUso = await prisma.pedido.findFirst({
+        where: {
+          emailCliente: emailCliente,
+          cuponCodigo: codigoUpper,
+          estado: { notIn: ['cancelado', 'cancelled', 'expired'] } // Ignoramos si falló o expiró
+        }
+      })
+
+      if (yaLoUso) {
+        return NextResponse.json({
+          valid: false,
+          error: 'Ya has utilizado este cupón en una compra anterior'
+        })
+      }
+    }
+
+    // 5. Validar monto mínimo
     if (cupon.montoMinimo && body.subtotal < cupon.montoMinimo) {
       return NextResponse.json({
         valid: false,
@@ -68,6 +70,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Calcular descuento
     let descuentoAplicado = 0
     if (cupon.tipo === 'PORCENTAJE') {
       descuentoAplicado = Math.round((body.subtotal * cupon.valor) / 100)
