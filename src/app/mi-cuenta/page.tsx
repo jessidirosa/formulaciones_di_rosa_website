@@ -297,7 +297,7 @@ export default function MiCuentaPage() {
                               ) : (
                                 <RefreshCw className="h-3 w-3 mr-2" />
                               )}
-                              Rehacer (próximamente)
+                              Rehacer
                             </Button>
 
                             <Link href={pedido.publicToken ? `/pedido/${pedido.publicToken}` : `/mi-cuenta`}>
