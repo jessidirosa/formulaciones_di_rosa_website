@@ -159,10 +159,10 @@ export default function ProductDetail({ producto, productosRelacionados }: Produ
           {/* ✅ NUEVO: APARTADO DE COMENTARIOS/ACLARACIONES */}
           <div className="space-y-3">
             <Label className="text-[10px] uppercase font-black text-[#A3B18A] tracking-[0.2em] flex items-center gap-2">
-              <MessageSquareText className="h-3 w-3" /> Aclaraciones para la fórmula
+              <MessageSquareText className="h-3 w-3" /> Aclaraciones para la fórmula (sujetas a posibilidades de producción)
             </Label>
             <Textarea
-              placeholder="Ej: Tengo piel sensible, prefiero envase dosificador, etc."
+              placeholder="Ej: Tengo piel sensible, prefiero otra textura, etc."
               value={comentario}
               onChange={(e) => setComentario(e.target.value)}
               className="rounded-2xl border-[#E9E9E0] bg-[#F9F9F7] text-xs focus:ring-[#4A5D45] min-h-[80px] resize-none"

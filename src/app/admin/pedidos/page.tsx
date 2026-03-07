@@ -24,7 +24,7 @@ import ConfirmarPedidoButton from '@/components/admin/ConfirmarPedidoButton'
 import DespacharAccionesWrapper from "@/components/admin/DespacharAccionesWrapper"
 import { sendEmail } from "@/lib/email"
 import { emailPagoExpirado } from "@/lib/emailTemplates"
-import { Printer, Search, MessageSquare, User, Calendar, Factory, MapPin, CreditCard, RotateCcw, FastForward } from "lucide-react"
+import { Printer, Search, MessageSquare, User, Calendar, Factory, MapPin, CreditCard, RotateCcw, FastForward, CalendarDays } from "lucide-react"
 import PedidosFiltros from "@/components/admin/PedidosFiltros"
 import { obtenerResumenCapacidad, formatearFechaArgentina } from "@/lib/capacity"
 import BotonSaltoSemana from "@/components/admin/BotonSaltoSemana"
@@ -53,6 +53,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
     const estado = params.estado ?? "activos"
     const desde = params.desde ?? ""
     const hasta = params.hasta ?? ""
+    const mesFiltro = params.mes // ✅ Recibimos el mes de la URL
 
     const now = new Date()
 
@@ -90,8 +91,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
         })
     }
 
-
-
     const where: any = {}
     if (search) {
         const searchUpper = search.toUpperCase();
@@ -106,17 +105,24 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
 
     if (estado !== "todos") {
         if (estado === "activos") {
-            // ✅ EXCLUIMOS los dos estados de cancelación
             where.estado = {
                 notIn: ["cancelado", "cancelled_expired"]
             }
-        } else if (estado !== "todos") {
-            // Si es un estado puntual (ej: "enviado"), filtramos normal
+        } else {
             where.estado = estado
         }
     }
 
-    if (desde || hasta) {
+    // ✅ FILTRO DE MES UNIFICADO: Aplicado a la consulta principal
+    if (mesFiltro) {
+        const anioActual = new Date().getFullYear();
+        const inicioMes = new Date(anioActual, parseInt(mesFiltro) - 1, 1);
+        const finMes = new Date(anioActual, parseInt(mesFiltro), 0, 23, 59, 59);
+        where.createdAt = {
+            gte: inicioMes,
+            lte: finMes
+        };
+    } else if (desde || hasta) {
         where.createdAt = {}
         if (desde) where.createdAt.gte = new Date(desde)
         if (hasta) {
@@ -138,19 +144,9 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
     })
 
     const totalPedidos = pedidos.length
-    // --- LÓGICA DE FACTURACIÓN ---
-    const mesFiltro = params.mes ?? (new Date().getMonth() + 1).toString(); // Mes actual por defecto
-    const anioFiltro = new Date().getFullYear();
+    // ✅ Facturación calculada directamente sobre los pedidos filtrados arriba
+    const totalFacturado = pedidos.reduce((acc: number, p) => acc + p.total, 0);
 
-    const pedidosMes = await prisma.pedido.findMany({
-        where: {
-            createdAt: {
-                gte: new Date(anioFiltro, parseInt(mesFiltro) - 1, 1),
-                lte: new Date(anioFiltro, parseInt(mesFiltro), 0, 23, 59, 59)
-            }
-        }
-    });
-    const facturacionMensual = pedidosMes.reduce((acc: number, p) => acc + p.total, 0);
     return (
         <div className="container mx-auto px-4 py-10 space-y-8 text-left">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -175,7 +171,6 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                         <div className="text-xl font-bold text-[#4A5D45]">
                             {resumenCapacidad.capacidadDisponible} <span className="text-gray-300 font-light text-sm">/ {resumenCapacidad.capacidadTotal}</span>
                         </div>
-                        {/* Botones de Salto de Semana */}
                         <BotonSaltoSemana semanasSaltadas={resumenCapacidad.semanasSaltadas} />
                     </Card>
 
@@ -190,17 +185,17 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                     </Card>
 
                     <Card className="px-4 py-3 border-gray-100 bg-gray-50/50 shadow-sm flex flex-col justify-center min-w-[120px]">
-                        <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider mb-1">Órdenes Hoy</div>
+                        <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider mb-1">Órdenes en Filtro</div>
                         <div className="text-xl font-bold text-gray-700">{totalPedidos}</div>
                     </Card>
 
                     <Card className="px-4 py-3 border-gray-100 bg-gray-50/50 shadow-sm flex flex-col justify-center min-w-[160px]">
                         <div className="flex items-center justify-between mb-1">
-                            <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider">Facturación Mensual</div>
-                            <Badge variant="outline" className="text-[8px] border-[#A3B18A] text-[#4A5D45]">Mes {mesFiltro}</Badge>
+                            <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider">Facturación Filtro</div>
+                            {mesFiltro && <Badge variant="outline" className="text-[8px] border-[#A3B18A] text-[#4A5D45]">Mes {mesFiltro}</Badge>}
                         </div>
-                        <div className="text-xl font-bold text-gray-700">${facturacionMensual.toLocaleString("es-AR")}</div>
-                        <p className="text-[8px] text-gray-400 italic">Total del mes seleccionado</p>
+                        <div className="text-xl font-bold text-gray-700">${totalFacturado.toLocaleString("es-AR")}</div>
+                        <p className="text-[8px] text-gray-400 italic">{mesFiltro ? 'Total del mes seleccionado' : 'Total acumulado'}</p>
                     </Card>
                 </div>
             </div>
@@ -219,10 +214,22 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                 <PedidosFiltros currentEstado={estado} />
             </div>
 
-            {/* SELECTOR DE MES PARA FACTURACIÓN */}
-            <div className="flex items-center gap-2 mb-4 bg-white p-2 rounded-xl border border-gray-100 w-fit">
-                <span className="text-[10px] font-bold uppercase text-gray-400 px-2">Ver Facturación:</span>
+            {/* ✅ SELECTOR DE MES CON BOTÓN TODO EL AÑO */}
+            <div className="flex items-center gap-2 mb-4 bg-white p-2 rounded-xl border border-gray-100 w-fit overflow-x-auto max-w-full">
+                <div className="flex items-center gap-2 px-2 border-r border-gray-100 mr-1">
+                    <CalendarDays className="w-3.5 h-3.5 text-[#4A5D45]" />
+                    <span className="text-[10px] font-bold uppercase text-gray-400">Período:</span>
+                </div>
                 <div className="flex gap-1">
+                    <Link
+                        href={`?${search ? `search=${search}&` : ''}${estado !== 'activos' ? `estado=${estado}` : ''}`}
+                        className={`text-[9px] px-3 py-1 rounded-md font-bold transition-all ${!mesFiltro
+                                ? "bg-[#4A5D45] text-white"
+                                : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                            }`}
+                    >
+                        TODO EL AÑO
+                    </Link>
                     {[
                         { n: "1", m: "Ene" }, { n: "2", m: "Feb" }, { n: "3", m: "Mar" },
                         { n: "4", m: "Abr" }, { n: "5", m: "May" }, { n: "6", m: "Jun" },
@@ -231,9 +238,9 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                     ].map((m) => (
                         <Link
                             key={m.n}
-                            href={`?mes=${m.n}${search ? `&search=${search}` : ''}${estado !== 'todos' ? `&estado=${estado}` : ''}`}
+                            href={`?mes=${m.n}${search ? `&search=${search}` : ''}${estado !== 'activos' ? `&estado=${estado}` : ''}`}
                             className={`text-[9px] px-2 py-1 rounded-md font-bold transition-all ${mesFiltro === m.n
-                                ? "bg-[#4A5D45] text-white"
+                                ? "bg-[#A3B18A] text-white"
                                 : "bg-gray-50 text-gray-400 hover:bg-gray-100"
                                 }`}
                         >
@@ -242,6 +249,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                     ))}
                 </div>
             </div>
+
             <Card className="border-gray-200 overflow-hidden">
                 <CardHeader className="bg-gray-50/30 border-b border-gray-100">
                     <CardTitle className="text-xl font-semibold text-gray-700">Listado de Órdenes</CardTitle>
@@ -299,9 +307,11 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                     )}
                                                 </div>
                                             </TableCell>
-
+                                            <TableCell className="font-bold text-gray-700">
+                                                ${pedido.total.toLocaleString("es-AR")}
+                                            </TableCell>
                                             <TableCell className="text-right flex gap-2 justify-end">
-                                                <EditarPedidoModal pedido={pedido} /> {/* Este es el nuevo componente */}
+                                                <EditarPedidoModal pedido={pedido} />
                                                 <Button variant="outline" size="sm" asChild className="h-8 px-2">
                                                     <Link href={`/pedido/${pedido.publicToken}`}>Ver</Link>
                                                 </Button>
@@ -363,11 +373,10 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                                 <div key={item.id} className="flex flex-col border-b border-gray-50 pb-2 mb-1">
                                                                     <div className="flex justify-between text-[10px] gap-2">
                                                                         <span className="text-gray-700 font-medium">
-                                                                            {item.nombreProducto} <span className="text-gray-700 truncate max-w-[150px] sm:max-w-none">{item.nombreProducto}</span>
+                                                                            {item.nombreProducto} <span className="text-[#A3B18A] font-bold">x{item.cantidad}</span>
                                                                         </span>
                                                                         <span className="font-semibold text-gray-900">${item.subtotal.toLocaleString("es-AR")}</span>
                                                                     </div>
-                                                                    {/* ✅ ESTO MUESTRA LA NOTA DEL PRODUCTO SI EXISTE */}
                                                                     {item.notas && (
                                                                         <div className="mt-1 flex items-start gap-1 bg-[#F5F5F0] p-1.5 rounded-md border border-[#E9E9E0]">
                                                                             <MessageSquare className="w-2.5 h-2.5 text-[#4A5D45] mt-0.5 flex-shrink-0" />
