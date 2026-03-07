@@ -26,12 +26,12 @@ export default function PedidosFiltros({ currentEstado }: { currentEstado: strin
         const params = new URLSearchParams(searchParams.toString())
 
         if (estadoId === 'activos') {
-            // Si es el nuevo default, podemos limpiar el param para que la URL quede limpia
+            // Al limpiar el parámetro, el servidor entrará por el default (params.estado ?? "activos")
             params.delete('estado')
         } else {
+            // Para "todos" u otros estados, lo seteamos normalmente
             params.set('estado', estadoId)
         }
-
         router.push(`/admin/pedidos?${params.toString()}`)
     }
 

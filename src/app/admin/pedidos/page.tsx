@@ -90,6 +90,8 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
         })
     }
 
+
+
     const where: any = {}
     if (search) {
         const searchUpper = search.toUpperCase();
@@ -108,14 +110,12 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
             where.estado = {
                 notIn: ["cancelado", "cancelled_expired"]
             }
-        } else {
-            // Lógica normal para un estado único
+        } else if (estado !== "todos") {
+            // Si es un estado puntual (ej: "enviado"), filtramos normal
             where.estado = estado
         }
     }
-    if (estado !== "todos") {
-        where.estado = estado
-    }
+
     if (desde || hasta) {
         where.createdAt = {}
         if (desde) where.createdAt.gte = new Date(desde)
