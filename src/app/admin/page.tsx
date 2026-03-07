@@ -11,7 +11,8 @@ import {
     Tag,
     BarChart3,
     FileSpreadsheet,
-    FilePieChart
+    FilePieChart,
+    Users
 } from "lucide-react"
 
 export default async function AdminDashboardPage() {
@@ -109,6 +110,26 @@ export default async function AdminDashboardPage() {
                         <Link href="/admin/categorias">
                             <Button className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 font-bold uppercase text-[10px] tracking-widest rounded-xl h-11" variant="outline">
                                 Gestionar categorías
+                            </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+
+                {/* Usuarios / Clientes - NUEVO */}
+                <Card className="border-indigo-200">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-indigo-700">
+                            <Users className="h-5 w-5" />
+                            Usuarios
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <p className="text-sm text-gray-600">
+                            Gestioná tu base de clientes, asigná etiquetas de profesional y revisá historial.
+                        </p>
+                        <Link href="/admin/usuarios">
+                            <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl h-11">
+                                Ir a usuarios
                             </Button>
                         </Link>
                     </CardContent>
