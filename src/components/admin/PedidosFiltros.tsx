@@ -24,11 +24,14 @@ export default function PedidosFiltros({ currentEstado }: { currentEstado: strin
 
     const handleFilter = (estadoId: string) => {
         const params = new URLSearchParams(searchParams.toString())
-        if (estadoId === 'todos') {
+
+        if (estadoId === 'activos') {
+            // Si es el nuevo default, podemos limpiar el param para que la URL quede limpia
             params.delete('estado')
         } else {
             params.set('estado', estadoId)
         }
+
         router.push(`/admin/pedidos?${params.toString()}`)
     }
 
@@ -41,11 +44,11 @@ export default function PedidosFiltros({ currentEstado }: { currentEstado: strin
                     size="sm"
                     onClick={() => handleFilter(est.id)}
                     className={`text-[10px] uppercase font-bold tracking-widest rounded-lg h-9 ${currentEstado === est.id
-                            ? 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'
-                            // ✅ Color especial para "Ventas Activas" para que resalte
-                            : est.id === 'activos'
-                                ? 'border-[#4A5D45] text-[#4A5D45] bg-[#F5F5F0] hover:bg-[#E9E9E0]'
-                                : 'border-[#E9E9E0] text-[#A3B18A] hover:bg-[#F9F9F7]'
+                        ? 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'
+                        // ✅ Color especial para "Ventas Activas" para que resalte
+                        : est.id === 'activos'
+                            ? 'border-[#4A5D45] text-[#4A5D45] bg-[#F5F5F0] hover:bg-[#E9E9E0]'
+                            : 'border-[#E9E9E0] text-[#A3B18A] hover:bg-[#F9F9F7]'
                         }`}
                 >
                     {est.label}
