@@ -11,6 +11,7 @@ export interface Producto {
   precio: number
   imagen: string
   categoria: string
+  notasPersonalizadas?: string
 }
 
 export interface CartItem {
@@ -47,8 +48,11 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_ITEM': {
       const { producto, cantidad } = action.payload
+
+      // ✅ Cambio clave: un item es "el mismo" solo si tiene el mismo ID Y las mismas NOTAS
       const existingItemIndex = state.items.findIndex(
-        item => item.producto.id === producto.id
+        item => item.producto.id === producto.id &&
+          item.producto.notasPersonalizadas === producto.notasPersonalizadas
       )
 
       let newItems: CartItem[]

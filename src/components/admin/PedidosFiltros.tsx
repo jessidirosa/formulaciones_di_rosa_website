@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 
 const ESTADOS = [
     { id: 'todos', label: 'Todos' },
+    { id: 'activos', label: 'Ventas Activas' }, // ✅ NUEVA OPCIÓN
     { id: 'pendiente_mercadopago', label: 'MP Pendiente' },
     { id: 'pending_payment_transfer', label: 'Transf. Pendiente' },
     { id: 'transfer_proof_sent', label: 'Comprobante Enviado' },
@@ -40,8 +41,11 @@ export default function PedidosFiltros({ currentEstado }: { currentEstado: strin
                     size="sm"
                     onClick={() => handleFilter(est.id)}
                     className={`text-[10px] uppercase font-bold tracking-widest rounded-lg h-9 ${currentEstado === est.id
-                        ? 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'
-                        : 'border-[#E9E9E0] text-[#A3B18A] hover:bg-[#F9F9F7]'
+                            ? 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'
+                            // ✅ Color especial para "Ventas Activas" para que resalte
+                            : est.id === 'activos'
+                                ? 'border-[#4A5D45] text-[#4A5D45] bg-[#F5F5F0] hover:bg-[#E9E9E0]'
+                                : 'border-[#E9E9E0] text-[#A3B18A] hover:bg-[#F9F9F7]'
                         }`}
                 >
                     {est.label}

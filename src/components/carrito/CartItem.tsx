@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/contexts/CartContext'
-import { Minus, Plus, Trash2 } from 'lucide-react'
+import { Minus, Plus, Trash2, MessageSquareText } from 'lucide-react'
 import type { CartItem as CartItemType } from '@/contexts/CartContext'
 
 interface CartItemProps {
@@ -72,6 +72,17 @@ export default function CartItem({ item }: CartItemProps) {
               </span>
             </div>
           </div>
+
+          {/* ✅ NUEVO: VISUALIZACIÓN DE LA NOTA PERSONALIZADA */}
+          {item.producto.notasPersonalizadas && (
+            <div className="mt-2 flex items-start gap-2 bg-[#F5F5F0] p-2 rounded-lg border border-[#E9E9E0]/50">
+              <MessageSquareText className="h-3 w-3 text-[#4A5D45] mt-0.5 flex-shrink-0" />
+              <p className="text-[10px] text-[#5B6350] leading-tight italic">
+                <span className="font-bold uppercase text-[#4A5D45] not-italic tracking-tighter mr-1">Nota:</span>
+                "{item.producto.notasPersonalizadas}"
+              </p>
+            </div>
+          )}
 
           <Button
             variant="ghost"

@@ -152,6 +152,7 @@ model PedidoItem {
   nombreProducto String
   cantidad       Int
   subtotal       Int
+  notas String?
 
   pedido   Pedido    @relation(fields: [pedidoId], references: [id])
   producto Producto? @relation(fields: [productoId], references: [id])

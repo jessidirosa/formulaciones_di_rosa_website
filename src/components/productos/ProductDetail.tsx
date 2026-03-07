@@ -7,7 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/contexts/CartContext'
-import { FlaskConical, Truck, ShieldCheck, ArrowRight, Sparkles, CreditCard } from 'lucide-react'
+import { FlaskConical, Truck, ShieldCheck, ArrowRight, Sparkles, CreditCard, MessageSquareText } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+
 
 type Presentacion = {
   id: number
@@ -53,6 +56,7 @@ const formatPrice = (value: number) =>
 export default function ProductDetail({ producto, productosRelacionados }: ProductDetailProps) {
   const { addItem } = useCart()
   const [imagenError, setImagenError] = useState(false)
+  const [comentario, setComentario] = useState('') // ✅ NUEVO: Estado para el comentario
 
   const [seleccion, setSeleccion] = useState<Presentacion | null>(
     producto.presentaciones && producto.presentaciones.length > 0 ? producto.presentaciones[0] : null
@@ -74,8 +78,13 @@ export default function ProductDetail({ producto, productosRelacionados }: Produ
       id: seleccion ? `${producto.id}-${seleccion.id}` : producto.id,
       nombre: seleccion ? `${producto.nombre} (${seleccion.nombre})` : producto.nombre,
       precio: precioActual,
-      imagen: producto.imagen
+      imagen: producto.imagen,
+      // ✅ PASAMOS EL COMENTARIO AL CARRITO
+      notasPersonalizadas: comentario.trim() !== '' ? comentario : undefined
     } as any, 1)
+
+    // Opcional: limpiar comentario después de añadir
+    setComentario('')
   }
 
   return (
@@ -146,6 +155,20 @@ export default function ProductDetail({ producto, productosRelacionados }: Produ
               </div>
             </div>
           )}
+
+          {/* ✅ NUEVO: APARTADO DE COMENTARIOS/ACLARACIONES */}
+          <div className="space-y-3">
+            <Label className="text-[10px] uppercase font-black text-[#A3B18A] tracking-[0.2em] flex items-center gap-2">
+              <MessageSquareText className="h-3 w-3" /> Aclaraciones para la fórmula
+            </Label>
+            <Textarea
+              placeholder="Ej: Tengo piel sensible, prefiero envase dosificador, etc."
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+              className="rounded-2xl border-[#E9E9E0] bg-[#F9F9F7] text-xs focus:ring-[#4A5D45] min-h-[80px] resize-none"
+            />
+            <p className="text-[9px] text-gray-400 italic">Esta nota se adjuntará a este producto en tu pedido.</p>
+          </div>
 
           {/* BLOQUE DE PRECIOS UNIFICADO */}
           <div className="bg-white p-8 rounded-[2.5rem] border border-[#E9E9E0] shadow-sm space-y-8">

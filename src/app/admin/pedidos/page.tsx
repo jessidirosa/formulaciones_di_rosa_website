@@ -36,6 +36,7 @@ interface PedidosPageProps {
         estado?: string
         desde?: string
         hasta?: string
+        mes?: string
     }>
 }
 
@@ -49,7 +50,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
 
     const params = await searchParams
     const search = params.search ?? ""
-    const estado = params.estado ?? "todos"
+    const estado = params.estado ?? "activos"
     const desde = params.desde ?? ""
     const hasta = params.hasta ?? ""
 
@@ -100,6 +101,18 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
             { emailCliente: { contains: search, mode: 'insensitive' } }
         ]
     }
+
+    if (estado !== "todos") {
+        if (estado === "activos") {
+            // ✅ EXCLUIMOS los dos estados de cancelación
+            where.estado = {
+                notIn: ["cancelado", "cancelled_expired"]
+            }
+        } else {
+            // Lógica normal para un estado único
+            where.estado = estado
+        }
+    }
     if (estado !== "todos") {
         where.estado = estado
     }
@@ -125,8 +138,19 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
     })
 
     const totalPedidos = pedidos.length
-    const totalFacturado = pedidos.reduce((acc: number, p) => acc + p.total, 0)
+    // --- LÓGICA DE FACTURACIÓN ---
+    const mesFiltro = params.mes ?? (new Date().getMonth() + 1).toString(); // Mes actual por defecto
+    const anioFiltro = new Date().getFullYear();
 
+    const pedidosMes = await prisma.pedido.findMany({
+        where: {
+            createdAt: {
+                gte: new Date(anioFiltro, parseInt(mesFiltro) - 1, 1),
+                lte: new Date(anioFiltro, parseInt(mesFiltro), 0, 23, 59, 59)
+            }
+        }
+    });
+    const facturacionMensual = pedidosMes.reduce((acc: number, p) => acc + p.total, 0);
     return (
         <div className="container mx-auto px-4 py-10 space-y-8 text-left">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -171,8 +195,12 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                     </Card>
 
                     <Card className="px-4 py-3 border-gray-100 bg-gray-50/50 shadow-sm flex flex-col justify-center min-w-[160px]">
-                        <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider mb-1">Facturación Filtro</div>
-                        <div className="text-xl font-bold text-gray-700">${totalFacturado.toLocaleString("es-AR")}</div>
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="text-[9px] uppercase font-black text-gray-400 tracking-wider">Facturación Mensual</div>
+                            <Badge variant="outline" className="text-[8px] border-[#A3B18A] text-[#4A5D45]">Mes {mesFiltro}</Badge>
+                        </div>
+                        <div className="text-xl font-bold text-gray-700">${facturacionMensual.toLocaleString("es-AR")}</div>
+                        <p className="text-[8px] text-gray-400 italic">Total del mes seleccionado</p>
                     </Card>
                 </div>
             </div>
@@ -191,6 +219,29 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                 <PedidosFiltros currentEstado={estado} />
             </div>
 
+            {/* SELECTOR DE MES PARA FACTURACIÓN */}
+            <div className="flex items-center gap-2 mb-4 bg-white p-2 rounded-xl border border-gray-100 w-fit">
+                <span className="text-[10px] font-bold uppercase text-gray-400 px-2">Ver Facturación:</span>
+                <div className="flex gap-1">
+                    {[
+                        { n: "1", m: "Ene" }, { n: "2", m: "Feb" }, { n: "3", m: "Mar" },
+                        { n: "4", m: "Abr" }, { n: "5", m: "May" }, { n: "6", m: "Jun" },
+                        { n: "7", m: "Jul" }, { n: "8", m: "Ago" }, { n: "9", m: "Sep" },
+                        { n: "10", m: "Oct" }, { n: "11", m: "Nov" }, { n: "12", m: "Dic" }
+                    ].map((m) => (
+                        <Link
+                            key={m.n}
+                            href={`?mes=${m.n}${search ? `&search=${search}` : ''}${estado !== 'todos' ? `&estado=${estado}` : ''}`}
+                            className={`text-[9px] px-2 py-1 rounded-md font-bold transition-all ${mesFiltro === m.n
+                                ? "bg-[#4A5D45] text-white"
+                                : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                                }`}
+                        >
+                            {m.m}
+                        </Link>
+                    ))}
+                </div>
+            </div>
             <Card className="border-gray-200 overflow-hidden">
                 <CardHeader className="bg-gray-50/30 border-b border-gray-100">
                     <CardTitle className="text-xl font-semibold text-gray-700">Listado de Órdenes</CardTitle>
@@ -268,7 +319,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         <div className="text-[11px] space-y-1.5 text-gray-700">
                                                             <p><span className="text-gray-400 font-medium">Nombre:</span> <span className="font-semibold">{pedido.nombreCliente} {pedido.apellidoCliente}</span></p>
                                                             <p><span className="text-gray-400 font-medium">DNI/CUIL:</span> {pedido.dniCliente || 's/d'}</p>
-                                                            <p><span className="text-gray-400 font-medium">Email:</span> <span className="text-[#4A5D45] font-semibold">{pedido.emailCliente}</span></p>
+                                                            <p><span className="text-gray-400 font-medium">Email:</span> <span className="text-[#4A5D45] font-semibold break-all sm:break-normal">{pedido.emailCliente}</span></p>
                                                             <p><span className="text-gray-400 font-medium">Tel:</span> {pedido.telefonoCliente}</p>
                                                             <div className="pt-2">
                                                                 <p className="text-[9px] text-gray-400 uppercase font-bold">Pago</p>
@@ -309,9 +360,22 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                         <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1">Resumen de Orden</div>
                                                         <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                                                             {pedido.items.map((item) => (
-                                                                <div key={item.id} className="flex justify-between text-[10px] border-b border-gray-50 pb-1 gap-2">
-                                                                    <span className="text-gray-700 truncate">{item.nombreProducto} <span className="text-[#A3B18A] font-bold">x{item.cantidad}</span></span>
-                                                                    <span className="font-semibold text-gray-900">${item.subtotal.toLocaleString("es-AR")}</span>
+                                                                <div key={item.id} className="flex flex-col border-b border-gray-50 pb-2 mb-1">
+                                                                    <div className="flex justify-between text-[10px] gap-2">
+                                                                        <span className="text-gray-700 font-medium">
+                                                                            {item.nombreProducto} <span className="text-gray-700 truncate max-w-[150px] sm:max-w-none">{item.nombreProducto}</span>
+                                                                        </span>
+                                                                        <span className="font-semibold text-gray-900">${item.subtotal.toLocaleString("es-AR")}</span>
+                                                                    </div>
+                                                                    {/* ✅ ESTO MUESTRA LA NOTA DEL PRODUCTO SI EXISTE */}
+                                                                    {item.notas && (
+                                                                        <div className="mt-1 flex items-start gap-1 bg-[#F5F5F0] p-1.5 rounded-md border border-[#E9E9E0]">
+                                                                            <MessageSquare className="w-2.5 h-2.5 text-[#4A5D45] mt-0.5 flex-shrink-0" />
+                                                                            <p className="text-[9px] text-[#5B6350] leading-tight italic">
+                                                                                "{item.notas}"
+                                                                            </p>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ))}
                                                         </div>
