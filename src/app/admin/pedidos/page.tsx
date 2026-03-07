@@ -224,8 +224,8 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                     <Link
                         href={`?${search ? `search=${search}&` : ''}${estado !== 'activos' ? `estado=${estado}` : ''}`}
                         className={`text-[9px] px-3 py-1 rounded-md font-bold transition-all ${!mesFiltro
-                                ? "bg-[#4A5D45] text-white"
-                                : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                            ? "bg-[#4A5D45] text-white"
+                            : "bg-gray-50 text-gray-400 hover:bg-gray-100"
                             }`}
                     >
                         TODO EL AÑO
@@ -320,7 +320,7 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
 
                                         <TableRow className="bg-gray-50/50">
                                             <TableCell colSpan={5} className="py-3 px-4 md:px-8">
-                                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 min-w-0 overflow-hidden">
 
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1 flex items-center gap-1">
@@ -369,14 +369,18 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                                                     <div className="space-y-3 min-w-0">
                                                         <div className="text-[10px] font-black text-[#4A5D45] uppercase tracking-widest border-b pb-1">Resumen de Orden</div>
                                                         <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
-                                                            {pedido.items.map((item) => (
+                                                            {pedido.items.map((item: any) => (
                                                                 <div key={item.id} className="flex flex-col border-b border-gray-50 pb-2 mb-1">
-                                                                    <div className="flex justify-between text-[10px] gap-2">
-                                                                        <span className="text-gray-700 font-medium">
-                                                                            {item.nombreProducto} <span className="text-[#A3B18A] font-bold">x{item.cantidad}</span>
+                                                                    {/* Usamos flex-nowrap para que no se bajen los precios y min-w-0 para permitir el corte de texto */}
+                                                                    <div className="flex justify-between items-start text-[10px] gap-3 w-full min-w-0">
+                                                                        <span className="text-gray-700 font-medium truncate min-w-0 flex-1">
+                                                                            {item.nombreProducto} <span className="text-[#A3B18A] font-bold shrink-0">x{item.cantidad}</span>
                                                                         </span>
-                                                                        <span className="font-semibold text-gray-900">${item.subtotal.toLocaleString("es-AR")}</span>
+                                                                        <span className="font-semibold text-gray-900 shrink-0">
+                                                                            ${item.subtotal.toLocaleString("es-AR")}
+                                                                        </span>
                                                                     </div>
+
                                                                     {item.notas && (
                                                                         <div className="mt-1 flex items-start gap-1 bg-[#F5F5F0] p-1.5 rounded-md border border-[#E9E9E0]">
                                                                             <MessageSquare className="w-2.5 h-2.5 text-[#4A5D45] mt-0.5 flex-shrink-0" />
