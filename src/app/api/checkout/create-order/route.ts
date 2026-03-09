@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       nombreProducto: item.nombreProducto,
       cantidad: item.cantidad,
       subtotal: item.subtotal,
-      notas: item.producto.notasPersonalizadas || null
+      notas: item.producto.notasPersonalizadas || item.notas || ""
     }))
 
     // ✅ LÓGICA DE UNICIDAD: Generamos y verificamos que el código no exista
