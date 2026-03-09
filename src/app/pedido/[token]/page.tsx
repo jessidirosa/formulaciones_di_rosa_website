@@ -112,12 +112,14 @@ export default function PedidoPublicPage({ params }: PageProps) {
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
 
-    const loadPedido = async () => {
+    // Dentro de loadPedido en tu componente de página
+    const loadPedido = async (retries = 3) => {
         try {
             const res = await fetch(`/api/pedidos/public/${token}`)
-            if (!res.ok) {
-                setPedido(null)
-                return
+            if (!res.ok && retries > 0) {
+                // Si falla, esperamos 1 segundo y reintentamos
+                setTimeout(() => loadPedido(retries - 1), 1000);
+                return;
             }
             const data = await res.json()
             if (data.ok) {
@@ -126,7 +128,6 @@ export default function PedidoPublicPage({ params }: PageProps) {
                 setPedido(null)
             }
         } catch (e) {
-            console.error("Error cargando pedido:", e)
             setPedido(null)
         } finally {
             setLoading(false)
