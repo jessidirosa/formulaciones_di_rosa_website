@@ -61,7 +61,8 @@ export async function POST(req: Request) {
       nombreProducto: item.nombreProducto,
       cantidad: item.cantidad,
       subtotal: item.subtotal,
-      notas: item.producto.notasPersonalizadas || item.notas || ""
+      // ✅ SOLUCIÓN: Buscamos notasPersonalizadas directamente en el item de forma segura
+      notas: item.notasPersonalizadas || item.notas || (item.producto?.notasPersonalizadas) || ""
     }))
 
     // ✅ LÓGICA DE UNICIDAD: Generamos y verificamos que el código no exista
