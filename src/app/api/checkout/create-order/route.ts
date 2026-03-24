@@ -213,6 +213,8 @@ export async function POST(req: Request) {
       data: { mercadopagoUrl: preferencia.init_point }
     })
 
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     return NextResponse.json({
       ok: true,
       pedidoId: pedido.id,

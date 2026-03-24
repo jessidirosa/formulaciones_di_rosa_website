@@ -114,23 +114,33 @@ export default function PedidoPublicPage({ params }: PageProps) {
 
     // Dentro de loadPedido en tu componente de página
     const loadPedido = async (retries = 3) => {
+        setLoading(true); // Aseguramos que se vea el spinner al reintentar
         try {
-            const res = await fetch(`/api/pedidos/public/${token}`)
-            if (!res.ok && retries > 0) {
-                // Si falla, esperamos 1 segundo y reintentamos
-                setTimeout(() => loadPedido(retries - 1), 1000);
+            const res = await fetch(`/api/pedidos/public/${token}`, {
+                cache: 'no-store' // Evita que el navegador cachee el error 404
+            });
+
+            if (!res.ok) {
+                if (retries > 0) {
+                    // Si falla, esperamos 1.5 segundos y probamos de nuevo solo
+                    setTimeout(() => loadPedido(retries - 1), 1500);
+                    return;
+                }
+                setPedido(null);
+                setLoading(false);
                 return;
             }
-            const data = await res.json()
-            if (data.ok) {
-                setPedido(data.pedido)
+
+            const data = await res.json();
+            if (data.ok && data.pedido) {
+                setPedido(data.pedido);
             } else {
-                setPedido(null)
+                setPedido(null);
             }
         } catch (e) {
-            setPedido(null)
+            setPedido(null);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
 
@@ -159,14 +169,23 @@ export default function PedidoPublicPage({ params }: PageProps) {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#F5F5F0]"><Loader2 className="animate-spin text-[#4A5D45]" /></div>
 
-    if (!pedido) return (
+    if (!pedido && !loading) return (
         <div className="min-h-screen flex items-center justify-center bg-[#F5F5F0]">
-            <div className="p-20 text-center text-[#5B6350] font-medium italic">
-                <AlertCircle className="w-10 h-10 mx-auto mb-4 opacity-20" />
-                Pedido no encontrado
+            <div className="p-10 max-w-sm text-center space-y-4">
+                <AlertCircle className="w-12 h-12 mx-auto mb-4 text-amber-500 opacity-50" />
+                <h2 className="text-xl font-serif font-bold text-[#3A4031]">Estamos preparando tu resumen</h2>
+                <p className="text-sm text-[#5B6350] italic">
+                    Tu pedido se registró con éxito, pero estamos terminando de procesar los detalles. Aguardá un instante.
+                </p>
+                <button
+                    onClick={() => loadPedido(3)}
+                    className="w-full bg-[#4A5D45] text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3A4031] transition-all"
+                >
+                    Actualizar Estado
+                </button>
             </div>
         </div>
-    )
+    );
 
     const estadoLwr = pedido.estado.toLowerCase()
     let info = INFO_ESTADOS[estadoLwr] || { title: pedido.estado, desc: "Procesando...", next: "Pronto habrá novedades.", icon: Package, color: "bg-gray-50 text-gray-700" }
