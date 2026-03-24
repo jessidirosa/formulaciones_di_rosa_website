@@ -80,23 +80,28 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
         return () => clearInterval(t)
     }, [])
 
-    const loadPedido = async () => {
-        // Intentamos la ruta normal
-        let res = await fetch(`/api/pedidos/${pedidoId}`)
-        let json = await res.json()
+    const loadPedido = async (retries = 3) => {
+        try {
+            // Usamos la API pública porque ya tenemos el Token en la URL (que react toma como pedidoId)
+            const res = await fetch(`/api/pedidos/public/${pedidoId}`, {
+                cache: 'no-store'
+            })
+            const json = await res.json()
 
-        // 🔄 SI FALLA POR PERMISOS (401/403), REINTENTAMOS POR LA VÍA PÚBLICA
-        if (!res.ok && (res.status === 401 || res.status === 403)) {
-            console.log("Reintentando por vía pública...");
-            res = await fetch(`/api/pedidos/public/${pedidoId}`) // Aquí pedidoId actúa como Token
-            json = await res.json()
+            if (!res.ok || !json.ok) {
+                // Si la base de datos está lenta, reintentamos un par de veces
+                if (retries > 0) {
+                    setTimeout(() => loadPedido(retries - 1), 1500)
+                    return
+                }
+                throw new Error(json.error || 'No se encontró el registro del pedido')
+            }
+
+            setPedido(json.pedido)
+        } catch (error: any) {
+            console.error("Error cargando transferencia:", error)
+            // Aquí podés setear un estado de error para mostrar el botón de reintentar
         }
-
-        if (!res.ok || !json.ok) {
-            throw new Error(json.error || 'No se pudo cargar el pedido')
-        }
-
-        setPedido(json.pedido)
     }
 
     useEffect(() => {
