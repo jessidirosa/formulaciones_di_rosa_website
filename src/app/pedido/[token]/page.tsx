@@ -321,12 +321,24 @@ export default function PedidoPublicPage({ params }: PageProps) {
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-4">
                             {pedido.items.map((it: any) => (
-                                <div key={it.id} className="flex justify-between text-sm">
-                                    <div className="flex flex-col">
-                                        <span className="font-medium text-[#3A4031] text-left">{it.nombreProducto}</span>
-                                        <span className="text-[10px] text-[#A3B18A] font-bold text-left">X {it.cantidad}</span>
+                                <div key={it.id} className="flex flex-col gap-1 border-b border-[#F5F5F0] pb-3 last:border-0">
+                                    <div className="flex justify-between text-sm">
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-[#3A4031] text-left">{it.nombreProducto}</span>
+                                            <span className="text-[10px] text-[#A3B18A] font-bold text-left">X {it.cantidad}</span>
+                                        </div>
+                                        <span className="font-bold text-[#4A5D45]">{formatARS(it.subtotal)}</span>
                                     </div>
-                                    <span className="font-bold text-[#4A5D45]">{formatARS(it.subtotal)}</span>
+
+                                    {/* ✅ AGREGADO: Notas del producto */}
+                                    {it.notas && (
+                                        <div className="bg-[#F9F9F7] p-2 rounded-lg border border-[#E9E9E0] mt-1">
+                                            <p className="text-[10px] text-[#5B6350] leading-relaxed italic">
+                                                <span className="font-bold uppercase not-italic mr-1 text-[#A3B18A]">Nota:</span>
+                                                {it.notas}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

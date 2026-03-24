@@ -56,14 +56,22 @@ export async function POST(req: Request) {
       : null;
 
     const rawItems = Array.isArray(data.items) ? data.items : []
-    const itemsCreate = rawItems.map((item: any) => ({
-      productoId: Number(item.productoId) || null,
-      nombreProducto: item.nombreProducto,
-      cantidad: item.cantidad,
-      subtotal: item.subtotal,
-      // ✅ SOLUCIÓN: Buscamos notasPersonalizadas directamente en el item de forma segura
-      notas: item.notasPersonalizadas || item.notas || (item.producto?.notasPersonalizadas) || ""
-    }))
+    const itemsCreate = rawItems.map((item: any) => {
+      // 🔍 Buscamos la nota en todos los lugares posibles según la estructura del CartContext
+      const notaExtraida =
+        item.notasPersonalizadas ||
+        item.producto?.notasPersonalizadas ||
+        item.notas ||
+        "";
+
+      return {
+        productoId: Number(item.productoId) || Number(item.producto?.id) || null,
+        nombreProducto: item.nombreProducto || item.producto?.nombre,
+        cantidad: Number(item.cantidad),
+        subtotal: Number(item.subtotal),
+        notas: String(notaExtraida)
+      }
+    })
 
     // ✅ LÓGICA DE UNICIDAD: Generamos y verificamos que el código no exista
     let codigoFinal = "";
@@ -75,6 +83,7 @@ export async function POST(req: Request) {
       });
       if (!pedidoExistente) existe = false;
     }
+
 
     const pedido = await prisma.pedido.create({
       data: {
@@ -160,12 +169,6 @@ export async function POST(req: Request) {
       console.error("⚠️ Error en notificaciones:", e)
     }
 
-    if (isTransfer) {
-      return NextResponse.json({
-        ok: true,
-        pedidoId: pedido.publicToken // ✅ Mandamos el Token, no el ID numérico
-      })
-    }
 
     // --- MERCADO PAGO ---
 
@@ -220,7 +223,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      pedidoId: pedido.id,
+      pedidoId: pedido.publicToken, // Antes decía pedido.id
       initPoint: preferencia.init_point,
     })
 
