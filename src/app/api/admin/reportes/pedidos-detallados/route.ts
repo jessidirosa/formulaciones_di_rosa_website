@@ -43,19 +43,25 @@ export async function GET(req: NextRequest) {
 
     const pedidos = await prisma.pedido.findMany({
         where,
-        orderBy: { createdAt: "asc" }
+        orderBy: { createdAt: "asc" },
+        include: {
+            user: true, // 👈 VITAL para saber si es Profesional
+            items: true
+        }
     })
 
     const filename = `reporte_detallado_di_rosa_${year}_${month}.csv`
     const sep = ";" // Punto y coma es el estándar para Excel en español
 
     // 1. HEADERS COMPLETOS
+    // 1. HEADERS COMPLETOS (Agregamos "Tipo Cliente" y "Detalle Fórmulas")
     const headers = [
-        "Fecha", "Pedido #", "Estado", "Cliente", "Email", "Telefono", "DNI",
+        "Fecha", "Pedido #", "Estado", "Cliente", "Tipo Cliente", "Email", "Telefono", "DNI",
         "Tipo Entrega", "Carrier", "Direccion", "Localidad", "Provincia", "CP", "Sucursal",
         "Metodo Pago", "Tarjeta/Medio", "Cuotas", "Subtotal", "Envio",
         "Cupon Usado", "Descuentos Aplicados",
-        "Total Cobrado", "Comision MP", "Neto Real", "Costo 40%", "Ganancia Neta Final", "Notas"
+        "Total Cobrado", "Comision MP", "Neto Real", "Costo 40%", "Ganancia Neta Final",
+        "Notas Cliente", "Detalle Fórmulas (Items)" // 👈 Agregamos este al final
     ].join(sep)
 
     let totalEnviosAcum = 0
@@ -72,6 +78,12 @@ export async function GET(req: NextRequest) {
         const baseConCupon = subtotal + envio - descCupon
         const descTransfer = p.metodoPago === "TRANSFERENCIA" ? Math.max(0, baseConCupon - total) : 0
 
+        const tipoCliente = p.user?.tags === "PROFESIONAL" ? "PROFESIONAL" : "CLIENTE FINAL";
+        // ✅ Lógica para agrupar las Fórmulas/Notas de los productos
+        // Recorremos los items y armamos un texto: "Producto A (Nota), Producto B..."
+        const detalleFormulas = (p.items || [])
+            .map((it: any) => `${it.nombreProducto}${it.notas ? ` [Fórmula: ${it.notas}]` : ""}`)
+            .join(" | "); // Usamos un separador que no sea punto y coma ni coma
         let comision = p.mpFee ? Number(p.mpFee) : 0
         let neto = p.netoReal ? Number(p.netoReal) : total
 
@@ -95,6 +107,7 @@ export async function GET(req: NextRequest) {
             csvEscape(p.numero),
             csvEscape(p.estado),
             csvEscape(`${p.nombreCliente} ${p.apellidoCliente}`),
+            csvEscape(tipoCliente),
             csvEscape(p.emailCliente),
             csvEscape(p.telefonoCliente),
             csvEscape(p.dniCliente),
@@ -117,17 +130,18 @@ export async function GET(req: NextRequest) {
             csvEscape(neto.toFixed(2)),
             csvEscape(costo40.toFixed(2)),
             csvEscape(gananciaFinal.toFixed(2)),
-            csvEscape(p.notasCliente || "")
+            csvEscape(p.notasCliente || ""),
+            csvEscape(detalleFormulas)
         ].join(sep)
     })
 
-    const filaVacia = Array(27).fill("").join(sep)
+    const filaVacia = Array(29).fill("").join(sep)
     const filaTotales = [
-        "TOTALES MES (SIN CANCELADOS)", "", "", "", "", "", "", "", "", "", "", "", "", "",
+        "TOTALES MES (SIN CANCELADOS)", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
         "Suma Envios:", csvEscape(totalEnviosAcum.toFixed(2)),
         "", "Ventas Brutas:", csvEscape(totalVentasRealAcum.toFixed(2)),
         "Neto Total:", csvEscape(totalNetoAcum.toFixed(2)),
-        "Ganancia Final:", csvEscape(totalGananciaFinalAcum.toFixed(2)), ""
+        "Ganancia Final:", csvEscape(totalGananciaFinalAcum.toFixed(2)), "", ""
     ].join(sep)
 
     // ✅ La clave es el BOM (\ufeff) pegado al contenido

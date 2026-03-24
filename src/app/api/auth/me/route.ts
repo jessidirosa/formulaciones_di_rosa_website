@@ -20,6 +20,7 @@ export async function GET() {
         email: true,
         telefono: true,
         role: true,
+        tags: true,
       }
     })
     return NextResponse.json({ user })

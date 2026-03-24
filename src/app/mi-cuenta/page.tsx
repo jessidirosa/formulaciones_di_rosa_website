@@ -80,6 +80,14 @@ export default function MiCuentaPage() {
     }
   }, [isAuthenticated, user])
 
+  useEffect(() => {
+    if (isAuthenticated && refreshUser) {
+      // Al entrar a la página, pedimos los datos más frescos
+      // para ver si el admin nos cambió el tag
+      refreshUser();
+    }
+  }, []); // Se ejecuta una sola vez al montar
+
   const fetchPedidos = async () => {
     try {
       const response = await fetch('/api/pedidos/mis-pedidos', { credentials: 'include' })
