@@ -118,6 +118,7 @@ export default function CheckoutPage() {
         subtotal: item.producto.precio * item.cantidad,
         nombreProducto: item.producto.nombre,
         categoriaProducto: item.producto.categoria,
+        notasPersonalizadas: item.producto.notasPersonalizadas || ""
       }))
 
       const orderData = {
