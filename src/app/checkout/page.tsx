@@ -11,7 +11,7 @@ import ShippingOptions from '@/components/checkout/ShippingOptions'
 import PaymentSection from '@/components/checkout/PaymentSection'
 import OrderSummary from '@/components/checkout/OrderSummary'
 import EstimatedDate from '@/components/carrito/EstimatedDate'
-import { ArrowLeft, Lock, CreditCard, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Lock, CreditCard, ShieldCheck, Star } from 'lucide-react'
 
 export interface CheckoutData {
   nombre: string
@@ -100,8 +100,14 @@ export default function CheckoutPage() {
 
   const subtotal = state.total
   const cuponDescuento = checkoutData.cuponDescuento || 0
+
+  // ✅ BENEFICIO PROFESIONAL AUTOMÁTICO (10%)
+  // Detectamos si el usuario logueado tiene el tag correspondiente
+  const esProfesional = user?.tags === 'PROFESIONAL'
+  const profesionalDiscount = esProfesional ? Math.round(subtotal * 0.10) : 0
+
   const transferDiscount = checkoutData.aplicarDescuentoTransfer ? Math.round(subtotal * 0.10) : 0
-  const descuentoTotal = cuponDescuento + transferDiscount
+  const descuentoTotal = cuponDescuento + profesionalDiscount + transferDiscount
   const totalFinal = subtotal + costoEnvio - descuentoTotal
 
   const updateCheckoutData = (update: Partial<CheckoutData>) => {
@@ -239,8 +245,29 @@ export default function CheckoutPage() {
           </div>
 
           <div className="space-y-6">
+            {/* ✅ AVISO DE BENEFICIO ACTIVO */}
+            {user?.tags === 'PROFESIONAL' && (
+              <Card className="border-[#A3B18A] bg-[#4A5D45] text-white overflow-hidden rounded-2xl shadow-lg border-2 animate-in fade-in slide-in-from-right-4">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="bg-white/20 p-2 rounded-full">
+                    <Star className="h-4 w-4 text-amber-300 fill-amber-300" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Beneficio Di Rosa</p>
+                    <p className="text-xs font-bold uppercase tracking-tight">Descuento profesional aplicado</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             <EstimatedDate />
-            <OrderSummary items={state.items} subtotal={subtotal} costoEnvio={costoEnvio} descuento={descuentoTotal} total={totalFinal} tipoEntrega={checkoutData.tipoEntrega} />
+            <OrderSummary
+              items={state.items}
+              subtotal={subtotal}
+              costoEnvio={costoEnvio}
+              descuento={descuentoTotal} // Aquí ya viaja el 15% extra si es profesional
+              total={totalFinal}
+              tipoEntrega={checkoutData.tipoEntrega}
+            />
           </div>
         </div>
       </div>

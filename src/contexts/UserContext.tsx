@@ -16,10 +16,10 @@ type AppUser = {
   email: string
   telefono?: string | null
   role: string
-  esAdmin: boolean // 👈 Mantenemos la propiedad pero la calcularemos
+  tags?: string | null // 👈 AGREGÁ ESTA LÍNEA
+  esAdmin: boolean
   creadoEn?: string
 }
-
 type UserContextValue = {
   user: AppUser | null
   isAuthenticated: boolean

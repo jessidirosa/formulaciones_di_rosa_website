@@ -24,7 +24,8 @@ import {
   X,
   Lock,
   Mail,
-  RefreshCw
+  RefreshCw,
+  Star
 } from 'lucide-react'
 
 interface Pedido {
@@ -236,6 +237,22 @@ export default function MiCuentaPage() {
                 <CardTitle className="flex items-center gap-2 text-[#4A5D45] text-lg"><div className="p-2 bg-[#F5F5F0] rounded-lg"><User className="h-5 w-5" /></div>Perfil de Usuario</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5 pt-6 text-left">
+                {/* ✅ BADGE PROFESIONAL LLAMATIVO */}
+                {user.tags === 'PROFESIONAL' && (
+                  <div className="mb-6 p-4 bg-[#3A4031] rounded-2xl border border-[#A3B18A]/20 shadow-inner flex items-center gap-4">
+                    <div className="bg-[#4A5D45] p-2 rounded-full shadow-sm">
+                      <Star className="h-4 w-4 text-amber-300 fill-amber-300" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black text-[#A3B18A] uppercase tracking-[0.2em] leading-none mb-1">
+                        Cuenta Profesional
+                      </span>
+                      <span className="text-xs font-bold text-white uppercase tracking-tight">
+                        Beneficios Di Rosa Activos
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Nombre</p><p className="font-semibold text-[#3A4031]">{user.nombre} {user.apellido}</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Email</p><p className="font-semibold text-[#3A4031]">{user.email}</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-[#A3B18A] font-bold">Teléfono</p><p className="font-semibold text-[#3A4031]">{user.telefono || "No registrado"}</p></div>
