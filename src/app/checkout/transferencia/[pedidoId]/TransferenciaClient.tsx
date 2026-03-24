@@ -81,14 +81,21 @@ export default function TransferenciaClient({ pedidoId }: { pedidoId: string }) 
     }, [])
 
     const loadPedido = async () => {
-        const res = await fetch(`/api/pedidos/${pedidoId}`)
-        const json = await res.json()
+        // Intentamos la ruta normal
+        let res = await fetch(`/api/pedidos/${pedidoId}`)
+        let json = await res.json()
+
+        // 🔄 SI FALLA POR PERMISOS (401/403), REINTENTAMOS POR LA VÍA PÚBLICA
+        if (!res.ok && (res.status === 401 || res.status === 403)) {
+            console.log("Reintentando por vía pública...");
+            res = await fetch(`/api/pedidos/public/${pedidoId}`) // Aquí pedidoId actúa como Token
+            json = await res.json()
+        }
+
         if (!res.ok || !json.ok) {
-            if (res.status === 401) {
-                throw new Error('No tienes permiso para ver este pedido o la sesión expiró.')
-            }
             throw new Error(json.error || 'No se pudo cargar el pedido')
         }
+
         setPedido(json.pedido)
     }
 

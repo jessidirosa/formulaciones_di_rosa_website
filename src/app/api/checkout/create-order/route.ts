@@ -161,7 +161,10 @@ export async function POST(req: Request) {
     }
 
     if (isTransfer) {
-      return NextResponse.json({ ok: true, pedidoId: pedido.id })
+      return NextResponse.json({
+        ok: true,
+        pedidoId: pedido.publicToken // ✅ Mandamos el Token, no el ID numérico
+      })
     }
 
     // --- MERCADO PAGO ---
