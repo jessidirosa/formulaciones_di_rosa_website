@@ -348,18 +348,29 @@ export default function PedidoPublicPage({ params }: PageProps) {
                                 <span>Subtotal</span>
                                 <span>{formatARS(subtotalItems)}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Envío</span>
+                            <div className={`flex justify-between items-center transition-all ${(pedido.tipoEntrega === "MOTOMENSAJERIA" || pedido.tipoEntrega === "RETIRO_LOCAL")
+                                    ? "bg-[#F9F9F7] -mx-2 px-2 py-2 rounded-xl border border-[#E9E9E0]/50"
+                                    : ""
+                                }`}>
+                                <span className="text-sm font-medium text-[#5B6350]">
+                                    {pedido.tipoEntrega === "RETIRO_LOCAL" ? "Retiro" : "Envío"}
+                                </span>
+
                                 <span className="text-right">
                                     {pedido.tipoEntrega === "MOTOMENSAJERIA" ? (
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[#4A5D45] font-bold uppercase text-[10px]">A coordinar</span>
-                                            <span className="text-[9px] text-gray-400 italic leading-none">Se abona al repartidor</span>
+                                            <span className="text-[#4A5D45] font-bold uppercase text-[10px] tracking-tight">A coordinar</span>
+                                            <span className="text-[9px] text-gray-400 italic leading-none mt-1">Se abona al repartidor</span>
+                                        </div>
+                                    ) : pedido.tipoEntrega === "RETIRO_LOCAL" ? (
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[#4A5D45] font-bold uppercase text-[10px] tracking-tight">Sin cargo</span>
+                                            <span className="text-[9px] text-gray-400 italic leading-none mt-1">En punto de retiro</span>
                                         </div>
                                     ) : pedido.costoEnvio > 0 ? (
-                                        formatARS(pedido.costoEnvio)
+                                        <span className="font-bold text-[#3A4031]">{formatARS(pedido.costoEnvio)}</span>
                                     ) : (
-                                        "Sin cargo"
+                                        <span className="text-[#4A5D45] font-bold uppercase text-[10px]">Sin cargo</span>
                                     )}
                                 </span>
                             </div>
