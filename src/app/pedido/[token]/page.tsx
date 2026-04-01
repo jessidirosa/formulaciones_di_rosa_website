@@ -350,7 +350,18 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             </div>
                             <div className="flex justify-between">
                                 <span>Envío</span>
-                                <span>{pedido.costoEnvio > 0 ? formatARS(pedido.costoEnvio) : "Sin cargo"}</span>
+                                <span className="text-right">
+                                    {pedido.tipoEntrega === "MOTOMENSAJERIA" ? (
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[#4A5D45] font-bold uppercase text-[10px]">A coordinar</span>
+                                            <span className="text-[9px] text-gray-400 italic leading-none">Se abona al repartidor</span>
+                                        </div>
+                                    ) : pedido.costoEnvio > 0 ? (
+                                        formatARS(pedido.costoEnvio)
+                                    ) : (
+                                        "Sin cargo"
+                                    )}
+                                </span>
                             </div>
                             {pedido.descuento > 0 && (
                                 <div className="flex justify-between text-[#A3B18A]">
