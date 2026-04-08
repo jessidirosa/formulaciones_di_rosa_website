@@ -3,19 +3,23 @@
 import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { useUser } from "@/contexts/UserContext" // ✅ Importamos el contexto
 import { Badge } from "@/components/ui/badge"
-import { FlaskConical, ChevronLeft, ChevronRight } from "lucide-react"
+import { FlaskConical, ChevronLeft, ChevronRight, Star } from "lucide-react"
 
 export default function CategoriesMenu({
     categorias,
 }: {
     categorias: { nombre: string; slug: string }[]
 }) {
+    const { user } = useUser() // ✅ Obtenemos el usuario
     const searchParams = useSearchParams()
     const categoriaActual = searchParams.get('categoria') || 'todos'
     const scrollRef = useRef<HTMLDivElement>(null)
     const [showLeftArrow, setShowLeftArrow] = useState(false)
     const [showRightArrow, setShowRightArrow] = useState(true)
+
+    const isProfesional = user?.tags === 'PROFESIONAL'
 
     const checkArrows = () => {
         if (scrollRef.current) {
@@ -53,7 +57,7 @@ export default function CategoriesMenu({
             <div className="flex items-center gap-2 mb-2 px-1">
                 <FlaskConical className="w-3 h-3 text-[#A3B18A]" />
                 <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#A3B18A]">
-                    Especialidades
+                    {isProfesional ? "Panel de Especialista" : "Especialidades"}
                 </span>
             </div>
 

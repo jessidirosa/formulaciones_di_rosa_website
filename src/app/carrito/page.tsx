@@ -44,13 +44,33 @@ export default function CarritoPage() {
                 <Button size="lg" className="bg-[#4A5D45] hover:bg-[#3D4C39] text-[#F5F5F0] px-10 rounded-full font-bold shadow-lg">Ir a la Tienda Online</Button>
               </Link>
               <div className="pt-8 border-t border-[#D6D6C2]">
-                <p className="text-xs uppercase tracking-widest text-[#A3B18A] font-bold mb-6">¿Qué estás buscando hoy?</p>
+                <p className="text-xs uppercase tracking-widest text-[#A3B18A] font-bold mb-6">
+                  {user?.tags === 'PROFESIONAL' ? 'Accesos Rápidos para Profesionales' : '¿Qué estás buscando hoy?'}
+                </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
-                  {[{ nombre: 'Anti age', slug: 'anti-age' }, { nombre: 'Capilar', slug: 'capilar' }, { nombre: 'Corporal', slug: 'corporal' }, { nombre: 'Solares', slug: 'solares' }].map((cat) => (
-                    <Link key={cat.slug} href={`/tienda?categoria=${cat.slug}`}>
-                      <Button variant="outline" size="sm" className="w-full border-[#D6D6C2] text-[#5B6350] hover:bg-white hover:border-[#4A5D45] rounded-lg">{cat.nombre}</Button>
-                    </Link>
-                  ))}
+                  {user?.tags === 'PROFESIONAL' ? (
+                    // ✅ Categorías para Profesionales
+                    <>
+                      <Link href="/tienda?categoria=linea-profesional" className="col-span-2 md:col-span-2">
+                        <Button variant="outline" className="w-full border-[#4A5D45] text-[#4A5D45] bg-[#4A5D45]/5 hover:bg-[#4A5D45] hover:text-white rounded-xl font-bold">
+                          ✨ LÍNEA PROFESIONAL COMPLETA
+                        </Button>
+                      </Link>
+                      <Link href="/tienda?categoria=insumos">
+                        <Button variant="outline" className="w-full border-[#D6D6C2] text-[#5B6350] rounded-xl font-bold">Insumos</Button>
+                      </Link>
+                      <Link href="/tienda?categoria=activos-puros">
+                        <Button variant="outline" className="w-full border-[#D6D6C2] text-[#5B6350] rounded-xl font-bold">Activos</Button>
+                      </Link>
+                    </>
+                  ) : (
+                    // ❌ Categorías Generales
+                    ['Anti age', 'Capilar', 'Corporal', 'Solares'].map((cat) => (
+                      <Link key={cat} href={`/tienda?categoria=${cat.toLowerCase().replace(' ', '-')}`}>
+                        <Button variant="outline" className="w-full border-[#D6D6C2] text-[#5B6350] hover:bg-white hover:border-[#4A5D45] rounded-lg">{cat}</Button>
+                      </Link>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

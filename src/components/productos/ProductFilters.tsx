@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
+import { useUser } from '@/contexts/UserContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -12,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, X, SlidersHorizontal } from 'lucide-react'
+import { Search, X, SlidersHorizontal, Sparkles, Award } from 'lucide-react'
 
 type ProductFiltersProps = {
   categorias: { nombre: string; slug: string }[]
@@ -29,7 +30,10 @@ export default function ProductFilters({
 }: ProductFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useUser() // ✅ Obtenemos el usuario
   const [busqueda, setBusqueda] = useState(busquedaActual || '')
+
+  const isProfesional = user?.tags === 'PROFESIONAL'
 
   useEffect(() => {
     setBusqueda(busquedaActual || '')
@@ -72,14 +76,40 @@ export default function ProductFilters({
     (ordenActual && ordenActual !== 'destacados')
 
   return (
-    <div className="space-y-6 bg-white p-6 rounded-3xl border border-[#E9E9E0] shadow-sm">
+    <div className={`space-y-6 p-6 rounded-3xl border shadow-sm transition-all duration-500 ${isProfesional ? 'bg-gradient-to-br from-white to-[#F0F4EF] border-[#A3B18A]' : 'bg-white border-[#E9E9E0]'
+      }`}>
+
+      {/* ✅ SECCIÓN EXCLUSIVA PARA PROFESIONALES (Solo visible para ellos) */}
+      {isProfesional && (
+        <div className="flex items-center justify-between bg-[#3A4031] p-3 rounded-2xl mb-2 animate-in fade-in zoom-in duration-500">
+          <div className="flex items-center gap-3 pl-2">
+            <div className="bg-[#A3B18A] p-1.5 rounded-full">
+              <Award className="h-4 w-4 text-white" />
+            </div>
+            <p className="text-[10px] font-black text-white uppercase tracking-[0.2em]">
+              Filtros de Gabinete Activos
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => updateSearchParams('categoria', 'linea-profesional')}
+            className={`h-8 rounded-xl text-[9px] font-bold uppercase tracking-tighter ${categoriaActual === 'linea-profesional'
+              ? 'bg-[#A3B18A] text-white'
+              : 'text-[#A3B18A] hover:bg-white/10'
+              }`}
+          >
+            <Sparkles className="w-3 h-3 mr-2" /> Ver mi línea exclusiva
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
 
         {/* Buscador de Productos */}
         <form onSubmit={handleSearch} className="relative w-full lg:max-w-md group">
           <Input
             type="text"
-            placeholder="¿Qué fórmula estás buscando?"
+            placeholder={isProfesional ? "Buscar insumos o fórmulas pro..." : "¿Qué fórmula estás buscando?"}
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="pl-12 pr-10 h-12 bg-[#F9F9F7] border-[#E9E9E0] focus:ring-[#A3B18A] focus:border-[#A3B18A] rounded-2xl transition-all"
