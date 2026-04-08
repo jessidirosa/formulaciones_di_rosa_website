@@ -51,7 +51,7 @@ export default function CarritoPage() {
                   {user?.tags === 'PROFESIONAL' ? (
                     // ✅ Categorías para Profesionales
                     <>
-                      <Link href="/tienda?categoria=linea-profesional" className="col-span-2 md:col-span-2">
+                      <Link href="/tienda?categoria=uso-profesional" className="col-span-2 md:col-span-2">
                         <Button variant="outline" className="w-full border-[#4A5D45] text-[#4A5D45] bg-[#4A5D45]/5 hover:bg-[#4A5D45] hover:text-white rounded-xl font-bold">
                           ✨ LÍNEA PROFESIONAL COMPLETA
                         </Button>

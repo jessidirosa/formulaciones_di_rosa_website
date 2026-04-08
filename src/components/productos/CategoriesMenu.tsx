@@ -89,6 +89,26 @@ export default function CategoriesMenu({
 
                     {categorias.map((cat) => {
                         const isActive = categoriaActual === cat.slug
+                        const esPro = cat.slug === 'uso-profesional'
+
+                        if (esPro && isProfesional) {
+                            return (
+                                <Link key={cat.slug} href={`/tienda?categoria=${cat.slug}`} className="flex-shrink-0">
+                                    <Badge
+                                        variant="outline"
+                                        className={`px-5 py-2 cursor-pointer rounded-full transition-all duration-300 border font-bold uppercase text-[9px] tracking-widest flex items-center gap-2
+                                            ${isActive
+                                                ? "bg-[#3A4031] border-[#3A4031] text-white shadow-lg shadow-black/20"
+                                                : "bg-[#4A5D45] border-[#4A5D45] text-white hover:bg-[#3A4031]"
+                                            }`}
+                                    >
+                                        <Star className={`w-3 h-3 ${isActive ? "text-amber-400 fill-amber-400" : "text-amber-300"}`} />
+                                        {cat.nombre}
+                                    </Badge>
+                                </Link>
+                            )
+                        }
+
                         return (
                             <Link key={cat.slug} href={`/tienda?categoria=${cat.slug}`} className="flex-shrink-0">
                                 <Badge

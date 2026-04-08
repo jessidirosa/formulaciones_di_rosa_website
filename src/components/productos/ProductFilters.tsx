@@ -92,8 +92,8 @@ export default function ProductFilters({
           </div>
           <Button
             variant="ghost"
-            onClick={() => updateSearchParams('categoria', 'linea-profesional')}
-            className={`h-8 rounded-xl text-[9px] font-bold uppercase tracking-tighter ${categoriaActual === 'linea-profesional'
+            onClick={() => updateSearchParams('categoria', 'uso-profesional')}
+            className={`h-8 rounded-xl text-[9px] font-bold uppercase tracking-tighter ${categoriaActual === 'uso-profesional'
               ? 'bg-[#A3B18A] text-white'
               : 'text-[#A3B18A] hover:bg-white/10'
               }`}

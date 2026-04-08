@@ -106,7 +106,7 @@ export default async function TiendaPage({
   let categoriasOrdenadas = [...categorias]
   if (userTags === 'PROFESIONAL') {
     // Buscamos la categoría profesional y la ponemos al principio
-    const indicePro = categoriasOrdenadas.findIndex(c => c.slug === 'linea-profesional')
+    const indicePro = categoriasOrdenadas.findIndex(c => c.slug === 'uso-profesional')
     if (indicePro > -1) {
       const [categoriaPro] = categoriasOrdenadas.splice(indicePro, 1)
       categoriasOrdenadas.unshift(categoriaPro)
@@ -191,7 +191,7 @@ export default async function TiendaPage({
 
                   // ✅ Si es profesional, podemos mostrar 8 productos en lugar de 4 
                   // en su categoría específica para que encuentre todo más rápido
-                  const esCatPro = cat.slug === 'linea-profesional'
+                  const esCatPro = cat.slug === 'uso-profesional'
                   const limite = esCatPro && userTags === 'PROFESIONAL' ? 8 : 4
                   const productosAMostrar = productosDeEstaCategoria.slice(0, limite)
 
