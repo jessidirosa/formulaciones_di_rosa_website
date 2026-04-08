@@ -34,6 +34,8 @@ export default function ProductFilters({
   const [busqueda, setBusqueda] = useState(busquedaActual || '')
 
   const isProfesional = user?.tags === 'PROFESIONAL'
+  // ✅ Detectamos si el "Modo Pro" está activo actualmente
+  const modoProActivo = categoriaActual === 'uso-profesional'
 
   useEffect(() => {
     setBusqueda(busquedaActual || '')
@@ -58,47 +60,69 @@ export default function ProductFilters({
 
     if (busqueda) {
       params.set('busqueda', busqueda)
-      params.delete('categoria') // Esto asegura que busque en todos los productos
+      if (!modoProActivo) {
+        params.delete('categoria')
+      }
     } else {
       params.delete('busqueda')
     }
 
     router.push(`/tienda?${params.toString()}`)
-  }
+  };
 
   const clearFilters = () => {
     setBusqueda('')
     router.push('/tienda')
   }
 
+  const toggleModoPro = () => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (modoProActivo) {
+      params.delete('categoria')
+      params.delete('busqueda')
+      setBusqueda('')
+    } else {
+      params.set('categoria', 'uso-profesional')
+    }
+    router.push(`/tienda?${params.toString()}`)
+  }
+
+
   const hasActiveFilters =
     busquedaActual ||
     (ordenActual && ordenActual !== 'destacados')
 
   return (
-    <div className={`space-y-6 p-6 rounded-3xl border shadow-sm transition-all duration-500 ${isProfesional ? 'bg-gradient-to-br from-white to-[#F0F4EF] border-[#A3B18A]' : 'bg-white border-[#E9E9E0]'
+    <div className={`space-y-6 p-6 rounded-3xl border shadow-sm transition-all duration-500 ${modoProActivo ? 'bg-[#3A4031] border-[#A3B18A] shadow-[#A3B18A]/10' :
+      isProfesional ? 'bg-gradient-to-br from-white to-[#F0F4EF] border-[#A3B18A]' : 'bg-white border-[#E9E9E0]'
       }`}>
 
-      {/* ✅ SECCIÓN EXCLUSIVA PARA PROFESIONALES (Solo visible para ellos) */}
+      {/* SECCIÓN EXCLUSIVA PARA PROFESIONALES */}
       {isProfesional && (
-        <div className="flex items-center justify-between bg-[#3A4031] p-3 rounded-2xl mb-2 animate-in fade-in zoom-in duration-500">
+        <div className={`flex items-center justify-between p-3 rounded-2xl mb-2 transition-colors ${modoProActivo ? 'bg-[#4A5D45] border border-white/10' : 'bg-[#3A4031]'
+          }`}>
           <div className="flex items-center gap-3 pl-2">
-            <div className="bg-[#A3B18A] p-1.5 rounded-full">
-              <Award className="h-4 w-4 text-white" />
+            <div className={`${modoProActivo ? 'bg-white text-[#4A5D45]' : 'bg-[#A3B18A] text-white'} p-1.5 rounded-full`}>
+              <Award className="h-4 w-4" />
             </div>
             <p className="text-[10px] font-black text-white uppercase tracking-[0.2em]">
-              Filtros de Gabinete Activos
+              {modoProActivo ? 'Vista Profesional Activada' : 'Filtros de Gabinete'}
             </p>
           </div>
+
           <Button
             variant="ghost"
-            onClick={() => updateSearchParams('categoria', 'uso-profesional')}
-            className={`h-8 rounded-xl text-[9px] font-bold uppercase tracking-tighter ${categoriaActual === 'uso-profesional'
-              ? 'bg-[#A3B18A] text-white'
+            onClick={toggleModoPro}
+            className={`h-8 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${modoProActivo
+              ? 'bg-red-500/20 text-red-200 hover:bg-red-500 hover:text-white'
               : 'text-[#A3B18A] hover:bg-white/10'
               }`}
           >
-            <Sparkles className="w-3 h-3 mr-2" /> Ver mi línea exclusiva
+            {modoProActivo ? (
+              <><X className="w-3 h-3 mr-2" /> Salir de Línea Profesional</>
+            ) : (
+              <><Sparkles className="w-3 h-3 mr-2" /> Activar Catálogo Profesional</>
+            )}
           </Button>
         </div>
       )}
