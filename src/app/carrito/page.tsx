@@ -56,11 +56,11 @@ export default function CarritoPage() {
                           ✨ LÍNEA PROFESIONAL COMPLETA
                         </Button>
                       </Link>
-                      <Link href="/tienda?categoria=insumos">
-                        <Button variant="outline" className="w-full border-[#D6D6C2] text-[#5B6350] rounded-xl font-bold">Insumos</Button>
+                      <Link href="/tienda?categoria=peeling">
+                        <Button variant="outline" className="w-full border-[#D6D6C2] text-[#5B6350] rounded-xl font-bold">Peelings</Button>
                       </Link>
-                      <Link href="/tienda?categoria=activos-puros">
-                        <Button variant="outline" className="w-full border-[#D6D6C2] text-[#5B6350] rounded-xl font-bold">Activos</Button>
+                      <Link href="/tienda?categoria=esteriles">
+                        <Button variant="outline" className="w-full border-[#D6D6C2] text-[#5B6350] rounded-xl font-bold">Estériles</Button>
                       </Link>
                     </>
                   ) : (
