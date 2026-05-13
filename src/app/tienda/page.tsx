@@ -28,7 +28,7 @@ async function getProductos(searchParams?: {
   categoria?: string
   busqueda?: string
   orden?: string
-}) {
+}, userTags?: string | null) {
   try {
     const { categoria, busqueda, orden } = searchParams || {}
     const normalizar = (str: string) =>
@@ -58,10 +58,26 @@ async function getProductos(searchParams?: {
       const terminos = normalizar(busqueda).split(' ').filter(t => t.length > 0)
 
       // 1. Filtrar por Nombre (Prioridad máxima)
-      productosPorNombre = productosBase.filter((p) => {
+      const resultadosNombreBase = productosBase.filter((p) => {
         const nombreNorm = normalizar(p.nombre)
         return terminos.every(term => nombreNorm.includes(term))
       })
+
+      // Separamos los resultados de nombre por categoría
+      const nombresPublico = resultadosNombreBase.filter(p =>
+        !p.categorias.some((pc: any) => pc.categoria.slug === 'uso-profesional')
+      )
+      const nombresProfesional = resultadosNombreBase.filter(p =>
+        p.categorias.some((pc: any) => pc.categoria.slug === 'uso-profesional')
+      )
+
+      // Si el usuario es PRO, mantenemos el orden normal (o mezclado). 
+      // Si NO es PRO (o no hay sesión), mandamos los nombres profesionales al final del bloque de nombres.
+      if (userTags === 'PROFESIONAL') {
+        productosPorNombre = [...nombresProfesional, ...nombresPublico] // Prioridad al stock pro para el pro
+      } else {
+        productosPorNombre = [...nombresPublico, ...nombresProfesional] // Prioridad al stock público para el resto
+      }
 
       // 2. Filtrar por Descripción/Componentes (Prioridad media)
       const productosPorComponente = productosBase.filter((p) => {
