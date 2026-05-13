@@ -27,14 +27,16 @@ export default function CartItem({ item }: CartItemProps) {
     if (newQuantity < 1) return
     setIsUpdating(true)
     try {
-      updateQuantity(item.producto.id, newQuantity)
+      // ✅ PASAMOS LAS NOTAS AQUÍ TAMBIÉN
+      updateQuantity(item.producto.id, newQuantity, item.producto.notasPersonalizadas)
     } finally {
       setIsUpdating(false)
     }
   }
 
   const handleRemove = () => {
-    removeItem(item.producto.id)
+    // ✅ PASAMOS AMBOS: El ID y las Notas para que el filtro sea exacto
+    removeItem(item.producto.id, item.producto.notasPersonalizadas)
   }
 
   return (
@@ -46,7 +48,7 @@ export default function CartItem({ item }: CartItemProps) {
         variant="ghost"
         size="sm"
         onClick={() => removeItem(item.producto.id, item.producto.notasPersonalizadas)}
-        className="absolute top-2 right-0 text-[#D6D6C2] hover:text-red-500 hover:bg-red-50 transition-all rounded-full h-9 w-9 p-0 z-10"
+        className="absolute top-2 right-2 text-[#D6D6C2] hover:text-red-500 hover:bg-red-50 transition-all rounded-full h-9 w-9 p-0 z-50 shadow-sm"
         title="Eliminar de mi selección"
       >
         <Trash2 className="h-4 w-4" />

@@ -139,7 +139,13 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
 
     case 'CLEAR_CART':
-      return initialState
+      // Forzamos el retorno al estado inicial limpio
+      return {
+        items: [],
+        total: 0,
+        cantidadItems: 0,
+        fechaEstimada: null,
+      }
 
     case 'SET_ESTIMATED_DATE':
       return {
@@ -160,7 +166,8 @@ const CartContext = createContext<{
   state: CartState
   addItem: (producto: Producto, cantidad?: number) => void
   removeItem: (productoId: string, notas?: string) => void
-  updateQuantity: (productoId: string, cantidad: number) => void
+  // ✅ Agregamos notas?: string aquí abajo para que updateQuantity no falle
+  updateQuantity: (productoId: string, cantidad: number, notas?: string) => void
   clearCart: () => void
   setEstimatedDate: (fecha: string | null) => void
 } | null>(null)
