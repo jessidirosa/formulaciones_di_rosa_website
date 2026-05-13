@@ -51,7 +51,7 @@ async function getProductos(searchParams?: {
     const productosBase = await getProductosBase(where, orderBy);
     let productos: any[] = [];
     let productosPorNombre: any[] = [];
-    let productosPorCategoria: any[] = [];
+    let productosPorOtros: any[] = [];
 
     // ✅ BUSQUEDA CON JERARQUÍA: Nombre > Descripción > Categoría
     if (busqueda && busqueda.trim() !== '') {
@@ -79,30 +79,31 @@ async function getProductos(searchParams?: {
         productosPorNombre = [...nombresPublico, ...nombresProfesional] // Prioridad al stock público para el resto
       }
 
-      // 2. Filtrar por Descripción/Componentes (Prioridad media)
-      const productosPorComponente = productosBase.filter((p) => {
-        const descNorm = normalizar(p.descripcionCorta || '')
-        const yaEstaEnNombre = productosPorNombre.some(n => n.id === p.id)
-        return !yaEstaEnNombre && terminos.every(term => descNorm.includes(term))
-      })
 
-      // 3. Filtrar por Categoría (Prioridad baja)
-      productosPorCategoria = productosBase.filter((p) => {
-        const yaEnAnteriores = [...productosPorNombre, ...productosPorComponente].some(n => n.id === p.id)
-        const enCategoriasRelacionadas = Array.isArray(p.categorias) &&
-          p.categorias.some((pc: any) => {
-            const catRelacionadaNorm = normalizar(pc.categoria.nombre)
-            return terminos.some(term => catRelacionadaNorm.includes(term))
-          })
-        return !yaEnAnteriores && enCategoriasRelacionadas
+      // --- 2. PRIORIDAD: TODO LO DEMÁS (Descripción + Categoría Texto + Categorías DB) ---
+      productosPorOtros = productosBase.filter((p) => {
+        // Evitamos duplicar lo que ya encontramos por nombre
+        const yaEstaEnNombre = productosPorNombre.some(n => n.id === p.id)
+        if (yaEstaEnNombre) return false
+
+        const descNorm = normalizar(p.descripcionCorta || '')
+        const catTextoNorm = normalizar(p.categoria || '') // El campo "categoria" de texto
+
+        // Revisamos las categorías vinculadas de la tienda
+        const enCategoriasTienda = p.categorias.some((pc: any) =>
+          normalizar(pc.categoria.nombre).includes(normalizar(busqueda))
+        )
+
+        // Verificamos si los términos de búsqueda están en alguno de esos campos
+        const coincideDescripcion = terminos.every(term => descNorm.includes(term))
+        const coincideCatTexto = terminos.every(term => catTextoNorm.includes(term))
+
+        return coincideDescripcion || coincideCatTexto || enCategoriasTienda
       })
 
       // Unificamos todo en una sola lista respetando el orden de relevancia
-      productos = [
-        ...productosPorNombre,
-        ...productosPorComponente,
-        ...productosPorCategoria
-      ]
+      productos = [...productosPorNombre, ...productosPorOtros]
+
     } else {
       // ✅ Si no hay búsqueda, mostramos todo el catálogo base
       productosPorNombre = productosBase
@@ -111,10 +112,10 @@ async function getProductos(searchParams?: {
 
     const categoriasMenu = await prisma.categoria.findMany({ orderBy: { nombre: "asc" } })
 
-    return { productos, categorias: categoriasMenu, productosPorNombre, productosPorCategoria }
+    return { productos, categorias: categoriasMenu, productosPorNombre, productosPorOtros }
   } catch (error) {
-    console.error('Error al obtener productos:', error)
-    return { productos: [], categorias: [], productosPorNombre: [], productosPorCategoria: [] }
+    console.error(error)
+    return { productos: [], categorias: [], productosPorNombre: [], productosPorOtros: [] }
   }
 }
 
@@ -133,7 +134,7 @@ export default async function TiendaPage({
     orden: resolvedSearchParams.orden as string,
   }
 
-  const { productos, categorias, productosPorNombre, productosPorCategoria } = await getProductos(params)
+  const { productos, categorias, productosPorNombre, productosPorOtros } = await getProductos(params, userTags)
 
   // ✅ LOGICA DE REORDENAMIENTO PARA PROFESIONALES
   let categoriasOrdenadas = [...categorias]
@@ -194,12 +195,6 @@ export default async function TiendaPage({
         <Suspense fallback={<TiendaSkeleton />}>
           {params.busqueda && params.busqueda.trim() !== '' ? (
             <div className="space-y-10">
-              {/* ✅ Unificamos todo en una sola grilla. 
-          El orden ya viene pre-establecido desde la función getProductos:
-          1. Nombres
-          2. Componentes
-          3. Categorías
-      */}
               {productos.length > 0 ? (
                 <div>
                   <h2 className="text-[10px] uppercase tracking-[0.3em] font-bold text-[#A3B18A] mb-8 flex items-center gap-4 text-left">
