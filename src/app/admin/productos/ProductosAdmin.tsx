@@ -238,12 +238,11 @@ export default function ProductosAdmin() {
     }
 
     const exportarReporte = () => {
-        // 1. Definir los encabezados del reporte
+        // 1. Definir los encabezados
         const headers = ["Fórmula", "Categoría", "Presentación", "Precio ARS", "Stock", "Estado"];
 
-        // 2. Procesar los productos y sus presentaciones
+        // 2. Procesar los datos
         const filas = productos.flatMap(p => {
-            // Si el producto tiene presentaciones, creamos una fila por cada una
             if (p.presentaciones && p.presentaciones.length > 0) {
                 return p.presentaciones.map(pres => [
                     p.nombre,
@@ -254,7 +253,6 @@ export default function ProductosAdmin() {
                     p.activo ? "Activo" : "Oculto"
                 ]);
             }
-            // Si no tiene presentaciones, mostramos la base
             return [[
                 p.nombre,
                 p.categoria || "General",
@@ -265,25 +263,28 @@ export default function ProductosAdmin() {
             ]];
         });
 
-        // 3. Crear el contenido CSV
+        // 3. Crear el contenido con punto y coma (delimitador estándar en Excel)
         const csvContent = [
             headers.join(";"),
             ...filas.map(f => f.join(";"))
         ].join("\n");
 
-        // 4. Crear el archivo y disparar la descarga
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        // 4. ✅ LA CLAVE: Añadir el BOM de UTF-8 (\uFEFF) para que Excel reconozca tildes y eñes
+        const universalBOM = "\uFEFF";
+        const blob = new Blob([universalBOM + csvContent], { type: "text/csv;charset=utf-8;" });
+
+        // 5. Descarga del archivo
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `reporte_productos_di_rosa_${new Date().toLocaleDateString()}.csv`);
+        link.setAttribute("download", `reporte_productos_di_rosa_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast.success("Reporte generado con éxito");
-    };
 
+        toast.success("Reporte generado con éxito (Compatible con Excel)");
+    };
     return (
         <div className="container mx-auto px-4 py-10 space-y-10 bg-[#F9F9F7] min-h-screen">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E9E9E0] pb-6">

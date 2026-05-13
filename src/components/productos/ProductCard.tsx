@@ -158,60 +158,63 @@ export default function ProductCard({ producto }: ProductCardProps) {
         </p>
       </CardContent>
 
-      <CardFooter className="px-5 pb-6 pt-2 flex flex-col gap-4">
-        <div className="w-full flex flex-col gap-2">
+      <CardFooter className="px-4 md:px-5 pb-6 pt-2 flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-3">
 
-          {/* PRECIO DE LISTA: Ahora es el principal */}
-          <div className="flex justify-between items-center px-1">
+          {/* PRECIO DE LISTA: Optimizado para móvil */}
+          <div className="flex flex-row justify-between items-end px-1 gap-2">
             <div className="flex flex-col text-left">
-              <span className="text-[9px] uppercase tracking-widest text-[#A3B18A] font-black leading-none mb-1">
+              <span className="text-[8px] md:text-[9px] uppercase tracking-widest text-[#A3B18A] font-black leading-none mb-1">
                 {tienePresentaciones ? 'Desde' : 'Precio de lista'}
               </span>
-              <div className="flex items-center gap-1.5">
-                <CreditCard className="h-3 w-3 text-[#5B6350]" />
-                <span className="text-2xl font-serif font-bold text-[#3A4031]">
+              <div className="flex items-center gap-1">
+                <CreditCard className="hidden xs:block h-3 w-3 text-[#5B6350]" />
+                <span className="text-xl md:text-2xl font-serif font-bold text-[#3A4031] whitespace-nowrap">
                   {formatPrice(precioBase)}
                 </span>
               </div>
             </div>
-            <Badge className="bg-[#F9F9F7] text-[#5B6350] border-[#E9E9E0] shadow-none text-[8px] font-bold px-1.5 h-5">
+
+            {/* Badge "En Cuotas" ahora es más flexible */}
+            <Badge className="bg-[#F9F9F7] text-[#5B6350] border-[#E9E9E0] shadow-none text-[7px] md:text-[8px] font-bold px-1.5 h-5 flex-shrink-0 mb-1">
               En CUOTAS
             </Badge>
           </div>
 
-          {/* PRECIO TRANSFERENCIA: Ahora es el secundario, más pequeño y contenido */}
-          <div className="flex justify-between items-center bg-[#F9F9F7] p-2.5 rounded-xl border border-[#E9E9E0]/50 transition-all hover:bg-[#F5F5F0]">
+          {/* PRECIO TRANSFERENCIA: Contenedor más compacto */}
+          <div className="flex justify-between items-center bg-[#F9F9F7] p-2 md:p-2.5 rounded-xl border border-[#E9E9E0]/50 transition-all hover:bg-[#F5F5F0]">
             <div className="flex flex-col text-left">
-              <span className="text-[8px] uppercase tracking-tight text-[#4A5D45] font-bold opacity-70">
-                Pagando con Transferencia
+              <span className="text-[7px] md:text-[8px] uppercase tracking-tight text-[#4A5D45] font-bold opacity-70 leading-none mb-0.5">
+                Transferencia
               </span>
-              <span className="text-base font-bold text-[#4A5D45]">
+              <span className="text-sm md:text-base font-bold text-[#4A5D45] whitespace-nowrap">
                 {formatPrice(precioTransferencia)}
               </span>
             </div>
-            <div className="text-right">
-              <Badge className="bg-[#4A5D45] text-white shadow-none border-none text-[8px] font-black px-2">
-                10% OFF
-              </Badge>
-            </div>
+            <Badge className="bg-[#4A5D45] text-white shadow-none border-none text-[7px] md:text-[8px] font-black px-1.5 h-4 md:h-5">
+              10% OFF
+            </Badge>
           </div>
         </div>
 
+        {/* BOTONES: Aseguramos que no se rompan en pantallas muy chicas */}
         <div className="w-full flex gap-2">
           <button
             onClick={handleAddToCart}
             disabled={isLoading || stockTotal === 0}
-            className={`flex-1 rounded-xl h-10 font-bold text-[10px] uppercase tracking-widest transition-all
-          ${stockTotal === 0 ? 'bg-gray-100 text-gray-400' : 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'}`}
+            className={`flex-[3] rounded-xl h-10 font-bold text-[10px] uppercase tracking-widest transition-all
+    ${stockTotal === 0 ? 'bg-gray-100 text-gray-400' : 'bg-[#4A5D45] text-white hover:bg-[#3A4031]'}`}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin mx-auto" />
             ) : (
-              <>{stockTotal === 0 ? 'Sin Stock' : tienePresentaciones ? 'Ver Opciones' : 'Añadir'}</>
+              <span className="whitespace-nowrap px-1">
+                {stockTotal === 0 ? 'Sin Stock' : tienePresentaciones ? 'Opciones' : 'Añadir'}
+              </span>
             )}
           </button>
-          <Link href={`/tienda/${producto.slug}`}>
-            <Button variant="outline" className="h-10 w-10 p-0 rounded-xl border-[#D6D6C2] text-[#4A5D45] hover:bg-[#F5F5F0]">
+          <Link href={`/tienda/${producto.slug}`} className="flex-1">
+            <Button variant="outline" className="h-10 w-full p-0 rounded-xl border-[#D6D6C2] text-[#4A5D45]">
               <Eye className="h-4 w-4" />
             </Button>
           </Link>
