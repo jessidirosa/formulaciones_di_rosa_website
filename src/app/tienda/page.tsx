@@ -110,6 +110,16 @@ async function getProductos(searchParams?: {
       productos = productosBase
     }
 
+    if (orden && orden !== 'destacados' && productos.length > 0) {
+      productos.sort((a, b) => {
+        if (orden === 'precio-asc') return a.precio - b.precio;
+        if (orden === 'precio-desc') return b.precio - a.precio;
+        if (orden === 'nombre') return a.nombre.localeCompare(b.nombre);
+        if (orden === 'nuevo') return new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime();
+        return 0;
+      });
+    }
+
     const categoriasMenu = await prisma.categoria.findMany({ orderBy: { nombre: "asc" } })
 
     return { productos, categorias: categoriasMenu, productosPorNombre, productosPorOtros }
