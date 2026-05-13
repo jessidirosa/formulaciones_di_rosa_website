@@ -19,13 +19,19 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { ShoppingBag, ArrowRight, ShieldCheck, Truck, AlertCircle, UserPlus, Ghost, Award } from 'lucide-react'
+import { ShoppingBag, ArrowRight, ShieldCheck, Truck, AlertCircle, UserPlus, Ghost, Award, Trash2 } from 'lucide-react'
 
 export default function CarritoPage() {
-  const { state } = useCart()
+  const { state, clearCart } = useCart()
   const { isAuthenticated, user } = useUser()
   const router = useRouter()
   const [showGuestModal, setShowGuestModal] = useState(false)
+
+  const handleClearCart = () => {
+    if (window.confirm("¿Deseas vaciar toda tu selección magistral?")) {
+      clearCart()
+    }
+  }
 
   if (state.items.length === 0) {
     return (
@@ -83,9 +89,21 @@ export default function CarritoPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F0] py-12">
       <div className="container mx-auto px-4">
-        <div className="mb-10 border-l-4 border-[#4A5D45] pl-6 text-left">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#3A4031] mb-2">Tu Selección Magistral</h1>
-          <p className="text-[#5B6350] font-medium italic">{state.cantidadItems} producto{state.cantidadItems !== 1 ? 's' : ''} listo{state.cantidadItems !== 1 ? 's' : ''} para preparar</p>
+        {/* Cabecera con botón Vaciar */}
+        <div className="mb-10 border-l-4 border-[#4A5D45] pl-6 flex justify-between items-end">
+          <div className="text-left">
+            <h1 className="text-3xl md:text-4xl font-bold text-[#3A4031] mb-2">Tu Selección Magistral</h1>
+            <p className="text-[#5B6350] font-medium italic">{state.cantidadItems} productos listos</p>
+          </div>
+
+          {/* ✅ BOTÓN VACIAR CARRITO */}
+          <Button
+            variant="ghost"
+            onClick={handleClearCart}
+            className="text-[#A3B18A] hover:text-red-500 hover:bg-red-50 text-[10px] font-bold uppercase tracking-widest gap-2 mb-1"
+          >
+            <Trash2 className="w-3 h-3" /> Vaciar Carrito
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">

@@ -29,8 +29,10 @@ export interface CartState {
 
 type CartAction =
   | { type: 'ADD_ITEM'; payload: { producto: Producto; cantidad: number } }
-  | { type: 'REMOVE_ITEM'; payload: { productoId: string } }
-  | { type: 'UPDATE_QUANTITY'; payload: { productoId: string; cantidad: number } }
+  // ✅ Agregamos notas?: string aquí
+  | { type: 'REMOVE_ITEM'; payload: { productoId: string; notas?: string } }
+  // ✅ Agregamos notas?: string aquí
+  | { type: 'UPDATE_QUANTITY'; payload: { productoId: string; cantidad: number; notas?: string } }
   | { type: 'CLEAR_CART' }
   | { type: 'SET_ESTIMATED_DATE'; payload: { fecha: string | null } }
   | { type: 'LOAD_CART'; payload: CartState }
@@ -88,29 +90,35 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
 
     case 'REMOVE_ITEM': {
+      const { productoId, notas } = action.payload;
+
+      // ✅ Ahora filtramos comparando ID y NOTAS
+      // "Mantené todos los ítems EXCEPTO el que coincide en ID Y en las notas"
       const newItems = state.items.filter(
-        item => item.producto.id !== action.payload.productoId
-      )
-      const newTotal = newItems.reduce((sum, item) => sum + item.subtotal, 0)
-      const newCantidadItems = newItems.reduce((sum, item) => sum + item.cantidad, 0)
+        item => !(item.producto.id === productoId && item.producto.notasPersonalizadas === notas)
+      );
+
+      const newTotal = newItems.reduce((sum, item) => sum + item.subtotal, 0);
+      const newCantidadItems = newItems.reduce((sum, item) => sum + item.cantidad, 0);
 
       return {
         ...state,
         items: newItems,
         total: newTotal,
         cantidadItems: newCantidadItems,
-      }
+      };
     }
 
     case 'UPDATE_QUANTITY': {
-      const { productoId, cantidad } = action.payload
+      const { productoId, cantidad, notas } = action.payload // 👈 Recibimos notas
 
       if (cantidad <= 0) {
-        return cartReducer(state, { type: 'REMOVE_ITEM', payload: { productoId } })
+        return cartReducer(state, { type: 'REMOVE_ITEM', payload: { productoId, notas } })
       }
 
       const newItems = state.items.map(item =>
-        item.producto.id === productoId
+        // ✅ Comparamos ID Y NOTAS para actualizar la cantidad del ítem correcto
+        item.producto.id === productoId && item.producto.notasPersonalizadas === notas
           ? {
             ...item,
             cantidad,
@@ -151,7 +159,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 const CartContext = createContext<{
   state: CartState
   addItem: (producto: Producto, cantidad?: number) => void
-  removeItem: (productoId: string) => void
+  removeItem: (productoId: string, notas?: string) => void
   updateQuantity: (productoId: string, cantidad: number) => void
   clearCart: () => void
   setEstimatedDate: (fecha: string | null) => void
@@ -224,12 +232,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     showToast("Producto agregado al carrito 🛒")
   }
 
-  const removeItem = (productoId: string) => {
-    dispatch({ type: 'REMOVE_ITEM', payload: { productoId } })
+  const removeItem = (productoId: string, notas?: string) => {
+    dispatch({ type: 'REMOVE_ITEM', payload: { productoId, notas } })
   }
 
-  const updateQuantity = (productoId: string, cantidad: number) => {
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { productoId, cantidad } })
+  const updateQuantity = (productoId: string, cantidad: number, notas?: string) => {
+    dispatch({ type: 'UPDATE_QUANTITY', payload: { productoId, cantidad, notas } })
   }
 
   const clearCart = () => {
