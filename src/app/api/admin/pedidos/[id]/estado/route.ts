@@ -130,6 +130,31 @@ export async function PATCH(
                     })
                 ).catch(err => console.error("Error email cancelado:", err))
             }
+
+            // ✅ NUEVO --- ESTADO: ENTREGADO ---
+            else if (estado === "entregado") {
+                await sendEmail(
+                    emailCliente,
+                    "✨ ¡Pedido Entregado! Un consejo para tu tratamiento - Di Rosa Formulaciones",
+                    `<div style="font-family:sans-serif; color:#3A4031; line-height:1.6; max-width: 600px; margin: auto; border: 1px solid #E9E9E0; border-radius: 20px; padding: 25px;">
+            <h2 style="color:#4A5D45;">¡Pedido entregado con éxito!</h2>
+            <p>¡Hola ${pedido.nombreCliente || ""}! Nos figura que ya tenés con vos tu pedido <b>#${pedido.numero}</b>.</p>
+            
+            <div style="background-color: #F9F9F4; border-radius: 15px; padding: 20px; margin: 20px 0; border-left: 4px solid #A3B18A;">
+                <p style="margin-top: 0;"><b>📸 Tip importante: El registro de tu proceso</b></p>
+                <p style="font-size: 15px;">Si podés, <b>sacate una foto ahora</b> antes de comenzar a usar los productos, con luz natural y sin filtros.</p>
+                <p style="font-size: 15px;">Esto te servirá para luego comparar con fotos del proceso (recordá mantener las mismas condiciones de luz). ☺️</p>
+                <p style="font-size: 15px; margin-bottom: 0;"><b>✨ ¡Tenemos un regalo!</b> Si nos compartís tus fotos para poder subirlas, ¡te ganás un <b>cupón de descuento</b> para tu próxima compra!</p>
+            </div>
+
+            <p>Cualquier duda sobre la aplicación de tus fórmulas, recordá que podés consultarnos por nuestros canales oficiales.</p>
+            
+            <div style="margin-top:25px; text-align:center;">
+                <a href="${appUrl}/tienda" style="background:#4A5D45; color:white; padding:12px 25px; text-decoration:none; border-radius:12px; font-weight:bold; display:inline-block;">Volver a la Tienda</a>
+            </div>
+        </div>`
+                ).catch(err => console.error("Error email entregado:", err))
+            }
         }
 
         // 4. Actualización final del estado en la base de datos
