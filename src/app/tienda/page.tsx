@@ -154,23 +154,25 @@ export default async function TiendaPage({
   return (
     <div className="min-h-screen bg-[#F5F5F0] relative">
       {/* ✅ BARRA STICKY CORREGIDA: z-[100] para estar sobre todo, top-0 o top-[altura-header] si tenés header fijo */}
-      <div className="sticky top-0 z-[100] bg-[#F5F5F0] border-b border-[#D6D6C2] py-4 w-full shadow-md">
-        <div className="container mx-auto px-4 max-w-7xl">
+      {/* ✅ Barra Sticky Corregida para Móvil */}
+      <div className="sticky top-0 z-[100] bg-[#F5F5F0]/80 backdrop-blur-md border-b border-[#D6D6C2] py-2 w-full shadow-sm">
+        <div className="container mx-auto px-2 md:px-4 max-w-7xl">
           <CategoriesMenu categorias={categorias} />
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-12 max-w-7xl relative">
-        <div className="mb-12 border-l-4 border-[#4A5D45] pl-6 text-left">
-          <h1 className="text-4xl md:text-5xl font-bold text-[#3A4031] mb-4 tracking-tight uppercase">
+      <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl relative">
+        {/* Título adaptado */}
+        <div className="mb-8 border-l-4 border-[#4A5D45] pl-4 md:pl-6 text-left">
+          <h1 className="text-3xl md:text-5xl font-bold text-[#3A4031] mb-2 tracking-tight uppercase leading-none">
             Laboratorio Magistral
           </h1>
-          <p className="text-lg text-[#5B6350] max-w-2xl leading-relaxed font-light italic">
+          <p className="text-sm md:text-lg text-[#5B6350] max-w-2xl font-light italic">
             Fórmulas exclusivas diseñadas por profesionales para potenciar tu belleza natural.
           </p>
         </div>
 
-        <div className="mb-10 text-left space-y-6">
+        <div className="mb-10 text-left space-y-4">
           {params.categoria && params.categoria !== 'todos' && (
             <div className="flex items-center gap-2 text-[#4A5D45] bg-[#A3B18A]/10 w-fit px-4 py-2 rounded-full border border-[#A3B18A]/20 animate-in fade-in slide-in-from-top-2 duration-500">
               <Search className="w-3 h-3" />
@@ -180,7 +182,7 @@ export default async function TiendaPage({
             </div>
           )}
 
-          <Suspense fallback={<div className="animate-pulse h-20 bg-[#E9E9E0] rounded-xl w-full"></div>}>
+          <Suspense fallback={<div className="h-20 bg-[#E9E9E0] animate-pulse rounded-2xl" />}>
             <ProductFilters
               categorias={categorias}
               categoriaActual={params.categoria}
