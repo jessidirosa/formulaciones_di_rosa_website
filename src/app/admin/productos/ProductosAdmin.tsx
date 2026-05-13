@@ -28,7 +28,8 @@ import {
     PackageSearch,
     Search,
     Copy,
-    ArrowUpDown
+    ArrowUpDown,
+    FileSpreadsheet
 } from "lucide-react"
 
 // --- Interfaces ---
@@ -236,6 +237,53 @@ export default function ProductosAdmin() {
         } catch (error) { toast.error("Error al guardar") } finally { setSavingEdit(false) }
     }
 
+    const exportarReporte = () => {
+        // 1. Definir los encabezados del reporte
+        const headers = ["Fórmula", "Categoría", "Presentación", "Precio ARS", "Stock", "Estado"];
+
+        // 2. Procesar los productos y sus presentaciones
+        const filas = productos.flatMap(p => {
+            // Si el producto tiene presentaciones, creamos una fila por cada una
+            if (p.presentaciones && p.presentaciones.length > 0) {
+                return p.presentaciones.map(pres => [
+                    p.nombre,
+                    p.categoria || "General",
+                    pres.nombre,
+                    `$${pres.precio}`,
+                    pres.stock,
+                    p.activo ? "Activo" : "Oculto"
+                ]);
+            }
+            // Si no tiene presentaciones, mostramos la base
+            return [[
+                p.nombre,
+                p.categoria || "General",
+                "Base / Única",
+                `$${p.precio}`,
+                p.stock || 0,
+                p.activo ? "Activo" : "Oculto"
+            ]];
+        });
+
+        // 3. Crear el contenido CSV
+        const csvContent = [
+            headers.join(";"),
+            ...filas.map(f => f.join(";"))
+        ].join("\n");
+
+        // 4. Crear el archivo y disparar la descarga
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `reporte_productos_di_rosa_${new Date().toLocaleDateString()}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Reporte generado con éxito");
+    };
+
     return (
         <div className="container mx-auto px-4 py-10 space-y-10 bg-[#F9F9F7] min-h-screen">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E9E9E0] pb-6">
@@ -243,6 +291,14 @@ export default function ProductosAdmin() {
                     <h1 className="text-3xl font-serif font-bold text-[#3A4031]">Gestión de Fórmulas</h1>
                     <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#A3B18A] mt-1">Panel Administrativo Magistral</p>
                 </div>
+                {/* ✅ NUEVO BOTÓN DE REPORTE */}
+                <Button
+                    onClick={exportarReporte}
+                    variant="outline"
+                    className="rounded-2xl shadow-sm h-12 px-6 flex gap-2 text-[#4A5D45] font-bold text-[10px] uppercase border-[#A3B18A] bg-white hover:bg-[#A3B18A] hover:text-white transition-all"
+                >
+                    <FileSpreadsheet className="w-4 h-4" /> Exportar Reporte de Precios
+                </Button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">

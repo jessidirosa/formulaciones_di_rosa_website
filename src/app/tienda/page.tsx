@@ -49,34 +49,51 @@ async function getProductos(searchParams?: {
     }
 
     const productosBase = await getProductosBase(where, orderBy);
-    let productosPorNombre: ProductoConRelaciones[] = []
-    let productosPorCategoria: ProductoConRelaciones[] = []
+    let productos: any[] = [];
+    let productosPorNombre: any[] = [];
+    let productosPorCategoria: any[] = [];
 
+    // ✅ BUSQUEDA CON JERARQUÍA: Nombre > Descripción > Categoría
     if (busqueda && busqueda.trim() !== '') {
       const terminos = normalizar(busqueda).split(' ').filter(t => t.length > 0)
+
+      // 1. Filtrar por Nombre (Prioridad máxima)
       productosPorNombre = productosBase.filter((p) => {
         const nombreNorm = normalizar(p.nombre)
-        const descNorm = normalizar(p.descripcionCorta || '')
-        const catTextoNorm = normalizar((p as any).categoria || '')
-        return terminos.every(term =>
-          nombreNorm.includes(term) || descNorm.includes(term) || catTextoNorm.includes(term)
-        )
+        return terminos.every(term => nombreNorm.includes(term))
       })
+
+      // 2. Filtrar por Descripción/Componentes (Prioridad media)
+      const productosPorComponente = productosBase.filter((p) => {
+        const descNorm = normalizar(p.descripcionCorta || '')
+        const yaEstaEnNombre = productosPorNombre.some(n => n.id === p.id)
+        return !yaEstaEnNombre && terminos.every(term => descNorm.includes(term))
+      })
+
+      // 3. Filtrar por Categoría (Prioridad baja)
       productosPorCategoria = productosBase.filter((p) => {
+        const yaEnAnteriores = [...productosPorNombre, ...productosPorComponente].some(n => n.id === p.id)
         const enCategoriasRelacionadas = Array.isArray(p.categorias) &&
           p.categorias.some((pc: any) => {
             const catRelacionadaNorm = normalizar(pc.categoria.nombre)
             return terminos.some(term => catRelacionadaNorm.includes(term))
           })
-        const yaEstaEnNombre = productosPorNombre.some((n) => n.id === p.id)
-        return enCategoriasRelacionadas && !yaEstaEnNombre
+        return !yaEnAnteriores && enCategoriasRelacionadas
       })
+
+      // Unificamos todo en una sola lista respetando el orden de relevancia
+      productos = [
+        ...productosPorNombre,
+        ...productosPorComponente,
+        ...productosPorCategoria
+      ]
     } else {
+      // ✅ Si no hay búsqueda, mostramos todo el catálogo base
       productosPorNombre = productosBase
+      productos = productosBase
     }
 
     const categoriasMenu = await prisma.categoria.findMany({ orderBy: { nombre: "asc" } })
-    const productos = busqueda ? [...productosPorNombre, ...productosPorCategoria] : productosBase
 
     return { productos, categorias: categoriasMenu, productosPorNombre, productosPorCategoria }
   } catch (error) {
@@ -186,7 +203,7 @@ export default async function TiendaPage({
               {mostrarAgrupado ? (
                 categoriasOrdenadas.map((cat) => { // 👈 Usamos la lista reordenada
                   const productosDeEstaCategoria = productos.filter((p) =>
-                    p.categorias.some((pc) => pc.categoria.id === (cat as any).id)
+                    p.categorias.some((pc: any) => pc.categoria.id === (cat as any).id)
                   )
 
                   // ✅ Si es profesional, podemos mostrar 8 productos en lugar de 4 

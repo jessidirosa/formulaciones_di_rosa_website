@@ -38,8 +38,34 @@ export default function ProductFilters({
   const modoProActivo = categoriaActual === 'uso-profesional'
 
   useEffect(() => {
-    setBusqueda(busquedaActual || '')
-  }, [busquedaActual])
+    // Si el usuario borra todo, limpiamos la búsqueda en la URL
+    if (busqueda === "" && busquedaActual) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('busqueda');
+      router.push(`/tienda?${params.toString()}`, { scroll: false });
+      return;
+    }
+
+    // Si lo que escribió es igual a lo que ya está en la URL, no hacemos nada
+    if (busqueda === (busquedaActual || '')) return;
+
+    // Timer para esperar a que deje de escribir (400ms)
+    const delayDebounceFn = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (busqueda) {
+        params.set('busqueda', busqueda);
+        // Si no es modo pro, buscamos en todo para no limitar resultados
+        if (!modoProActivo) params.delete('categoria');
+      } else {
+        params.delete('busqueda');
+      }
+
+      router.push(`/tienda?${params.toString()}`, { scroll: false });
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [busqueda, modoProActivo, busquedaActual, router, searchParams]);
 
   const updateSearchParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -53,21 +79,8 @@ export default function ProductFilters({
     router.push(`/tienda?${params.toString()}`)
   }
 
-  // ✅ Modificado: Al buscar, eliminamos la categoría para buscar en todo el sitio
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const params = new URLSearchParams(searchParams.toString())
-
-    if (busqueda) {
-      params.set('busqueda', busqueda)
-      if (!modoProActivo) {
-        params.delete('categoria')
-      }
-    } else {
-      params.delete('busqueda')
-    }
-
-    router.push(`/tienda?${params.toString()}`)
+    e.preventDefault();
   };
 
   const clearFilters = () => {
