@@ -95,9 +95,9 @@ export default function ServiciosPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-left">
                         {[
-                            { icon: <UserCheck />, title: "Validación", desc: "Envianos por WhatsApp tu título o matrícula profesional." },
-                            { icon: <FlaskConical />, title: "Cupón Activo", desc: "Te generamos un código personalizado para tus compras." },
-                            { icon: <CheckCircle2 />, title: "Compra Online", desc: "Aplicá tu descuento al finalizar el carrito y listo." }
+                            { icon: <UserCheck />, title: "Registro", desc: "Registrate en la web para que podamos activar tu cuenta como profesional." },
+                            { icon: <FlaskConical />, title: "Validación", desc: "Envianos por WhatsApp tu título o matrícula profesional y el mail con el que te registraste." },
+                            { icon: <CheckCircle2 />, title: "Activación", desc: "Nosotros activamos tu cuenta, y automáticamente ya accedés al descuento." }
                         ].map((item, i) => (
                             <div key={i} className="bg-white p-10 rounded-[3rem] border border-[#E9E9E0] hover:border-[#A3B18A] transition-colors group relative shadow-sm overflow-hidden text-left">
                                 <div className="relative z-10">
@@ -116,7 +116,7 @@ export default function ServiciosPage() {
                     <div className="mt-16 text-center">
                         <a href="https://wa.me/541137024467" target="_blank">
                             <Button variant="outline" className="border-[#4A5D45] text-[#4A5D45] hover:bg-[#4A5D45] hover:text-white rounded-full px-12 h-14 font-bold uppercase text-[10px] tracking-[0.2em] transition-all shadow-md">
-                                Solicitar Cupón Profesional
+                                Solicitar Activación
                             </Button>
                         </a>
                     </div>

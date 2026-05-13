@@ -177,26 +177,24 @@ export default async function TiendaPage({
 
         <Suspense fallback={<TiendaSkeleton />}>
           {params.busqueda && params.busqueda.trim() !== '' ? (
-            <div className="space-y-16">
-              {productosPorNombre.length > 0 && (
+            <div className="space-y-10">
+              {/* ✅ Unificamos todo en una sola grilla. 
+          El orden ya viene pre-establecido desde la función getProductos:
+          1. Nombres
+          2. Componentes
+          3. Categorías
+      */}
+              {productos.length > 0 ? (
                 <div>
                   <h2 className="text-[10px] uppercase tracking-[0.3em] font-bold text-[#A3B18A] mb-8 flex items-center gap-4 text-left">
                     <span className="w-8 h-[1px] bg-[#A3B18A]"></span>
-                    Resultados Directos
+                    Resultados para: {params.busqueda}
                   </h2>
-                  <ProductGrid productos={productosPorNombre as any} />
+                  <ProductGrid productos={productos as any} />
                 </div>
+              ) : (
+                <EmptyState />
               )}
-              {productosPorCategoria.length > 0 && (
-                <div>
-                  <h2 className="text-[10px] uppercase tracking-[0.3em] font-bold text-[#A3B18A] mb-8 flex items-center gap-4 text-left">
-                    <span className="w-8 h-[1px] bg-[#A3B18A]"></span>
-                    Líneas Sugeridas
-                  </h2>
-                  <ProductGrid productos={productosPorCategoria as any} />
-                </div>
-              )}
-              {productosPorNombre.length === 0 && productosPorCategoria.length === 0 && <EmptyState />}
             </div>
           ) : (
             <div className="space-y-24">
