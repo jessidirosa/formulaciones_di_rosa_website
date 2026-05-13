@@ -163,11 +163,11 @@ export default async function TiendaPage({
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl relative">
         {/* Título adaptado */}
-        <div className="mb-8 border-l-4 border-[#4A5D45] pl-4 md:pl-6 text-left">
-          <h1 className="text-3xl md:text-5xl font-bold text-[#3A4031] mb-2 tracking-tight uppercase leading-none">
-            Laboratorio Magistral
+        <div className="mb-6 border-l-4 border-[#4A5D45] pl-4 text-left">
+          <h1 className="text-2xl md:text-5xl font-bold text-[#3A4031] leading-tight uppercase tracking-tighter">
+            Laboratorio <br className="md:hidden" /> Magistral
           </h1>
-          <p className="text-sm md:text-lg text-[#5B6350] max-w-2xl font-light italic">
+          <p className="text-xs md:text-lg text-[#5B6350] font-light italic mt-1">
             Fórmulas exclusivas diseñadas por profesionales para potenciar tu belleza natural.
           </p>
         </div>
