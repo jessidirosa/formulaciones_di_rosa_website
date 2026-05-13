@@ -248,6 +248,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   const clearCart = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('formulaciones-cart');
+    }
     dispatch({ type: 'CLEAR_CART' })
   }
 

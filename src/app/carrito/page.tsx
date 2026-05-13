@@ -27,11 +27,16 @@ export default function CarritoPage() {
   const router = useRouter()
   const [showGuestModal, setShowGuestModal] = useState(false)
 
-  const handleClearCart = () => {
-    if (window.confirm("¿Deseas vaciar toda tu selección magistral?")) {
-      clearCart()
+  const handleClearCart = (e: React.MouseEvent) => {
+    e.preventDefault(); // Evitamos cualquier comportamiento extraño del botón
+    e.stopPropagation();
+
+    const confirmar = window.confirm("¿Deseas vaciar toda tu selección magistral?");
+    if (confirmar) {
+      console.log("Vaciando carrito...");
+      clearCart();
     }
-  }
+  };
 
   if (state.items.length === 0) {
     return (
@@ -98,9 +103,10 @@ export default function CarritoPage() {
 
           {/* ✅ BOTÓN VACIAR CARRITO */}
           <Button
+            type="button" // Forzamos que sea tipo botón y no submit
             variant="ghost"
             onClick={handleClearCart}
-            className="text-[#A3B18A] hover:text-red-500 hover:bg-red-50 text-[10px] font-bold uppercase tracking-widest gap-2 mb-1"
+            className="text-[#A3B18A] hover:text-red-500 hover:bg-red-50 text-[10px] font-bold uppercase tracking-widest gap-2 mb-1 z-50 relative"
           >
             <Trash2 className="w-3 h-3" /> Vaciar Carrito
           </Button>

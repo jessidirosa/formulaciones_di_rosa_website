@@ -152,47 +152,54 @@ export default async function TiendaPage({
   const nombreCategoriaActual = categorias.find(c => c.slug === params.categoria)?.nombre
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] relative">
-      {/* ✅ BARRA STICKY CORREGIDA: z-[100] para estar sobre todo, top-0 o top-[altura-header] si tenés header fijo */}
-      {/* ✅ Barra Sticky Corregida para Móvil */}
+    <div className="min-h-screen bg-[#F5F5F0] relative overflow-x-hidden">
+      {/* Barra Sticky */}
       <div className="sticky top-0 z-[100] bg-[#F5F5F0]/80 backdrop-blur-md border-b border-[#D6D6C2] py-2 w-full shadow-sm">
-        <div className="container mx-auto px-2 md:px-4 max-w-7xl">
+        <div className="w-full px-4 md:container md:mx-auto max-w-7xl">
           <CategoriesMenu categorias={categorias} />
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl relative">
-        {/* Título adaptado */}
-        <div className="mb-6 border-l-4 border-[#4A5D45] pl-4 text-left">
-          <h1 className="text-2xl md:text-5xl font-bold text-[#3A4031] leading-tight uppercase tracking-tighter">
+      {/* Main: Quitamos el container rígido para que en móvil toque los bordes si es necesario */}
+      <main className="w-full max-w-7xl mx-auto px-4 py-8 md:py-12 relative">
+
+        {/* Título: Forzamos ancho total */}
+        <div className="mb-6 border-l-4 border-[#4A5D45] pl-4 text-left w-full">
+          <h1 className="text-3xl md:text-5xl font-bold text-[#3A4031] leading-tight uppercase tracking-tighter">
             Laboratorio <br className="md:hidden" /> Magistral
           </h1>
-          <p className="text-xs md:text-lg text-[#5B6350] font-light italic mt-1">
+          <p className="text-xs md:text-lg text-[#5B6350] font-light italic mt-1 w-full">
             Fórmulas exclusivas diseñadas por profesionales para potenciar tu belleza natural.
           </p>
         </div>
 
-        <div className="mb-10 text-left space-y-4">
+        {/* Contenedor de Filtros: Aquí es donde eliminamos el "aire" lateral */}
+        <div className="mb-10 text-left space-y-4 w-full">
           {params.categoria && params.categoria !== 'todos' && (
-            <div className="flex items-center gap-2 text-[#4A5D45] bg-[#A3B18A]/10 w-fit px-4 py-2 rounded-full border border-[#A3B18A]/20 animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="flex items-center gap-2 text-[#4A5D45] bg-[#A3B18A]/10 w-fit px-4 py-2 rounded-full border border-[#A3B18A]/20">
               <Search className="w-3 h-3" />
               <span className="text-[11px] font-bold uppercase tracking-wider">
-                Estás en la categoría: <span className="underline decoration-2 underline-offset-4">{nombreCategoriaActual}</span>
+                Estás en la categoría: <span className="underline underline-offset-4">{nombreCategoriaActual}</span>
               </span>
             </div>
           )}
 
-          <Suspense fallback={<div className="h-20 bg-[#E9E9E0] animate-pulse rounded-2xl" />}>
-            <ProductFilters
-              categorias={categorias}
-              categoriaActual={params.categoria}
-              busquedaActual={params.busqueda}
-              ordenActual={params.orden}
-            />
-          </Suspense>
+          {/* Wrapper del Filtro: Asegura que el componente se estire al máximo */}
+          <div className="w-full overflow-hidden">
+            <Suspense fallback={<div className="h-24 bg-[#E9E9E0] animate-pulse rounded-3xl w-full" />}>
+              <ProductFilters
+                categorias={categorias}
+                categoriaActual={params.categoria}
+                busquedaActual={params.busqueda}
+                ordenActual={params.orden}
+              />
+            </Suspense>
+          </div>
         </div>
 
-        <Separator className="mb-10 bg-[#D6D6C2]" />
+        <Separator className="mb-10 bg-[#D6D6C2] w-full" />
+
+        {/* Grilla de productos: También con w-full */}
 
         <Suspense fallback={<TiendaSkeleton />}>
           {params.busqueda && params.busqueda.trim() !== '' ? (

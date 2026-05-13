@@ -107,7 +107,7 @@ export default function ProductFilters({
 
   return (
     <div className={`space-y-6 p-6 rounded-3xl border shadow-sm transition-all duration-500 w-full overflow-hidden ${modoProActivo ? 'bg-[#3A4031] border-[#A3B18A] shadow-[#A3B18A]/10' :
-        isProfesional ? 'bg-gradient-to-br from-white to-[#F0F4EF] border-[#A3B18A]' : 'bg-white border-[#E9E9E0]'
+      isProfesional ? 'bg-gradient-to-br from-white to-[#F0F4EF] border-[#A3B18A]' : 'bg-white border-[#E9E9E0]'
       }`}>
 
       {/* SECCIÓN EXCLUSIVA PARA PROFESIONALES - Mantengo tu lógica intacta */}
@@ -127,8 +127,8 @@ export default function ProductFilters({
             variant="ghost"
             onClick={toggleModoPro}
             className={`h-8 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${modoProActivo
-                ? 'bg-red-500/20 text-red-200 hover:bg-red-500 hover:text-white'
-                : 'text-[#A3B18A] hover:bg-white/10'
+              ? 'bg-red-500/20 text-red-200 hover:bg-red-500 hover:text-white'
+              : 'text-[#A3B18A] hover:bg-white/10'
               }`}
           >
             {modoProActivo ? (
@@ -140,11 +140,10 @@ export default function ProductFilters({
         </div>
       )}
 
-      {/* La clave está en este contenedor: flex-wrap para que no empuje hacia la derecha */}
-      <div className="flex flex-wrap lg:flex-nowrap gap-6 justify-between items-center">
+      <div className="flex flex-col lg:flex-row gap-4 justify-between items-center w-full overflow-hidden">
 
         {/* Buscador: Mantenemos tu diseño con el botón afuera pero con w-full ajustable */}
-        <form onSubmit={handleSearch} className="relative flex-1 min-w-[280px] w-full group">
+        <form onSubmit={handleSearch} className="relative w-full lg:max-w-md shrink-0">
           <Input
             type="text"
             placeholder={isProfesional ? "Buscar insumos o fórmulas pro..." : "¿Qué fórmula estás buscando?"}
@@ -154,7 +153,7 @@ export default function ProductFilters({
           />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#A3B18A]" />
 
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+          <div className="flex items-center justify-between lg:justify-end gap-2 w-full lg:w-auto shrink-0">
             {busqueda && (
               <button type="button" onClick={() => { setBusqueda(''); updateSearchParams('busqueda', ''); }} className="text-gray-400 hover:text-red-500">
                 <X className="h-4 w-4" />
