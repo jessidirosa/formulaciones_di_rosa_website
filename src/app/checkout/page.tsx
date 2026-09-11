@@ -69,22 +69,31 @@ export default function CheckoutPage() {
   })
 
   // ✅ Efecto para cargar datos del usuario logueado
+  // ✅ Traemos los datos directamente de la base de datos para asegurarnos de incluir la dirección
   useEffect(() => {
-    if (user) {
-      setCheckoutData(prev => ({
-        ...prev,
-        nombre: prev.nombre || user.nombre || '',
-        apellido: prev.apellido || user.apellido || '',
-        emailCliente: prev.emailCliente || user.email || '',
-        telefono: prev.telefono || user.telefono || '',
-        dni: prev.dni || (user as any).dni || '',
-        direccion: prev.direccion || (user as any).direccion || '',
-        localidad: prev.localidad || (user as any).localidad || '',
-        provincia: prev.provincia || (user as any).provincia || '',
-        codigoPostal: prev.codigoPostal || (user as any).codigoPostal || '',
-      }))
+    if (isAuthenticated) {
+      fetch('/api/auth/me')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.user) {
+            const u = data.user
+            setCheckoutData(prev => ({
+              ...prev,
+              nombre: prev.nombre || u.nombre || '',
+              apellido: prev.apellido || u.apellido || '',
+              emailCliente: prev.emailCliente || u.email || '',
+              telefono: prev.telefono || u.telefono || '',
+              dni: prev.dni || u.dni || '',
+              direccion: prev.direccion || u.direccion || '',
+              localidad: prev.localidad || u.localidad || '',
+              provincia: prev.provincia || u.provincia || '',
+              codigoPostal: prev.codigoPostal || u.codigoPostal || '',
+            }))
+          }
+        })
+        .catch(err => console.error("Error al cargar dirección guardada:", err))
     }
-  }, [user])
+  }, [isAuthenticated])
 
   // ✅ Lógica de costo de envío
   useEffect(() => {
@@ -166,7 +175,7 @@ export default function CheckoutPage() {
 
       if (response.ok && (result.ok || result.success)) {
         if (isAuthenticated) {
-          fetch('/api/auth/me', {
+          await fetch('/api/auth/me', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
