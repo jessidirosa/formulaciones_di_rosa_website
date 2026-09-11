@@ -71,6 +71,13 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // 🔹 CAMPOS DE DIRECCIÓN PARA AUTOCOMPLETAR EN CHECKOUT
+  dni          String?
+  direccion    String?
+  localidad    String?
+  provincia    String?
+  codigoPostal String?
+
   pedidos Pedido[]
 }
 

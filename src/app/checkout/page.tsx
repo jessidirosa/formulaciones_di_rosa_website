@@ -77,6 +77,11 @@ export default function CheckoutPage() {
         apellido: prev.apellido || user.apellido || '',
         emailCliente: prev.emailCliente || user.email || '',
         telefono: prev.telefono || user.telefono || '',
+        dni: prev.dni || (user as any).dni || '',
+        direccion: prev.direccion || (user as any).direccion || '',
+        localidad: prev.localidad || (user as any).localidad || '',
+        provincia: prev.provincia || (user as any).provincia || '',
+        codigoPostal: prev.codigoPostal || (user as any).codigoPostal || '',
       }))
     }
   }, [user])
@@ -160,6 +165,22 @@ export default function CheckoutPage() {
       const result = await response.json()
 
       if (response.ok && (result.ok || result.success)) {
+        if (isAuthenticated) {
+          fetch('/api/auth/me', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nombre: checkoutData.nombre,
+              apellido: checkoutData.apellido,
+              telefono: checkoutData.telefono,
+              dni: checkoutData.dni,
+              direccion: checkoutData.direccion,
+              localidad: checkoutData.localidad,
+              provincia: checkoutData.provincia,
+              codigoPostal: checkoutData.codigoPostal,
+            })
+          }).catch(err => console.error("Error actualizando perfil:", err))
+        }
         clearCart()
         if (checkoutData.metodoPago === 'TRANSFERENCIA') {
           router.push(`/checkout/transferencia/${result.pedidoId}`)

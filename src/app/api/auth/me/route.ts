@@ -21,6 +21,11 @@ export async function GET() {
         telefono: true,
         role: true,
         tags: true,
+        dni: true,
+        direccion: true,
+        localidad: true,
+        provincia: true,
+        codigoPostal: true,
       }
     })
     return NextResponse.json({ user })
@@ -81,6 +86,8 @@ export async function PATCH(req: NextRequest) {
       passwordUpdate = { passwordHash: newPasswordHash }
     }
 
+    const { dni, direccion, localidad, provincia, codigoPostal } = await req.json()
+
     // 3. Update usando el ID
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
@@ -89,6 +96,11 @@ export async function PATCH(req: NextRequest) {
         apellido: apellido || user.apellido,
         email: email || user.email,
         telefono: telefono || user.telefono,
+        dni: dni || user.dni,
+        direccion: direccion || user.direccion,
+        localidad: localidad || user.localidad,
+        provincia: provincia || user.provincia,
+        codigoPostal: codigoPostal || user.codigoPostal,
         ...passwordUpdate
       }
     })
