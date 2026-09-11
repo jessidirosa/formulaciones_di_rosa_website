@@ -116,7 +116,7 @@ export default function OrderSummary({
                   <span className="text-[#4A5D45] font-bold uppercase text-[10px]">Sin Cargo</span>
                   {tipoEntrega === 'ENVIO_DOMICILIO' && subtotal >= 200000 && (
                     <div className="text-[9px] text-[#A3B18A] line-through font-bold leading-none">
-                      {formatPrice(9500)}
+                      {formatPrice(10000)}
                     </div>
                   )}
                 </div>

@@ -29,7 +29,7 @@ export default function CartSummary({
   const faltaParaEnvioGratis = ENVIO_GRATIS_MINIMO - subtotal
   const porcentajeProgreso = Math.min((subtotal / ENVIO_GRATIS_MINIMO) * 100, 100)
 
-  const costoEnvioFinal = envioGratis ? 0 : costoEnvio || 9500
+  const costoEnvioFinal = envioGratis ? 0 : costoEnvio || 10000
   const total = subtotal + costoEnvioFinal - descuento
 
   return (
