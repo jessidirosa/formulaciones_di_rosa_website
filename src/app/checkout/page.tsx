@@ -84,8 +84,8 @@ export default function CheckoutPage() {
   // ✅ Lógica de costo de envío
   useEffect(() => {
     const ENVIO_GRATIS_MINIMO = 200000
-    const COSTO_SUCURSAL = 7000
-    const COSTO_DOMICILIO = 9500
+    const COSTO_SUCURSAL = 7500
+    const COSTO_DOMICILIO = 10000
 
     if (checkoutData.tipoEntrega === 'RETIRO_LOCAL') {
       setCostoEnvio(0)
