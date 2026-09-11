@@ -39,7 +39,7 @@ const announcements = [
         link: "/servicios"
     },
     {
-        text: "USÁ EL CUPÓN 'HOLA2026' Y OBTENÉ $5.000 OFF EXTRA EN TU COMPRA",
+        text: "USÁ EL CUPÓN 'WELCOME' Y OBTENÉ $5.000 OFF EXTRA EN TU COMPRA",
         icon: <Sparkles className="w-3 h-3 flex-shrink-0" />,
         color: "bg-[#D4A373]",
         link: "/tienda"
