@@ -7,9 +7,9 @@ import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import {
     Package, Truck, Calendar, Clock, ExternalLink, AlertCircle,
-    CheckCircle2, FlaskConical, Boxes, Landmark, ChevronRight, Loader2, Tag, CreditCard, ArrowRight, Sparkles
+    CheckCircle2, FlaskConical, Boxes, Landmark, ChevronRight, Loader2, Tag, CreditCard, ArrowRight, Sparkles,
+    User, Phone, Mail, FileText, MapPin
 } from "lucide-react"
-
 function formatARS(n: number) {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n)
 }
@@ -26,6 +26,16 @@ function formatFechaEstimadaConsistente(fechaIso: string) {
     const mes = fin.toLocaleDateString("es-AR", { month: 'long' });
 
     return `${diaIn} al ${diaFin} de ${mes}`;
+}
+
+function formatoTipoEntrega(tipo: string) {
+    switch (tipo) {
+        case 'RETIRO_LOCAL': return 'Retiro en Local / Punto de Entrega';
+        case 'ENVIO_DOMICILIO': return 'Envío a Domicilio';
+        case 'SUCURSAL_CORREO': return 'Retiro en Sucursal de Correo';
+        case 'MOTOMENSAJERIA': return 'Motomensajería (A coordinar)';
+        default: return tipo || 'No especificado';
+    }
 }
 
 const INFO_ESTADOS: Record<string, { title: string, desc: string, next: string, icon: any, color: string }> = {
@@ -314,6 +324,99 @@ export default function PedidoPublicPage({ params }: PageProps) {
                     </Card>
                 )}
 
+                {/* ✅ NUEVA SECCIÓN: DATOS DEL CLIENTE Y ENVÍO */}
+                <Card className="border-none shadow-md rounded-3xl overflow-hidden bg-white">
+                    <CardHeader className="bg-[#F9F9F7] border-b border-[#E9E9E0]">
+                        <CardTitle className="text-[10px] uppercase tracking-widest font-bold text-[#A3B18A] text-left flex items-center gap-2">
+                            <User className="w-3.5 h-3.5 text-[#4A5D45]" /> Datos de Entrega y Titular
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4 text-xs text-[#5B6350]">
+                        {/* Datos Personales */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex items-center gap-2">
+                                <User className="w-3.5 h-3.5 text-[#A3B18A] flex-shrink-0" />
+                                <div>
+                                    <span className="block text-[9px] uppercase font-bold text-[#A3B18A]">Cliente</span>
+                                    <span className="font-bold text-[#3A4031]">
+                                        {pedido.nombreCliente} {pedido.apellidoCliente}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {pedido.dniCliente && (
+                                <div className="flex items-center gap-2">
+                                    <FileText className="w-3.5 h-3.5 text-[#A3B18A] flex-shrink-0" />
+                                    <div>
+                                        <span className="block text-[9px] uppercase font-bold text-[#A3B18A]">DNI</span>
+                                        <span className="font-bold text-[#3A4031]">{pedido.dniCliente}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {pedido.telefonoCliente && (
+                                <div className="flex items-center gap-2">
+                                    <Phone className="w-3.5 h-3.5 text-[#A3B18A] flex-shrink-0" />
+                                    <div>
+                                        <span className="block text-[9px] uppercase font-bold text-[#A3B18A]">Teléfono</span>
+                                        <span className="font-bold text-[#3A4031]">{pedido.telefonoCliente}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {pedido.emailCliente && (
+                                <div className="flex items-center gap-2">
+                                    <Mail className="w-3.5 h-3.5 text-[#A3B18A] flex-shrink-0" />
+                                    <div>
+                                        <span className="block text-[9px] uppercase font-bold text-[#A3B18A]">Email</span>
+                                        <span className="font-bold text-[#3A4031] break-all">{pedido.emailCliente}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <Separator className="bg-[#F5F5F0]" />
+
+                        {/* Detalles del Envío */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <Truck className="w-3.5 h-3.5 text-[#4A5D45] flex-shrink-0" />
+                                <div>
+                                    <span className="block text-[9px] uppercase font-bold text-[#A3B18A]">Método de Entrega</span>
+                                    <span className="font-bold text-[#3A4031]">{formatoTipoEntrega(pedido.tipoEntrega)}</span>
+                                </div>
+                            </div>
+
+                            {/* Mostrar dirección completa si aplica */}
+                            {pedido.direccion && (
+                                <div className="flex items-start gap-2 pt-1">
+                                    <MapPin className="w-3.5 h-3.5 text-[#A3B18A] mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <span className="block text-[9px] uppercase font-bold text-[#A3B18A]">Dirección de Destino</span>
+                                        <span className="font-medium text-[#3A4031]">
+                                            {pedido.direccion}
+                                            {pedido.localidad ? `, ${pedido.localidad}` : ""}
+                                            {pedido.provincia ? `, ${pedido.provincia}` : ""}
+                                            {pedido.codigoPostal ? ` (CP: ${pedido.codigoPostal})` : ""}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Sucursal de correo si seleccionó sucursal */}
+                            {pedido.sucursalNombre && (
+                                <div className="flex items-start gap-2 pt-1">
+                                    <MapPin className="w-3.5 h-3.5 text-[#A3B18A] mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <span className="block text-[9px] uppercase font-bold text-[#A3B18A]">Sucursal Seleccionada</span>
+                                        <span className="font-medium text-[#3A4031]">{pedido.sucursalNombre}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
                 <Card className="border-none shadow-xl rounded-3xl overflow-hidden bg-white">
                     <CardHeader className="bg-[#F9F9F7] border-b border-[#E9E9E0]">
                         <CardTitle className="text-[10px] uppercase tracking-widest font-bold text-[#A3B18A] text-left">Resumen de Inversión</CardTitle>
@@ -349,8 +452,8 @@ export default function PedidoPublicPage({ params }: PageProps) {
                                 <span>{formatARS(subtotalItems)}</span>
                             </div>
                             <div className={`flex justify-between items-center transition-all ${(pedido.tipoEntrega === "MOTOMENSAJERIA" || pedido.tipoEntrega === "RETIRO_LOCAL")
-                                    ? "bg-[#F9F9F7] -mx-2 px-2 py-2 rounded-xl border border-[#E9E9E0]/50"
-                                    : ""
+                                ? "bg-[#F9F9F7] -mx-2 px-2 py-2 rounded-xl border border-[#E9E9E0]/50"
+                                : ""
                                 }`}>
                                 <span className="text-sm font-medium text-[#5B6350]">
                                     {pedido.tipoEntrega === "RETIRO_LOCAL" ? "Retiro" : "Envío"}
