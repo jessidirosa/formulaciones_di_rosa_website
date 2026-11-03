@@ -59,37 +59,44 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
     const now = new Date()
 
     // --- LÓGICA DE CAPACIDAD ---
-    const resumenCapacidad = await obtenerResumenCapacidad()
+    // ✅ OPTIMIZACIÓN 1: Cargar capacidad y expirados al mismo tiempo + seleccionar solo campos necesarios
+    const [resumenCapacidad, pedidosAExpirar] = await Promise.all([
+        obtenerResumenCapacidad(),
+        prisma.pedido.findMany({
+            where: {
+                metodoPago: "TRANSFERENCIA",
+                estado: "pending_payment_transfer",
+                expiresAt: { lt: now },
+            },
+            select: { id: true, emailCliente: true, nombreCliente: true, numero: true }
+        })
+    ])
 
-    const pedidosAExpirar = await prisma.pedido.findMany({
-        where: {
-            metodoPago: "TRANSFERENCIA",
-            estado: "pending_payment_transfer",
-            expiresAt: { lt: now },
-        },
-    })
-
+    // ✅ OPTIMIZACIÓN 2: Actualización inmediata en BD y envíos de mails en paralelo/segundo plano
     if (pedidosAExpirar.length > 0) {
-        for (const p of pedidosAExpirar) {
-            if (p.emailCliente) {
-                try {
-                    await sendEmail(
-                        p.emailCliente,
+        const idsExpirados = pedidosAExpirar.map(p => p.id)
+
+        // Actualizamos la base de datos de una sola vez
+        await prisma.pedido.updateMany({
+            where: { id: { in: idsExpirados } },
+            data: { estado: "cancelled_expired" },
+        })
+
+        // Disparamos los mails sin hacer 'await' dentro del flujo principal
+        Promise.all(
+            pedidosAExpirar
+                .filter(p => p.emailCliente)
+                .map(p =>
+                    sendEmail(
+                        p.emailCliente!,
                         `⏳ Tu pedido #${p.numero} ha expirado`,
                         emailPagoExpirado({
                             nombre: p.nombreCliente || undefined,
                             pedidoNumero: p.numero
                         })
-                    )
-                } catch (e) {
-                    console.error("Error enviando mail de expiración:", e)
-                }
-            }
-        }
-        await prisma.pedido.updateMany({
-            where: { id: { in: pedidosAExpirar.map(p => p.id) } },
-            data: { estado: "cancelled_expired" },
-        })
+                    ).catch(e => console.error("Error enviando mail de expiración:", e))
+                )
+        )
     }
 
     const where: any = {}
@@ -133,16 +140,21 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
         }
     }
 
+    // ✅ OPTIMIZACIÓN 3: Sacamos 'user: true' ya que todos los datos del cliente se leen directo del pedido
     const pedidos = await prisma.pedido.findMany({
         where,
         orderBy: [{ createdAt: "desc" }],
-        include: { items: true, user: true },
+        include: { items: true },
     })
 
-    await prisma.pedido.updateMany({
-        where: { adminSeenAt: null },
-        data: { adminSeenAt: new Date() },
-    })
+    // ✅ OPTIMIZACIÓN 4: Solo ejecuta la query si realmente hay algún pedido nuevo sin ver
+    const haySinVer = pedidos.some(p => p.adminSeenAt === null)
+    if (haySinVer) {
+        prisma.pedido.updateMany({
+            where: { adminSeenAt: null },
+            data: { adminSeenAt: new Date() },
+        }).catch(err => console.error("Error marcando vistos:", err))
+    }
 
     const totalPedidos = pedidos.length
     // ✅ Facturación calculada directamente sobre los pedidos filtrados arriba
