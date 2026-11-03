@@ -57,7 +57,8 @@ export async function PATCH(
     const resolvedParams = await params;
     const pedidoId = Number(resolvedParams.id);
 
-    const { items, total, subtotal, descuento, notasCliente, datosContacto } = await req.json();
+    const body = await req.json()
+    const { items, subtotal, total, descuento, notasCliente, datosContacto, fechaEstimadaEnvio } = body
 
     try {
         // 0. Buscamos si existe un usuario con el email que pusiste en el formulario
@@ -89,13 +90,13 @@ export async function PATCH(
                     subtotal: subtotal,
                     descuento: Number(descuento),
                     notasCliente: notasCliente,
+                    fechaEstimadaEnvio: fechaEstimadaEnvio ? new Date(fechaEstimadaEnvio) : null,
                     nombreCliente: datosContacto.nombreCliente,
                     apellidoCliente: datosContacto.apellidoCliente,
                     emailCliente: datosContacto.emailCliente,
                     telefonoCliente: datosContacto.telefonoCliente,
                     direccion: datosContacto.direccion,
                     localidad: datosContacto.localidad,
-                    // ✅ IMPORTANTE: Agregamos la sucursal aquí
                     sucursalCorreo: datosContacto.sucursalCorreo,
                     // Si encontramos al usuario, asociamos el pedido a su cuenta.
                     // Si no existe el usuario, el pedido queda como invitado (null).

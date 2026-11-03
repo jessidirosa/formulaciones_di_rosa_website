@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { sendEmail } from "@/lib/email"
+import { emailPedidoRecibido, emailPedidoConfirmado } from "@/lib/emailTemplates"
 
 export async function POST(req: NextRequest) {
     try {
@@ -29,6 +31,7 @@ export async function POST(req: NextRequest) {
             items, // Array de { productoId, nombreProducto, cantidad, precioUnitario, notas }
             costoEnvio = 0,
             descuento = 0,
+            fechaEstimadaEnvio,
             notasCliente
         } = body
 
@@ -70,6 +73,7 @@ export async function POST(req: NextRequest) {
                 subtotal: Math.round(subtotal),
                 costoEnvio: Math.round(Number(costoEnvio)),
                 descuento: Math.round(Number(descuento)),
+                fechaEstimadaEnvio: fechaEstimadaEnvio ? new Date(fechaEstimadaEnvio) : null, // ✅ GUARDAR EN BD
                 total: Math.round(total),
                 notasCliente,
                 items: {
@@ -83,6 +87,51 @@ export async function POST(req: NextRequest) {
                 }
             }
         })
+
+        if (nuevoPedido.emailCliente) {
+            try {
+                const appUrl = process.env.APP_URL || "http://localhost:3000"
+                const linkEstado = `${appUrl}/pedido/${nuevoPedido.publicToken}`
+
+                if (nuevoPedido.estado === "confirmado" || nuevoPedido.estado === "en_produccion") {
+                    // Usamos la plantilla oficial de pago acreditado / confirmado
+                    await sendEmail(
+                        nuevoPedido.emailCliente,
+                        `✅ Pago Acreditado - Pedido #${nuevoPedido.numero}`,
+                        emailPedidoConfirmado({
+                            nombre: nuevoPedido.nombreCliente || undefined,
+                            pedidoNumero: nuevoPedido.numero,
+                            linkEstado
+                        })
+                    )
+                } else {
+                    // Usamos la plantilla completa con el desglose de productos y totales
+                    const itemsFormatted = items.map((it: any) => ({
+                        nombre: it.nombreProducto,
+                        cantidad: Number(it.cantidad),
+                        subtotal: Math.round(it.precioUnitario * it.cantidad)
+                    }))
+
+                    await sendEmail(
+                        nuevoPedido.emailCliente,
+                        `🧾 Recibimos tu pedido #${nuevoPedido.numero}`,
+                        emailPedidoRecibido({
+                            nombre: nuevoPedido.nombreCliente || undefined,
+                            pedidoNumero: nuevoPedido.numero,
+                            total: nuevoPedido.total,
+                            subtotal: nuevoPedido.subtotal,
+                            costoEnvio: nuevoPedido.costoEnvio,
+                            descuento: nuevoPedido.descuento,
+                            metodoPago: nuevoPedido.metodoPago || undefined,
+                            linkEstado,
+                            items: itemsFormatted
+                        })
+                    )
+                }
+            } catch (err) {
+                console.error("Error al enviar el email de orden manual:", err)
+            }
+        }
 
         return NextResponse.json({ ok: true, pedido: nuevoPedido })
     } catch (error: any) {

@@ -45,6 +45,7 @@ export default function CrearPedidoModal() {
     const [estado, setEstado] = useState("confirmado")
     const [costoEnvio, setCostoEnvio] = useState<number | "">(0)
     const [descuento, setDescuento] = useState<number | "">(0)
+    const [fechaEstimadaEnvio, setFechaEstimadaEnvio] = useState("")
     const [notasCliente, setNotasCliente] = useState("")
 
     const [items, setItems] = useState<ItemPedido[]>([])
@@ -110,6 +111,7 @@ export default function CrearPedidoModal() {
                     estado,
                     costoEnvio: Number(costoEnvio || 0),
                     descuento: Number(descuento || 0),
+                    fechaEstimadaEnvio: fechaEstimadaEnvio || null,
                     notasCliente,
                     items
                 })
@@ -119,12 +121,21 @@ export default function CrearPedidoModal() {
             if (res.ok && data.ok) {
                 toast.success(`Pedido #${data.pedido.numero} creado exitosamente`)
                 setOpen(false)
-                // Limpiar form
+                // ✅ LIMPIAR CAMPOS DEL FORMULARIO
                 setItems([])
                 setNombreCliente("")
                 setApellidoCliente("")
                 setEmailCliente("")
                 setTelefonoCliente("")
+                setDniCliente("")
+                setDireccion("")
+                setLocalidad("")
+                setProvincia("")
+                setCodigoPostal("")
+                setNotasCliente("")
+                setCostoEnvio(0)
+                setDescuento(0)
+                setFechaEstimadaEnvio("")
                 router.refresh()
             } else {
                 toast.error(data.error || "Error al crear pedido")
@@ -197,6 +208,15 @@ export default function CrearPedidoModal() {
                                     <option value="listo_envio">Listo para Envío</option>
                                     <option value="entregado">Entregado</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className="text-[9px] uppercase font-bold text-gray-400 block mb-1">Fecha Est. Envío</label>
+                                <Input
+                                    type="date"
+                                    value={fechaEstimadaEnvio}
+                                    onChange={e => setFechaEstimadaEnvio(e.target.value)}
+                                    className="bg-white rounded-xl text-xs h-9"
+                                />
                             </div>
                         </div>
 

@@ -7,12 +7,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2, User, MapPin, FileText, CreditCard, Home } from "lucide-react"
+import { Plus, Trash2, User, MapPin, FileText, CreditCard, Home, Calendar } from "lucide-react"
+
 
 export default function EditarPedidoModal({ pedido }: { pedido: any }) {
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
+    const fechaInicial = pedido.fechaEstimadaEnvio
+        ? new Date(pedido.fechaEstimadaEnvio).toISOString().split("T")[0]
+        : ""
+
+    const [fechaEstimadaEnvio, setFechaEstimadaEnvio] = useState(fechaInicial)
 
     // Estados para edición
     const [items, setItems] = useState(pedido.items.map((item: any) => ({
@@ -62,6 +68,7 @@ export default function EditarPedidoModal({ pedido }: { pedido: any }) {
                     total,
                     descuento,
                     notasCliente,
+                    fechaEstimadaEnvio: fechaEstimadaEnvio || null,
                     datosContacto: contacto
                 })
             })
@@ -172,6 +179,18 @@ export default function EditarPedidoModal({ pedido }: { pedido: any }) {
                                 <Input value={contacto.direccion} onChange={e => setContacto({ ...contacto, direccion: e.target.value })} placeholder="Calle y Nro" className="h-8 text-xs bg-white" />
                                 <Input value={contacto.localidad} onChange={e => setContacto({ ...contacto, localidad: e.target.value })} placeholder="Localidad" className="h-8 text-xs bg-white" />
 
+                                {/* 👈 AGREGAR ESTE BLOQUE DEBAJO DE LA DIRECCIÓN / LOCALIDAD */}
+                                <div className="pt-2 border-t border-gray-200/60 mt-2">
+                                    <Label className="text-[10px] uppercase font-black text-[#4A5D45] flex items-center gap-1 mb-1.5">
+                                        <Calendar className="w-3 h-3 text-[#A3B18A]" /> Fecha Estimada de Envío
+                                    </Label>
+                                    <Input
+                                        type="date"
+                                        value={fechaEstimadaEnvio}
+                                        onChange={e => setFechaEstimadaEnvio(e.target.value)}
+                                        className="h-8 text-xs bg-white"
+                                    />
+                                </div>
                                 {pedido.tipoEntrega === 'SUCURSAL_CORREO' && (
                                     <div className="pt-2 border-t mt-2">
                                         <Label className="text-[9px] uppercase font-bold text-amber-700 flex items-center gap-1 mb-1">
