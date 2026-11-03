@@ -29,6 +29,7 @@ import PedidosFiltros from "@/components/admin/PedidosFiltros"
 import { obtenerResumenCapacidad, formatearFechaArgentina } from "@/lib/capacity"
 import BotonSaltoSemana from "@/components/admin/BotonSaltoSemana"
 import EditarPedidoModal from "@/components/admin/EditarPedidoModal"
+import CrearPedidoModal from "@/components/admin/CrearPedidoModal"
 
 interface PedidosPageProps {
     searchParams: Promise<{
@@ -153,6 +154,19 @@ export default async function PedidosPage({ searchParams }: PedidosPageProps) {
                 <div className="space-y-1">
                     <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Panel de Pedidos</h1>
                     <p className="text-gray-500 text-sm">Gestioná las órdenes y el flujo del laboratorio</p>
+                </div>
+
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Panel de Pedidos</h1>
+                            {/* ✅ BOTÓN DE CREAR PEDIDO MANUAL */}
+                            <CrearPedidoModal />
+                        </div>
+                        <p className="text-gray-500 text-sm">Gestioná las órdenes y el flujo del laboratorio</p>
+                    </div>
+
+                    {/* ... resto del código ... */}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full md:w-auto">
