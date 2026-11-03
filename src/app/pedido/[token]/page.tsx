@@ -485,7 +485,16 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             )}
                             <div className="flex justify-between text-[#4A5D45] pt-2 border-t border-[#F9F9F7]">
                                 <span className="flex items-center gap-1 text-left"><CreditCard className="w-3 h-3" /> Método de Pago</span>
-                                <span>{pedido.metodoPago === 'MERCADOPAGO' ? 'Mercado Pago' : 'Transferencia Bancaria'}</span>
+                                <span>
+                                    {pedido.metodoPago === 'MERCADOPAGO'
+                                        ? 'Mercado Pago'
+                                        : pedido.metodoPago === 'EFECTIVO'
+                                            ? (pedido.tipoEntrega === 'MOTOMENSAJERIA' || pedido.metodoEnvio === 'MOTOMENSAJERIA'
+                                                ? 'Efectivo contra entrega (Motomensajería)'
+                                                : 'Efectivo en Punto de Retiro')
+                                            : 'Transferencia Bancaria'
+                                    }
+                                </span>
                             </div>
                         </div>
                         <div className="flex justify-between items-baseline pt-4 border-t-2 border-[#F9F9F7]">
