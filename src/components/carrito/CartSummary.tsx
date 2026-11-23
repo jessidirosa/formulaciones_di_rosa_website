@@ -71,7 +71,7 @@ export default function CartSummary({
           </div>
 
           <div className="flex justify-between text-sm text-[#5B6350]">
-            <span>Costo de Envío (Es un valor estimativo, el tipo de entrega se coordina luego)</span>
+
             <span className={envioGratis ? "text-[#4A5D45] font-bold" : "font-semibold text-[#3A4031]"}>
               {envioGratis ? "Bonificado" : formatPrice(costoEnvioFinal)}
             </span>
@@ -89,7 +89,7 @@ export default function CartSummary({
 
         {/* Total Final */}
         <div className="flex justify-between items-baseline">
-          <span className="text-sm font-bold text-[#3A4031] uppercase tracking-widest">Total</span>
+          <span className="text-sm font-bold text-[#3A4031] uppercase tracking-widest">Subtotal</span>
           <div className="text-right">
             <span className="text-3xl font-serif font-bold text-[#4A5D45]">
               {formatPrice(total)}
