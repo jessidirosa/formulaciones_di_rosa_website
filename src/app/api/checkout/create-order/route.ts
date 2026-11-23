@@ -84,6 +84,41 @@ export async function POST(req: Request) {
       if (!pedidoExistente) existe = false;
     }
 
+    let descuentoCupon = 0
+    const codigoCupon = data.cuponCodigo?.trim().toUpperCase()
+
+    if (codigoCupon) {
+      const cupon = await prisma.cupon.findUnique({
+        where: { codigo: codigoCupon }
+      })
+
+      const ahora = new Date()
+
+      if (
+        !cupon ||
+        !cupon.activo ||
+        (cupon.fechaInicio && ahora < cupon.fechaInicio) ||
+        (cupon.fechaVencimiento && ahora >= cupon.fechaVencimiento) ||
+        (cupon.limiteUsos !== null && cupon.usos >= cupon.limiteUsos) ||
+        (cupon.montoMinimo !== null && data.subtotal < cupon.montoMinimo)
+      ) {
+        return NextResponse.json(
+          { ok: false, error: "El cupón ya no está disponible. Volvé a aplicarlo o quitá el código." },
+          { status: 400 }
+        )
+      }
+
+      descuentoCupon = cupon.tipo === "PORCENTAJE"
+        ? Math.round(data.subtotal * cupon.valor / 100)
+        : Math.min(cupon.valor, data.subtotal)
+    }
+
+    if (Number(data.cuponDescuento || 0) !== descuentoCupon) {
+      return NextResponse.json(
+        { ok: false, error: "El descuento del cupón cambió. Actualizá el checkout y volvé a intentarlo." },
+        { status: 400 }
+      )
+    }
 
     const pedido = await prisma.pedido.create({
       data: {
@@ -116,8 +151,8 @@ export async function POST(req: Request) {
         publicToken: crypto.randomUUID(),
         metodoPago,
         expiresAt,
-        cuponCodigo: data.cuponCodigo || null,
-        cuponDescuento: data.cuponDescuento || 0,
+        cuponCodigo: codigoCupon || null,
+        cuponDescuento: descuentoCupon,
         items: { create: itemsCreate },
       },
       include: { items: true },

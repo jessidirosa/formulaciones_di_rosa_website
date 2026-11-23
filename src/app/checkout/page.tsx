@@ -162,7 +162,8 @@ export default function CheckoutPage() {
         costoEnvio,
         total: totalFinal,
         items,
-        cuponCodigo: checkoutData.cuponCodigo || null
+        cuponCodigo: checkoutData.cuponCodigo || null,
+        cuponDescuento,
       }
 
       const response = await fetch('/api/checkout/create-order', {

@@ -52,7 +52,7 @@ export default async function AdminCuponesPage() {
                                 <TableHead className="font-bold text-[10px] uppercase text-[#A3B18A]">Código</TableHead>
                                 <TableHead className="font-bold text-[10px] uppercase text-[#A3B18A]">Descuento</TableHead>
                                 <TableHead className="font-bold text-[10px] uppercase text-[#A3B18A]">Uso / Límite</TableHead>
-                                <TableHead className="font-bold text-[10px] uppercase text-[#A3B18A]">Vencimiento</TableHead>
+                                <TableHead className="font-bold text-[10px] uppercase text-[#A3B18A]">Vigencia</TableHead>
                                 <TableHead className="font-bold text-[10px] uppercase text-[#A3B18A]">Estado</TableHead>
                                 <TableHead className="text-right font-bold text-[10px] uppercase text-[#A3B18A]">Acciones</TableHead>
                             </TableRow>
