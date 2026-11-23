@@ -108,6 +108,23 @@ export async function POST(req: Request) {
         )
       }
 
+      if (cupon.usosPorCliente === 1 && data.emailCliente) {
+        const yaLoUso = await prisma.pedido.findFirst({
+          where: {
+            emailCliente: data.emailCliente,
+            cuponCodigo: codigoCupon,
+            estado: { notIn: ['cancelado', 'cancelled', 'expired'] }
+          }
+        })
+
+        if (yaLoUso) {
+          return NextResponse.json(
+            { ok: false, error: 'Ya utilizaste este cupón en una compra anterior' },
+            { status: 400 }
+          )
+        }
+      }
+
       descuentoCupon = cupon.tipo === "PORCENTAJE"
         ? Math.round(data.subtotal * cupon.valor / 100)
         : Math.min(cupon.valor, data.subtotal)

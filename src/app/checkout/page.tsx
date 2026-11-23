@@ -12,6 +12,7 @@ import PaymentSection from '@/components/checkout/PaymentSection'
 import OrderSummary from '@/components/checkout/OrderSummary'
 import EstimatedDate from '@/components/carrito/EstimatedDate'
 import { ArrowLeft, Lock, CreditCard, ShieldCheck, Star } from 'lucide-react'
+import { toast } from 'sonner'
 
 export interface CheckoutData {
   nombre: string
@@ -173,6 +174,11 @@ export default function CheckoutPage() {
       })
 
       const result = await response.json()
+
+      if (!response.ok || (!result.ok && !result.success)) {
+        toast.error(result.error || 'No se pudo crear el pedido')
+        return
+      }
 
       if (response.ok && (result.ok || result.success)) {
         if (isAuthenticated) {
