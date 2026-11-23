@@ -70,13 +70,6 @@ export default function CartSummary({
             )}
           </div>
 
-          <div className="flex justify-between text-sm text-[#5B6350]">
-
-            <span className={envioGratis ? "text-[#4A5D45] font-bold" : "font-semibold text-[#3A4031]"}>
-              {envioGratis ? "Bonificado" : null}
-            </span>
-          </div>
-
           {descuento > 0 && (
             <div className="flex justify-between text-sm text-[#A3B18A] bg-[#A3B18A]/10 p-2 rounded-lg border border-[#A3B18A]/20 font-bold">
               <span>Beneficio aplicado</span>
