@@ -8,7 +8,7 @@ import { toast } from "sonner"
 import {
     Package, Truck, Calendar, Clock, ExternalLink, AlertCircle,
     CheckCircle2, FlaskConical, Boxes, Landmark, ChevronRight, Loader2, Tag, CreditCard, ArrowRight, Sparkles,
-    User, Phone, Mail, FileText, MapPin
+    User, Phone, Mail, FileText, MapPin, Copy
 } from "lucide-react"
 function formatARS(n: number) {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n)
@@ -310,7 +310,27 @@ export default function PedidoPublicPage({ params }: PageProps) {
                             </div>
                             <div className="flex flex-col gap-1 text-left">
                                 <p className="text-xs text-blue-600 font-medium">Empresa: <span className="font-bold">{pedido.carrier === 'CORREO_ARGENTINO' ? 'Correo Argentino' : 'Andreani'}</span></p>
-                                <p className="text-sm font-bold text-blue-900">Código: {pedido.trackingNumber}</p>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <p className="text-sm font-bold text-blue-900 break-all">
+                                        Código: {pedido.trackingNumber}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            try {
+                                                await navigator.clipboard.writeText(pedido.trackingNumber)
+                                                toast.success('Código de seguimiento copiado')
+                                            } catch {
+                                                toast.error('No se pudo copiar el código')
+                                            }
+                                        }}
+                                        aria-label="Copiar código de seguimiento"
+                                        className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                                    >
+                                        <Copy className="h-3.5 w-3.5" />
+                                        Copiar
+                                    </button>
+                                </div>
                             </div>
                             <a
                                 href={pedido.trackingUrl}
