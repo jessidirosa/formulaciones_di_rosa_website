@@ -73,7 +73,7 @@ export default function CartSummary({
           <div className="flex justify-between text-sm text-[#5B6350]">
 
             <span className={envioGratis ? "text-[#4A5D45] font-bold" : "font-semibold text-[#3A4031]"}>
-              {envioGratis ? "Bonificado" : formatPrice(costoEnvioFinal)}
+              {envioGratis ? "Bonificado" : null}
             </span>
           </div>
 
