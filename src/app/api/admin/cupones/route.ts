@@ -13,6 +13,22 @@ export async function POST(req: NextRequest) {
 
         const data = await req.json()
 
+        const fechaInicio = data.fechaInicio ? new Date(data.fechaInicio) : null
+        const fechaVencimiento = data.fechaVencimiento
+            ? new Date(data.fechaVencimiento)
+            : null
+
+        if (
+            (fechaInicio && Number.isNaN(fechaInicio.getTime())) ||
+            (fechaVencimiento && Number.isNaN(fechaVencimiento.getTime())) ||
+            (fechaInicio && fechaVencimiento && fechaVencimiento <= fechaInicio)
+        ) {
+            return NextResponse.json(
+                { error: "La franja horaria del cupón no es válida" },
+                { status: 400 }
+            )
+        }
+
         // Validar si el código ya existe
         const existente = await prisma.cupon.findUnique({
             where: { codigo: data.codigo }
@@ -31,7 +47,8 @@ export async function POST(req: NextRequest) {
                 montoMinimo: data.montoMinimo,
                 limiteUsos: data.limiteUsos,
                 usosPorCliente: data.usosPorCliente || 0,
-                fechaVencimiento: data.fechaVencimiento ? new Date(data.fechaVencimiento) : null,
+                fechaInicio,
+                fechaVencimiento,
             }
         })
 

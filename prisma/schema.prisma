@@ -177,6 +177,7 @@ model Cupon {
   usos             Int      @default(0)
   usosPorCliente   Int       @default(0) // 0 = Infinito, 1 = Una vez por cliente
   activo           Boolean  @default(true)
+  fechaInicio      DateTime?
   fechaVencimiento DateTime?
   createdAt        DateTime @default(now())
 }

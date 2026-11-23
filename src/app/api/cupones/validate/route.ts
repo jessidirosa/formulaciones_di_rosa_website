@@ -33,9 +33,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ valid: false, error: 'Este cupón ya no está disponible' })
     }
 
-    // 2. Validar fecha de vencimiento
-    if (cupon.fechaVencimiento && new Date() > new Date(cupon.fechaVencimiento)) {
-      return NextResponse.json({ valid: false, error: 'Este cupón ha expirado' })
+    const ahora = new Date()
+
+    //2. validar fechas de vigencia
+    if (cupon.fechaInicio && ahora < cupon.fechaInicio) {
+      return NextResponse.json({
+        valid: false,
+        error: 'Este cupón todavía no está vigente'
+      })
+    }
+
+    if (cupon.fechaVencimiento && ahora >= cupon.fechaVencimiento) {
+      return NextResponse.json({
+        valid: false,
+        error: 'Este cupón ha expirado'
+      })
     }
 
     // 3. Validar límite de usos TOTALES

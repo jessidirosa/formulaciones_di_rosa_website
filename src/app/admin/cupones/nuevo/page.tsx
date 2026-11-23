@@ -37,6 +37,7 @@ export default function NuevoCuponPage() {
         montoMinimo: '',
         limiteUsos: '',
         usosPorCliente: '0',
+        fechaInicio: '',
         fechaVencimiento: ''
     })
 
@@ -48,6 +49,15 @@ export default function NuevoCuponPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        if (
+            formData.fechaInicio &&
+            formData.fechaVencimiento &&
+            new Date(formData.fechaVencimiento) <= new Date(formData.fechaInicio)
+        ) {
+            toast.error('El fin de vigencia debe ser posterior al inicio')
+            return
+        }
         setLoading(true)
 
         try {
@@ -60,7 +70,12 @@ export default function NuevoCuponPage() {
                     montoMinimo: formData.montoMinimo ? Number(formData.montoMinimo) : null,
                     limiteUsos: formData.limiteUsos ? Number(formData.limiteUsos) : null,
                     usosPorCliente: Number(formData.usosPorCliente), // ✅ Se envía como número
-                    fechaVencimiento: formData.fechaVencimiento || null
+                    fechaInicio: formData.fechaInicio
+                        ? new Date(formData.fechaInicio).toISOString()
+                        : null,
+                    fechaVencimiento: formData.fechaVencimiento
+                        ? new Date(formData.fechaVencimiento).toISOString()
+                        : null,
                 })
             })
 
@@ -228,12 +243,26 @@ export default function NuevoCuponPage() {
                                     <div className="relative">
                                         <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A3B18A]" />
                                         <Input
-                                            type="date"
+                                            type="datetime-local"
                                             value={formData.fechaVencimiento}
                                             onChange={(e) => setFormData({ ...formData, fechaVencimiento: e.target.value })}
                                             className="rounded-xl border-[#E9E9E0] pl-10"
                                         />
                                     </div>
+
+                                    <Label>Inicio de vigencia</Label>
+                                    <Input
+                                        type="datetime-local"
+                                        value={formData.fechaInicio}
+                                        onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+                                    />
+
+                                    <Label>Fin de vigencia</Label>
+                                    <Input
+                                        type="datetime-local"
+                                        value={formData.fechaVencimiento}
+                                        onChange={(e) => setFormData({ ...formData, fechaVencimiento: e.target.value })}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -241,7 +270,7 @@ export default function NuevoCuponPage() {
                         <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex gap-3 italic">
                             <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />
                             <p className="text-[11px] text-blue-700 leading-relaxed">
-                                El cupón se activará inmediatamente después de ser creado. Podrás desactivarlo en cualquier momento desde la lista general.
+                                El cupón quedará habilitado durante la vigencia configurada. Podrás desactivarlo en cualquier momento desde la lista de cupones.
                             </p>
                         </div>
 

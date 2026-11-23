@@ -13,6 +13,18 @@ export const dynamic = 'force-dynamic';
 import BotonEstadoCupon from "@/components/admin/BotonEstadoCupon"
 import BotonEliminarCupon from "@/components/admin/BotonEliminarCupon"
 
+function mostrarFechaHora(fecha: Date) {
+    return new Intl.DateTimeFormat('es-AR', {
+        timeZone: 'America/Argentina/Buenos_Aires',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).format(fecha)
+}
+
 export default async function AdminCuponesPage() {
     const cupones = await prisma.cupon.findMany({
         orderBy: { createdAt: 'desc' }
@@ -58,9 +70,6 @@ export default async function AdminCuponesPage() {
                                         <TableCell className="text-sm font-semibold">
                                             {cupon.tipo === 'PORCENTAJE' ? `${cupon.valor}%` : `$${cupon.valor.toLocaleString('es-AR')}`}
                                         </TableCell>
-                                        <TableCell className="text-xs text-gray-500">
-                                            <span className="font-bold text-gray-700">{cupon.usos}</span> / {cupon.limiteUsos || '∞'}
-                                        </TableCell>
                                         <TableCell className="text-xs">
                                             <div className="flex flex-col">
                                                 <span className="text-gray-500">Total: <span className="font-bold">{cupon.usos}</span> / {cupon.limiteUsos || '∞'}</span>
@@ -71,13 +80,18 @@ export default async function AdminCuponesPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-xs text-gray-500">
-                                            {cupon.fechaVencimiento ? (
-                                                <span className={isExpired ? "text-red-500 font-bold" : ""}>
-                                                    {format(new Date(cupon.fechaVencimiento), "dd MMM yyyy", { locale: es })}
+                                            <div className="flex flex-col gap-1">
+                                                <span>
+                                                    Desde: {cupon.fechaInicio
+                                                        ? mostrarFechaHora(cupon.fechaInicio)
+                                                        : 'Sin fecha de inicio'}
                                                 </span>
-                                            ) : (
-                                                <span className="text-[#A3B18A] font-medium italic">♾ Permanente</span>
-                                            )}
+                                                <span>
+                                                    Hasta: {cupon.fechaVencimiento
+                                                        ? mostrarFechaHora(cupon.fechaVencimiento)
+                                                        : 'Sin vencimiento'}
+                                                </span>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${cupon.activo && !isExpired ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
